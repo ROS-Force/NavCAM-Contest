@@ -19,9 +19,7 @@ class Distances():
 
     def __init__(self):
         
-        self.roiSize = 5 #tamanho do lado que quero calcular a distancia (Area = 25pixeis)
         
-
         #Subscriber
         self.sensor_Subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.dataCallback, queue_size=10)
 
@@ -30,33 +28,25 @@ class Distances():
     
     def dataCallback(self, new_data):
 
-        #obtem as informacoes do tamanho do video
-        self.height = new_data.height 
-        self.width = new_data.width
-        
+
+        roiSize = 5 #tamanho do lado que quero calcular a distancia (Area = 25pixeis)
+
+        dist = np.fromstring(new_data.data, dtype=np.int16) # Converte os dados de String para num array de Numpy int16[]
+
+        height = new_data.height
+        width = new_data.width
+
         #transforma o array de 1D para 2D
+        distances = dist.reshape(height, width)
+        roiDistances = distances[int(round(height/2 - roiSize)):int(round(roiSize + height/2)), int(round(width/2 - roiSize)):int(round(roiSize + width/2))]
 
-        # Nao sei bem porque motivo o Python esta a considerar que new_data.data e uma String 
-        # quando na verdade e um uint8[] (segundo rosmsg info sensor_msg/Image)
+        #Calcula o minimo, maximo e a media da Regiao de Interesse (RoI)
+        minimo = np.amin(roiDistances)
+        maximo = np.amax(roiDistances)
+        media = np.mean(roiDistances)
+
+        print(minimo, maximo, media)
         
-        self.distances = new_data.data
-        self.distances.shape = (self.distances.size//self.width, self.width)
-
-        #calcula a media das distancias da area de interesse
-        roi_distance = mean(self.distances[int(round(self.height/2))-self.roiSize : int(round(self.height/2)) + self.roiSize][int(round(self.width/2))-self.roiSize : int(round(self.width/2)) + self.roiSize])
-        
-        #calcula a distancia minima e maxima
-        min_distance = min(self.distances)
-        max_distance = max(self.distances)
-
-        print(roi_distance, min_distance, max_distance) #da um print
-
-    #def calcRealDistance(self, d):
-        
-    #    real_distances = d * 0.0384
-
-    #    return real_distances
-
     def run(self):
         rate = rospy.Rate(10)
 
