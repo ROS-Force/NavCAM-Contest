@@ -18,8 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(numpy REQUIRED)
-find_package(pyrealsense2 REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -111,7 +109,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES realsense_tools
 #  CATKIN_DEPENDS cv_bridge message_generation message_runtime rospy sensor_msgs std_msgs
-#  DEPENDS numpy pyrealsense2
+#  DEPENDS system_lib
 )
 
 ###########
@@ -123,9 +121,6 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-# TODO: Check names of system library include directories (numpy, pyrealsense2)
-  ${numpy_INCLUDE_DIRS}
-  ${pyrealsense2_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -156,8 +151,6 @@ include_directories(
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
-#   ${numpy_LIBRARIES}
-#   ${pyrealsense2_LIBRARIES}
 # )
 
 #############
