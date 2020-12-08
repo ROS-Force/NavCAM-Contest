@@ -165,6 +165,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
    src/get_distances.py
+   src/export_depth_images.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
