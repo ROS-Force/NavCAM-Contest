@@ -15,6 +15,7 @@ from sensor_msgs.msg import Image
 
 #adicionar comentario
 
+
 class Distances():
 
     def __init__(self):
