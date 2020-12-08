@@ -60,10 +60,10 @@ class ExportData():
         if (self.stamp == self.stampToCompare and not self.stamp == 0):
 
             self.exportFile();
-            if True:
-                self.List = []
-            else:
-                rospy.signal_shutdown("Exportado para um ficheiro CSV!")
+            #if True:
+            #    self.List = []
+            #else:
+            rospy.signal_shutdown("Exportado para um ficheiro CSV!")
 
         else:
             self.stampToCompare = self.stamp
