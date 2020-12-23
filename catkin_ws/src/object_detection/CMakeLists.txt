@@ -164,7 +164,10 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
    src/human_detection.py
+<<<<<<< HEAD
    src/object_detection.py
+=======
+>>>>>>> 3a83e9d85a8eccadf02e7538795ffc3ee485e250
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
