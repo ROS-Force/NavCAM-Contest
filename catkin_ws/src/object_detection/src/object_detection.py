@@ -19,9 +19,11 @@ class Object_Detection():
         self.bridge = CvBridge()
         self.load_yolo
 
-        self.net = cv2.dnn.readNet("~/Yolo/yolov3.weights", "~/Yolo/yolov3.cfg")
+        abs_path = "/home/mjpc13"
+
+        self.net = cv2.dnn.readNet(abs_path + "/Yolo/yolov3-tiny.weights", abs_path + "/Yolo/yolov3-tiny.cfg")
         self.classes = []
-        with open("~/Yolo/coco.names", "r") as f:
+        with open(abs_path+"/Yolo/coco.names", "r") as f:
             self.classes = [line.strip() for line in f.readlines()]
 
         layers_names = self.net.getLayerNames()
@@ -42,7 +44,9 @@ class Object_Detection():
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
 
             height, width, channels = cv_image.shape
-            blob, outputs = self.detect_objects(cv_image, self.net, self.output_layers)
+            #blob, outputs = self.detect_objects(cv_image, self.net, self.output_layers)
+            blob, outputs = self.detect_objects(cv_image)
+
             boxes, confs, class_ids = self.get_box_dimensions(outputs, height, width)
             self.draw_labels(boxes, confs, self.colors, class_ids, self.classes, cv_image)
 
@@ -65,20 +69,21 @@ class Object_Detection():
 
 
     def detect_objects(self,frame):
+
         blob = cv2.dnn.blobFromImage(frame, scalefactor=0.00392, size=(320,320), mean=(0, 0, 0), swapRB=True, crop=False)
         self.net.setInput(blob)
-        outputs = self.net.forward(self.outputLayers)
+        outputs = self.net.forward(self.output_layers)
 
         return blob, outputs
 
-    def get_box_dimensions(outputs, height, width):
+    def get_box_dimensions(self, outputs, height, width):
         boxes = []
         confs = []
         class_ids = []
         for output in outputs:
             for detect in output:
                 scores = detect[5:]
-                print(scores)
+                #print(scores)
                 class_id = np.argmax(scores)
                 conf = scores[class_id]
                 if conf > 0.3:
