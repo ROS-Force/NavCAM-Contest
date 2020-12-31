@@ -165,6 +165,7 @@ include_directories(
  catkin_install_python(PROGRAMS
    src/human_detection.py
    src/object_detection.py
+   src/falling_object.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
