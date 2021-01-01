@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import rospy
 import math
@@ -10,20 +10,26 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
-
+import rospkg
 
 class Object_Detection():
+    CONFIDENCE_THRESHOLD = 0.3
+    NMS_THRESHOLD = 0.4
 
     def __init__(self):
 
         self.bridge = CvBridge()
         self.load_yolo
 
-        abs_path = "/home/mjpc13"
-
-        self.net = cv2.dnn.readNet(abs_path + "/Yolo/yolov3-tiny.weights", abs_path + "/Yolo/yolov3-tiny.cfg")
+        abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
+        
+        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
+        self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
+        self.model = cv2.dnn_DetectionModel(self.net)
+        self.model.setInputParams(scale=0.00392, size=(320,320), mean=(0, 0, 0), swapRB=True, crop=False)
         self.classes = []
-        with open(abs_path+"/Yolo/coco.names", "r") as f:
+        with open(abs_path + "coco.names", "r") as f:
             self.classes = [line.strip() for line in f.readlines()]
 
         layers_names = self.net.getLayerNames()
@@ -32,24 +38,16 @@ class Object_Detection():
 
 
         #Publisher
-        self.pub = rospy.Publisher("/detection/objects_image", Image, queue_size=10)
-
-        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback)
-
-
+        self.pub = rospy.Publisher("/detection/objects_image", Image, queue_size=1)
+        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
     def imageCallback(self, data):
-
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-
-            height, width, channels = cv_image.shape
-            #blob, outputs = self.detect_objects(cv_image, self.net, self.output_layers)
-            blob, outputs = self.detect_objects(cv_image)
-
-            boxes, confs, class_ids = self.get_box_dimensions(outputs, height, width)
-            self.draw_labels(boxes, confs, self.colors, class_ids, self.classes, cv_image)
-
+            classes, scores, boxes = self.model.detect(cv_image, self.CONFIDENCE_THRESHOLD, self.NMS_THRESHOLD)
+            cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image)
+            image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=data.encoding)
+            self.pub.publish(image_message)
         except CvBridgeError as e:
             print(e)
             return
@@ -57,75 +55,23 @@ class Object_Detection():
             print(e)
             return
 
-
-    def run(self):
-        rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            
-            rate.sleep()
-
     def load_yolo(self):
         pass
 
-
-    def detect_objects(self,frame):
-
-        blob = cv2.dnn.blobFromImage(frame, scalefactor=0.00392, size=(320,320), mean=(0, 0, 0), swapRB=True, crop=False)
-        self.net.setInput(blob)
-        outputs = self.net.forward(self.output_layers)
-
-        return blob, outputs
-
-    def get_box_dimensions(self, outputs, height, width):
-        boxes = []
-        confs = []
-        class_ids = []
-        for output in outputs:
-            for detect in output:
-                scores = detect[5:]
-                #print(scores)
-                class_id = np.argmax(scores)
-                conf = scores[class_id]
-                if conf > 0.3:
-                    center_x = int(detect[0] * width)
-                    center_y = int(detect[1] * height)
-                    w = int(detect[2] * width)
-                    h = int(detect[3] * height)
-                    x = int(center_x - w/2)
-                    y = int(center_y - h / 2)
-                    boxes.append([x, y, w, h])
-                    confs.append(float(conf))
-                    class_ids.append(class_id)
-	return boxes, confs, class_ids
-
-
-
-    def draw_labels(self, boxes, confs, colors, class_ids, classes, img): 
-        indexes = cv2.dnn.NMSBoxes(boxes, confs, 0.5, 0.4)
+    def draw_labels(self, boxes, classes, scores, img): 
         font = cv2.FONT_HERSHEY_PLAIN
-        for i in range(len(boxes)):
-            if i in indexes:
-                x, y, w, h = boxes[i]
-                label = str(classes[class_ids[i]])
-                color = colors[i]
-                cv2.rectangle(img, (x,y), (x+w, y+h), color, 2)
-                cv2.putText(img, label, (x, y - 5), font, 1, color, 1)
-
-        image_message = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
-        self.pub.publish(image_message)
-
-
-
-
+        # iteracao em paralelo
+        for (classid, score, box) in zip(classes, scores, boxes):
+                label = "%s : %f" % (self.classes[classid[0]], score)
+                color = self.colors[int(classid) % len(self.colors)]
+                cv2.rectangle(img, box, color, 2)
+                cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+        return img
 
 def main():
 
-    rospy.init_node('object_detect', anonymous=True)
-
+    rospy.init_node('object_detection')
     hd = Object_Detection()
-
-    hd.run()
-
     rospy.spin()
 
 if __name__ == "__main__":
