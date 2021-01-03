@@ -55,8 +55,6 @@ class Object_Detection():
             print(e)
             return
 
-    def load_yolo(self):
-        pass
 
     def draw_labels(self, boxes, classes, scores, img): 
         font = cv2.FONT_HERSHEY_PLAIN
