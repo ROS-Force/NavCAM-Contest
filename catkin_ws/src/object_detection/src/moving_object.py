@@ -14,7 +14,7 @@ from sensor_msgs.msg import Image
 import time
 
 
-class Falling_Object():
+class Moving_Object():
 
     def __init__(self):
 
@@ -81,9 +81,9 @@ def main():
 
     rospy.init_node('falling_object', anonymous=True)
 
-    fod = Falling_Object()
+    mod = Moving_Object()
 
-    fod.run()
+    mod.run()
 
     rospy.spin()
 
