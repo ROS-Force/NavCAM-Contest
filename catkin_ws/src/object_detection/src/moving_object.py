@@ -37,22 +37,22 @@ class Moving_Object():
 
             cv_image_gray = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
             #edge = cv2.Laplacian(cv_image_gray,cv2.CV_8UC1)
-            edge = cv2.Canny(cv2.GaussianBlur (cv_image_gray, (7, 7), 0), 120,200)
+            
+            ws = self.watershed(cv_image)
+            edge = cv2.Canny(cv2.GaussianBlur (cv_image_gray, (7, 7), 1), 120,200)
 
             try:
                 
                 dif_img = cv2.absdiff(self.previous_frame, edge)
                 self.previous_frame = edge
 
+                #dif_img_blur = cv2.GaussianBlur (dif_img, (9, 9), 0)
+                ret, test = cv2.threshold(dif_img, 25, 255, 0)
 
-                dif_img_blur = cv2.GaussianBlur (dif_img, (9, 9), 0)
-                ret, test = cv2.threshold(dif_img_blur, 25, 255, 0)
-
-                contours, hierarchy = cv2.findContours(test, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
+                contours, hierarchy = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
                 cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
-                    
-
-                image_message = self.bridge.cv2_to_imgmsg(cv_image, encoding="passthrough")
+                
+                image_message = self.bridge.cv2_to_imgmsg(ws, encoding="passthrough")
                 self.pub.publish(image_message)
 
             except:
@@ -71,37 +71,67 @@ class Moving_Object():
         cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
         cv_encoding = cv2.CV_16UC1
 
-        self.map_uint16_to_uint8(cv_image, lower_bound=20, upper_bound=10000)
+        cv_image = self.map_uint16_to_uint8(cv_image, lower_bound=20, upper_bound=10000)
         
-        cv_image = cv2.GaussianBlur (cv_image, (21, 21), 0)
-        cv_image = cv2.Canny(np.uint8(cv_image), 200, 255)
-#        cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        #cv_image = cv2.GaussianBlur (cv_image, (5, 5), 0)
+        edges = cv2.Canny(cv_image, 230, 255)
+        #cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         
         #new_data = cv2.GaussianBlur(new_data, (5, 5), 0.5, cv_encoding)
         #cv_image = cv2.Laplacian(cv_image, cv_encoding)
         
-        #contours, hierarchy = cv2.findContours(test, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE, [-2:]
-        #cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
-        
-        #ret, low_thr = cv2.threshold(new_data, 20, 255, 0)
-        #img = cv2.bitwise_and(new_data, new_data, mask = test)
-        #cv2.normalize(edges, edges, 0, 65536,cv2.NORM_MINMAX, cv2.CV_16UC1)
-
+        #contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
+        #cv2.drawContours(test, contours, -1, (0,255,0), 1)
 
         try:
 
-            
-            dif_img = cv2.absdiff(self.previous_frame_depth, cv_image)
-            self.previous_frame_depth = cv_image
+            #dif_img = cv2.absdiff(self.previous_frame_depth, cv_image)
+            #self.previous_frame_depth = cv_image
             #dif_img_blur = cv2.GaussianBlur (dif_img, (21, 21), 0)
 
-            image_message = self.bridge.cv2_to_imgmsg(dif_img, encoding="8UC1")
+            image_message = self.bridge.cv2_to_imgmsg(test, encoding="8UC1")
             self.pub_depth.publish(image_message)
 
         except:
         #    pass
             self.previous_frame_depth = cv_image
+
+
+    def watershed(self, image):
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        ret, thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+
+        # noise removal
+        kernel = np.ones((3,3),np.uint8)
+        opening = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel, iterations = 3)
+        
+        # sure background area
+        sure_bg = cv2.dilate(opening,kernel,iterations=3)
+
+        # Finding sure foreground area
+        dist_transform = cv2.distanceTransform(opening,cv2.DIST_L2,5)
+        ret, sure_fg = cv2.threshold(dist_transform,0.3*dist_transform.max(),255,0)
+
+        # Finding unknown region
+        sure_fg = np.uint8(sure_fg)
+        unknown = cv2.subtract(sure_bg,sure_fg)
+
+        # Marker labelling
+        ret, markers = cv2.connectedComponents(sure_fg)
+
+        # Add one to all labels so that sure background is not 0, but 1
+        markers = markers+1
+
+        # Now, mark the region of unknown with zero
+        markers[unknown==255] = 0
+
+        markers = cv2.watershed(image,markers)
+        image[markers == -1] = [255,0,0]
+
+        img = markers.astype(np.uint16)
+
+        return img
 
 
 
