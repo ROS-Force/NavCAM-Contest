@@ -12,7 +12,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import rospkg
 
-class Object_Detection():
+class Yolo_Detection():
     CONFIDENCE_THRESHOLD = 0.3
     NMS_THRESHOLD = 0.4
 
@@ -68,8 +68,8 @@ class Object_Detection():
 
 def main():
 
-    rospy.init_node('object_detection')
-    hd = Object_Detection()
+    rospy.init_node('yolo_detection')
+    hd = Yolo_Detection()
     rospy.spin()
 
 if __name__ == "__main__":

@@ -13,8 +13,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import time
 
-
-class Moving_Object():
+class Watershed_Detection():
 
     def __init__(self):
 
@@ -22,11 +21,9 @@ class Moving_Object():
         self.countFrame = 1
 
         #Publisher
-        self.pub = rospy.Publisher("/detection/moving_object", Image, queue_size=10)
+        self.pub = rospy.Publisher("/detection/watershed_blob", Image, queue_size=10)
         #Subscriber
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=10)
-
-
     
     def imageCallback(self, data):
 
@@ -82,9 +79,9 @@ class Moving_Object():
 
 def main():
 
-    rospy.init_node('falling_object', anonymous=True)
+    rospy.init_node('watershed_detection', anonymous=True)
 
-    mod = Moving_Object()
+    mod = Watershed_detection()
 
     mod.run()
 
