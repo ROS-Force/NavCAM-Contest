@@ -128,11 +128,10 @@ class Moving_Object():
 
         markers = cv2.watershed(image,markers)
         image[markers == -1] = [255,0,0]
+        markers[markers == -1] = 31
 
         img = markers.astype(np.uint16)
-
         return img
-
 
 
     def run(self):
