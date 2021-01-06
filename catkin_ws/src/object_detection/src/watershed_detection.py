@@ -34,28 +34,16 @@ class Watershed_Detection():
         ws_8bit = self.map_uint16_to_uint8(ws)
 
         contours, hierarchy = cv2.findContours(ws_8bit, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[-2:]
-        cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
+        #cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
 
         for c in contours:
             x, y, w, h = cv2.boundingRect(c)
+            
+            #clean rectangles with area < 100px
+            if (w * h > 100): 
 
-            # draw a green rectangle to visualize the bounding rect
-            cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            # get the min area rect
-            rect = cv2.minAreaRect(c)
-            box = cv2.boxPoints(rect)
-                # convert all coordinates floating point values to int
-            box = np.int0(box)
-                # draw a red 'nghien' rectangle
-            cv2.drawContours(cv_image, [box], 0, (0, 0, 255))
-
-                # finally, get the min enclosing circle
-            (x, y), radius = cv2.minEnclosingCircle(c)
-            # convert all values to int
-            center = (int(x), int(y))
-            radius = int(radius)
-                # and draw the circle in blue
-            cv_image = cv2.circle(cv_image, center, radius, (255, 0, 0), 2)
+                # draw a green rectangle to visualize the bounding rect
+                cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
         image_message = self.bridge.cv2_to_imgmsg(cv_image, encoding="8UC3")
         self.pub.publish(image_message)
@@ -90,8 +78,11 @@ class Watershed_Detection():
         markers[unknown==255] = 0
 
         markers = cv2.watershed(image,markers)
-        #image[markers == -1] = [255,0,0]
+        
+        #colocar as fronteiras dos blobs a 0, para nao dar stress com o background
         markers[markers == -1] = 0
+
+        #Remover o background como sendo um blob
         markers[markers == 1] = 0
         img = markers.astype(np.uint16)
         #unique, counts = np.unique(img, return_counts=True)
