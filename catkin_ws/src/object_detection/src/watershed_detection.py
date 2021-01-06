@@ -11,6 +11,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
+from object_detection.msg import bbox_msgs
 import time
 
 class Watershed_Detection():
@@ -19,15 +20,19 @@ class Watershed_Detection():
 
         self.bridge = CvBridge()
         self.countFrame = 1
+        
 
         #Publisher
-        self.pub = rospy.Publisher("/detection/watershed_blob", Image, queue_size=10)
+        self.pub_blob = rospy.Publisher("/detection/watershed_blob", Image, queue_size=10)
+        self.pub_bbox = rospy.Publisher("/detection/watershed_bbox", bbox_msgs, queue_size=10)
+        
         #Subscriber
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=10)
     
     def imageCallback(self, data):
 
         cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
+        id = 1
             
         ws = self.watershed(cv_image)
 
@@ -41,13 +46,28 @@ class Watershed_Detection():
             
             #clean rectangles with area < 100px
             if (w * h > 100): 
-
                 # draw a green rectangle to visualize the bounding rect
                 cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                bbox_message = self.prepareBbox(ws_8bit.shape, id, x, y, w, h)
+                id = id+1
+                self.pub_bbox.publish(bbox_message)
 
-        image_message = self.bridge.cv2_to_imgmsg(cv_image, encoding="8UC3")
-        self.pub.publish(image_message)
+
+        image_message = self.bridge.cv2_to_imgmsg(ws_8bit, encoding="8UC1")
+        self.pub_blob.publish(image_message)
             
+    def prepareBbox(self, shape, id, x, y, w, h):
+
+        array = np.uint8(np.zeros(shape))
+        cv2.rectangle(array, (x, y), (x+w, y+h), id, 1)
+        bbox = bbox_msgs()
+        a = array.tolist()
+        bbox.data = a
+        bbox.center = [x,y]
+        bbox.size = [w,h]
+        bbox.area = w * h
+        bbox.perimeter = 2*h + 2*w
+        return bbox
 
     def watershed(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
