@@ -10,6 +10,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
+from object_detection.msg import bbox_msgs
 import rospkg
 
 class Yolo_Detection():
@@ -38,7 +39,8 @@ class Yolo_Detection():
 
 
         #Publisher
-        self.pub = rospy.Publisher("/detection/objects_image", Image, queue_size=1)
+        self.pub = rospy.Publisher("/detection/yolo/objects_image", Image, queue_size=1)
+        self.pub_bbox = rospy.Publisher("/detection/yolo/bbox", bbox_msgs, queue_size=10)
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
     def imageCallback(self, data):

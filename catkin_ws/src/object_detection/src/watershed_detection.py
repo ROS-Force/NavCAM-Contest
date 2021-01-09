@@ -23,8 +23,9 @@ class Watershed_Detection():
         
 
         #Publisher
-        self.pub_blob = rospy.Publisher("/detection/watershed_blob", Image, queue_size=10)
-        self.pub_bbox = rospy.Publisher("/detection/watershed_bbox", bbox_msgs, queue_size=10)
+        self.pub_blob = rospy.Publisher("/detection/watershed/blob", Image, queue_size=10)
+        self.pub_image = rospy.Publisher("/detection/watershed/objects_image", Image, queue_size=10) 
+        self.pub_bbox = rospy.Publisher("/detection/watershed/bbox", bbox_msgs, queue_size=10)
         
         #Subscriber
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=10)
@@ -39,7 +40,7 @@ class Watershed_Detection():
         ws_8bit = self.map_uint16_to_uint8(ws)
 
         contours, hierarchy = cv2.findContours(ws_8bit, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[-2:]
-        #cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
+        cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
 
         for c in contours:
             x, y, w, h = cv2.boundingRect(c)
@@ -52,16 +53,22 @@ class Watershed_Detection():
                 id = id+1
                 self.pub_bbox.publish(bbox_message)
 
+        #Publica a imagem com os quadrados verdes desenhados
+        image_message = self.bridge.cv2_to_imgmsg(cv_image, encoding="8UC3")
+        self.pub_image.publish(image_message)
 
-        image_message = self.bridge.cv2_to_imgmsg(ws_8bit, encoding="8UC1")
-        self.pub_blob.publish(image_message)
+        #Publica a imagem dos blobs
+        blob_message = self.bridge.cv2_to_imgmsg(ws_8bit, encoding="8UC1")
+        self.pub_blob.publish(blob_message)
             
     def prepareBbox(self, shape, id, x, y, w, h):
 
         array = np.uint8(np.zeros(shape))
-        cv2.rectangle(array, (x, y), (x+w, y+h), id, 1)
+        array=array.flatten()
+        cv2.rectangle(array, (x, y), (x+w, y+h), color = id)
         bbox = bbox_msgs()
         a = array.tolist()
+        bbox.shape = shape
         bbox.data = a
         bbox.center = [x,y]
         bbox.size = [w,h]
