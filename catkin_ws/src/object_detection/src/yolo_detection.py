@@ -23,7 +23,7 @@ class Yolo_Detection():
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
-        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov3.cfg", abs_path + "yolov3.weights")
+        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
         self.model = cv2.dnn_DetectionModel(self.net)
