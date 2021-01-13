@@ -23,8 +23,9 @@ class Watershed_Detection():
         
 
         #Publisher
-        self.pub_blob = rospy.Publisher("/detection/watershed_blob", Image, queue_size=10)
-        self.pub_bbox = rospy.Publisher("/detection/watershed_bbox", bbox_msgs, queue_size=10)
+        self.pub_blob = rospy.Publisher("/detection/watershed/blob", Image, queue_size=10)
+        self.pub_image = rospy.Publisher("/detection/watershed/objects_image", Image, queue_size=10) 
+        self.pub_bbox = rospy.Publisher("/detection/watershed/bbox", bbox_msgs, queue_size=10)
         
         #Subscriber
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=10)
@@ -45,24 +46,33 @@ class Watershed_Detection():
             x, y, w, h = cv2.boundingRect(c)
             
             #clean rectangles with area < 100px
-            if (w * h > 100): 
+            if (w * h > 100 and w * h < 250000): 
                 # draw a green rectangle to visualize the bounding rect
                 cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                bbox_message = self.prepareBbox(ws_8bit.shape, id, x, y, w, h)
+                bbox_message = self.prepareBbox(id, x, y, w, h)
                 id = id+1
                 self.pub_bbox.publish(bbox_message)
 
+        #Publica a imagem com os quadrados verdes desenhados
+        image_message = self.bridge.cv2_to_imgmsg(cv_image, encoding=data.encoding)
+        self.pub_image.publish(image_message)
 
-        image_message = self.bridge.cv2_to_imgmsg(ws_8bit, encoding="8UC1")
-        self.pub_blob.publish(image_message)
+        #Publica a imagem dos blobs
+        blob_message = self.bridge.cv2_to_imgmsg(ws_8bit, encoding="8UC1")
+        self.pub_blob.publish(blob_message)
             
-    def prepareBbox(self, shape, id, x, y, w, h):
+    def prepareBbox(self, id, x, y, w, h):
 
-        array = np.uint8(np.zeros(shape))
-        cv2.rectangle(array, (x, y), (x+w, y+h), id, 1)
         bbox = bbox_msgs()
-        a = array.tolist()
-        bbox.data = a
+        x1 = abs(x-w//2)
+        x2 = abs(x+w//2)
+
+        y1 = abs(y-h//2)
+        y2 = abs(y+h//2)
+
+        box = [x1,y1,x2,y2]
+        bbox.classid = id
+        bbox.data = box
         bbox.center = [x,y]
         bbox.size = [w,h]
         bbox.area = w * h

@@ -10,6 +10,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
+from object_detection.msg import bbox_msgs
 import rospkg
 
 class Yolo_Detection():
@@ -19,10 +20,11 @@ class Yolo_Detection():
     def __init__(self):
 
         self.bridge = CvBridge()
-        
+        self.load_yolo
+
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
-        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
+        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov3.cfg", abs_path + "yolov3.weights")
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
         self.model = cv2.dnn_DetectionModel(self.net)
@@ -37,7 +39,8 @@ class Yolo_Detection():
 
 
         #Publisher
-        self.pub = rospy.Publisher("/detection/objects_image", Image, queue_size=1)
+        self.pub = rospy.Publisher("/detection/yolo/objects_image", Image, queue_size=1)
+        self.pub_bbox = rospy.Publisher("/detection/yolo/bbox", bbox_msgs, queue_size=10)
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
     def imageCallback(self, data):
@@ -63,7 +66,25 @@ class Yolo_Detection():
                 color = self.colors[int(classid) % len(self.colors)]
                 cv2.rectangle(img, box, color, 2)
                 cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+
+                bbox_message = self.prepareBbox(img.shape, box, int(classid))
+                self.pub_bbox.publish(bbox_message)
         return img
+
+    def prepareBbox(self, shape, box, id):
+
+        w = int(abs(box[0]- box[2]))
+        h = int(abs(box[3]- box[1]))
+        x = int(w//2)
+        y = int(h//2)
+        bbox = bbox_msgs()
+        bbox.classid = id
+        bbox.data = box.tolist()
+        bbox.center = [x,y]
+        bbox.size = [w,h]
+        bbox.area = w * h
+        bbox.perimeter = 2*h + 2*w
+        return bbox
 
 def main():
 
