@@ -20,7 +20,6 @@ class Yolo_Detection():
     def __init__(self):
 
         self.bridge = CvBridge()
-        self.load_yolo
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
