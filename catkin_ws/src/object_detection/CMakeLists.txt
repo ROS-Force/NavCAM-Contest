@@ -166,6 +166,7 @@ include_directories(
  catkin_install_python(PROGRAMS
    src/yolo_detection.py
    src/watershed_detection.py
+   src/sort_tracking.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
