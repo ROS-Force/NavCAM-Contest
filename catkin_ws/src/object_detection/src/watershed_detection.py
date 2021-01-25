@@ -55,7 +55,7 @@ class Watershed_Detection():
                 id1 = id1+1
 
                 list_id.append(int(id1))
-                bbox = [x - w//2, y - h//2, x + w//2, y + h//2]
+                bbox = [x, y, x + w, y + h]
                 bbox.append(float(1.0))
                 list_bbox.append(bbox)
 
