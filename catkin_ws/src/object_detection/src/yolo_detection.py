@@ -70,10 +70,13 @@ class Yolo_Detection():
             color = self.colors[int(classid) % len(self.colors)]
             cv2.rectangle(img, box, color, 2)
             cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+            
                 
             # juntar o score a bbox
             list_id.append(int(classid))
             bbox = box.tolist()
+            bbox[2] = box[0] + box[2]
+            bbox[3] = box[1] + box[3]
             bbox.append(float(score))
             list_bbox.append(bbox)
 
