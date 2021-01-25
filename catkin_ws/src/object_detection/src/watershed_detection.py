@@ -33,14 +33,16 @@ class Watershed_Detection():
     def imageCallback(self, data):
 
         cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-        id = 1
+        id1 = 1
             
         ws = self.watershed(cv_image)
 
         ws_8bit = self.map_uint16_to_uint8(ws)
 
         contours, hierarchy = cv2.findContours(ws_8bit, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[-2:]
-        #cv2.drawContours(cv_image, contours, -1, (0,255,0), 1)
+
+        list_bbox = []
+        list_id = []
 
         for c in contours:
             x, y, w, h = cv2.boundingRect(c)
@@ -49,9 +51,15 @@ class Watershed_Detection():
             if (w * h > 100 and w * h < 250000): 
                 # draw a green rectangle to visualize the bounding rect
                 cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                bbox_message = self.prepareBbox(id, x, y, w, h)
-                id = id+1
-                self.pub_bbox.publish(bbox_message)
+                #bbox_message = self.prepareBbox(id1, x, y, w, h)
+                id1 = id1+1
+
+                list_id.append(int(id1))
+                bbox = [x - w//2, y - h//2, x + w//2, y + h//2]
+                bbox.append(float(1.0))
+                list_bbox.append(bbox)
+
+            self.publishBbox(list_bbox, list_id)
 
         #Publica a imagem com os quadrados verdes desenhados
         image_message = self.bridge.cv2_to_imgmsg(cv_image, encoding=data.encoding)
@@ -61,23 +69,13 @@ class Watershed_Detection():
         blob_message = self.bridge.cv2_to_imgmsg(ws_8bit, encoding="8UC1")
         self.pub_blob.publish(blob_message)
             
-    def prepareBbox(self, id, x, y, w, h):
+    def publishBbox(self, list_bbox, list_classid):
+        
+        bboxs = bbox_msgs()
+        bboxs.bbox_list = sum(list_bbox, [])
+        bboxs.classid = list_classid
 
-        bbox = bbox_msgs()
-        x1 = abs(x-w//2)
-        x2 = abs(x+w//2)
-
-        y1 = abs(y-h//2)
-        y2 = abs(y+h//2)
-
-        box = [x1,y1,x2,y2]
-        bbox.classid = id
-        bbox.data = box
-        bbox.center = [x,y]
-        bbox.size = [w,h]
-        bbox.area = w * h
-        bbox.perimeter = 2*h + 2*w
-        return bbox
+        self.pub_bbox.publish(bboxs)
 
     def watershed(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
