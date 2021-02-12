@@ -45,7 +45,6 @@ class Human_Detection():
 
             self.pub.publish(image_message)
 
-
         except CvBridgeError as e:
             print(e)
             return
