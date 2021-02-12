@@ -187,3 +187,7 @@ dmypy.json
 
 # ROSBags
 *.bag
+
+# DNN 
+yolo*.weights
+yolo*.cfg
