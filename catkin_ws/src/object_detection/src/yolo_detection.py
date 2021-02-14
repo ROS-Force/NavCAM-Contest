@@ -20,6 +20,8 @@ class Yolo_Detection():
     def __init__(self):
 
         self.bridge = CvBridge()
+        self.list_bbox = []
+        self.list_id = []
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
@@ -59,31 +61,37 @@ class Yolo_Detection():
 
     def draw_labels(self, boxes, classes, scores, img): 
         font = cv2.FONT_HERSHEY_PLAIN
+        
+        list_bbox = []
+        list_id = []
         # iteracao em paralelo
         for (classid, score, box) in zip(classes, scores, boxes):
-                label = "%s : %f" % (self.classes[classid[0]], score)
-                color = self.colors[int(classid) % len(self.colors)]
-                cv2.rectangle(img, box, color, 2)
-                cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+            label = "%s : %f" % (self.classes[classid[0]], score)
+            color = self.colors[int(classid) % len(self.colors)]
+            cv2.rectangle(img, box, color, 2)
+            cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+            
+                
+            # juntar o score a bbox
+            list_id.append(int(classid))
+            bbox = box.tolist()
+            bbox[2] = box[0] + box[2]
+            bbox[3] = box[1] + box[3]
+            bbox.append(float(score))
+            list_bbox.append(bbox)
 
-                bbox_message = self.prepareBbox(img.shape, box, int(classid))
-                self.pub_bbox.publish(bbox_message)
+        self.publishBbox(list_bbox, list_id)
+        
         return img
 
-    def prepareBbox(self, shape, box, id):
+    def publishBbox(self, list_bbox, list_classid):
+        
+        bboxs = bbox_msgs()
+        bboxs.bbox_list = sum(list_bbox, [])
+        bboxs.classid = list_classid
 
-        w = int(abs(box[0]- box[2]))
-        h = int(abs(box[3]- box[1]))
-        x = int(w//2)
-        y = int(h//2)
-        bbox = bbox_msgs()
-        bbox.classid = id
-        bbox.data = box.tolist()
-        bbox.center = [x,y]
-        bbox.size = [w,h]
-        bbox.area = w * h
-        bbox.perimeter = 2*h + 2*w
-        return bbox
+        self.pub_bbox.publish(bboxs)
+
 
 def main():
 

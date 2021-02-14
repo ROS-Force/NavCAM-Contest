@@ -170,6 +170,7 @@ include_directories(
 >>>>>>> e243d3c68ba94d8bf3aa0a42c60d5382c83d6834
    src/yolo_detection.py
    src/watershed_detection.py
+   src/sort_tracking.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
