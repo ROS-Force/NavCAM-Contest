@@ -1,0 +1,15 @@
+[submodule "catkin_ws/src/packagedeps/--force"]
+	path = catkin_ws/src/packagedeps/--force
+	url = git@github.com:ccny-ros-pkg/imu_tools.git
+	branch = melodic
+[submodule "catkin_ws/src/packagedeps/realsense-ros"]
+	path = catkin_ws/src/packagedeps/realsense-ros
+	url = git@github.com:IntelRealSense/realsense-ros.git
+	branch = development
+[submodule "catkin_ws/src/packagedeps/imu_tools"]
+	path = catkin_ws/src/packagedeps/imu_tools
+	url = git@github.com:ccny-ros-pkg/imu_tools.git
+	branch = melodic
+[submodule "catkin_ws/src/packagedeps/sort"]
+	path = catkin_ws/src/packagedeps/sort
+	url = git@github.com:abewley/sort.git
