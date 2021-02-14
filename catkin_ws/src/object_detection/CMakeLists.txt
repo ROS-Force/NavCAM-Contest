@@ -164,10 +164,6 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-<<<<<<< HEAD
-=======
-   src/human_detection.py
->>>>>>> e243d3c68ba94d8bf3aa0a42c60d5382c83d6834
    src/yolo_detection.py
    src/watershed_detection.py
    src/sort_tracking.py
