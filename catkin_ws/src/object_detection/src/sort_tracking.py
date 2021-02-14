@@ -33,9 +33,11 @@ class Sort_tracking():
         self.existnewBboxWatershed = False
 
         self.bridge = CvBridge()
-        abs_path = rospkg.RosPack().get_path("object_detection") 
+        abs_path = rospkg.RosPack().get_path("object_detection")
+
+        
     
-        si = imp.load_source('sort', abs_path + "/src/sort/" + 'sort.py')
+        si = imp.load_source('sort', abs_path + "/include/sort/" + 'sort.py')
         self.mo_tracker = si.Sort(max_age=MAX_AGE, min_hits=MIN_HITS, iou_threshold=IoU_THRESHOLD) #cria o multiple object tracker com base no codigo do Andrew cenas
         self.mo_tracker_watershed = si.Sort(max_age=20, min_hits=1, iou_threshold=IoU_THRESHOLD)
 
