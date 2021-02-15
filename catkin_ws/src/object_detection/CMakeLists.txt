@@ -172,6 +172,7 @@ include_directories(
    src/yolo_detection.py
    src/watershed_detection.py
    src/sort_tracking.py
+   src/find_speed.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
