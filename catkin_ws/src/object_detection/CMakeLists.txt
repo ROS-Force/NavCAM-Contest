@@ -57,6 +57,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    bbox_msgs.msg
    real_center.msg
+   object_speed.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -74,9 +75,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages()
+ generate_messages(DEPENDENCIES geometry_msgs)
 
-catkin_package(CATKIN_DEPENDS message_runtime)
+catkin_package(CATKIN_DEPENDS 
+    message_runtime 
+    geometry_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
