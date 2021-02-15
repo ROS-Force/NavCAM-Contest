@@ -6,6 +6,8 @@ import sys
 import numpy as np
 import cv2
 
+import ctypes
+
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
@@ -22,10 +24,29 @@ class Yolo_Detection():
         self.bridge = CvBridge()
         self.list_bbox = []
         self.list_id = []
+        cuda = True
+
+        libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
+        for libname in libnames:
+            try:
+                cuda = ctypes.CDLL(libname)
+                print(cuda)
+            except OSError:
+                continue
+            else:
+                break
+        else:
+            cuda = False
+            print("CUDA no found, loading light YOLO model...")
+            raise OSError("could not load any of: " + ' '.join(libnames))
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
-        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
+        if cuda:
+            self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
+        else:
+            self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov3-tiny.cfg", abs_path + "yolov3-tiny.weights")
+
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
         self.model = cv2.dnn_DetectionModel(self.net)
