@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    bbox_msgs.msg
+   real_center.msg
  )
 
 ## Generate services in the 'srv' folder
