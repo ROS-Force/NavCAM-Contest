@@ -13,6 +13,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from object_detection.msg import bbox_msgs
+from object_detection.msg import real_center
 
 
 class Sort_tracking():
@@ -49,6 +50,7 @@ class Sort_tracking():
         self.pub = rospy.Publisher("/tracking/yolo/objects_image", Image, queue_size=10)
         self.pub_water = rospy.Publisher("/tracking/watershed/objects_image", Image, queue_size=10)
         self.pub_bbox = rospy.Publisher("/tracking/yolo/bbox", bbox_msgs, queue_size=10)
+        self.pub_center = rospy.Publisher("/tracking/yolo/center", real_center, queue_size=10)
 
         #Subscribers
         self.sub_bbox_yolo = rospy.Subscriber("/detection/yolo/bbox", bbox_msgs,self.bboxCallback, queue_size=10)
@@ -128,9 +130,6 @@ class Sort_tracking():
 
 
 
-
-
-
     def draw_labels(self, boxes, object_id, classes, img): 
         font = cv2.FONT_HERSHEY_PLAIN
         pub_box= []
@@ -150,8 +149,9 @@ class Sort_tracking():
 
 
     def publishCenter(self, boxes, object_id):
-        
-        pub_center = []
+
+        center = real_center()
+        center_msg = []
 
         for (id, box) in zip(object_id, boxes):
 
@@ -159,9 +159,14 @@ class Sort_tracking():
             
 
             depth = self.cv_image_depth[pix[1], pix[0]]
-            result = [rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth), id]
-
-
+            result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth)
+            result.append(id)
+            center_msg.append(result)
+        
+        array = np.array(center_msg)
+        array=array.flatten()
+        center.data = array.tolist()
+        self.pub_center.publish(center)
 
 
     def run(self):
