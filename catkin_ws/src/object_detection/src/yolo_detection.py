@@ -38,7 +38,6 @@ class Yolo_Detection():
         else:
             cuda = False
             print("CUDA no found, loading light YOLO model...")
-            raise OSError("could not load any of: " + ' '.join(libnames))
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
