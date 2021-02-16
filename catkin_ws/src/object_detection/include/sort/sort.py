@@ -240,8 +240,8 @@ class Sort(object):
 
     dets = np.zeros((len(bblist.bounding_boxes), 5))
 
-    for (bb, det) in zip(bblist, dets):       
-      det[:] = [bb.xmin, bb.ymin, bb.xmax. bb.ymax, bb.score]
+    for (t, det) in enumerate(dets):       
+      det[:] = [bblist.bounding_boxes[t].xmin, bblist.bounding_boxes[t].ymin, bblist.bounding_boxes[t].xmax. bblist.bounding_boxes[t].ymax, bblist.bounding_boxes[t].score]
 
     # get predicted locations from existing trackers.
     trks = np.zeros((len(self.trackers), 5))
@@ -265,7 +265,7 @@ class Sort(object):
 
     # create and initialise new trackers for unmatched detections
     for i in unmatched_dets:
-        trk = KalmanBoxTracker(dets[i,:], bb[i])
+        trk = KalmanBoxTracker(dets[i,:], bblist.bounding_boxes[i])
         self.trackers.append(trk)
     i = len(self.trackers)
     for trk in reversed(self.trackers):
@@ -282,6 +282,7 @@ class Sort(object):
         # remove dead tracklet
         if(trk.time_since_update > self.max_age):
           self.trackers.pop(i)
-    if(len(ret)>0):
-      return 
+    if(len(tblist)>0):
+      trackerboxes.bounding_boxes = tblist
+      return tblist
     return BoundingBoxes()
