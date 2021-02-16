@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  sort
   message_generation
 )
 
@@ -83,6 +84,7 @@ catkin_package(CATKIN_DEPENDS
     message_runtime 
     geometry_msgs
     std_msgs
+    sort
 )
 
 ################################################
