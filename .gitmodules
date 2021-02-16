@@ -12,4 +12,4 @@
 	branch = melodic
 [submodule "catkin_ws/src/packagedeps/sort"]
 	path = catkin_ws/src/packagedeps/sort
-	url = git@github.com:abewley/sort.git
+	url = git@github.com:ROS-Force/sort.git
