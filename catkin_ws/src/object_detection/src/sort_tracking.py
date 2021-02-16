@@ -8,7 +8,7 @@ import rospkg
 import pyrealsense2 as rs2
 
 from std_msgs.msg import Header
-from geometry_msgs.msg import Twist
+from object_detection import ObjectSpeed
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
@@ -50,6 +50,7 @@ class Sort_tracking():
 
         #Publisher
         self.pub = rospy.Publisher("/tracking/yolo/objects_image", Image, queue_size=10)
+        self.pub_speed = rospy.Publisher("/tracking/speed", ObjectSpeed, queue_size=10)
 
         #Subscribers
         self.sub_bbox_yolo = rospy.Subscriber("/detection/yolo/bboxes", BoundingBoxes,self.bboxCallback, queue_size=10)
@@ -149,7 +150,7 @@ class Sort_tracking():
             center.id = id
             center.Class = t.Class
             center_list[id] = center
-
+            
         return center_list, new_time
 
 
@@ -158,9 +159,10 @@ class Sort_tracking():
 
     def computeSpeed(self, centers, new_time):
 
-        vel = Vector3()
+        speed = Vector3()
 
-
+        msg = ObjectSpeed()
+        
         if len(self.previous_center) == 0:
             return None
         
@@ -175,41 +177,15 @@ class Sort_tracking():
                 if not updated_center == None:
                     continue
 
+                speed.x = (updated_center.x - previous_center.x)*10**(-3)/deltat
+                speed.y = (updated_center.y - previous_center.y)*10**(-3)/deltat
+                speed.z = (updated_center.z - previous_center.z)*10**(-3)/deltat
 
-                vel.x = (updated_center.x - previous_center.x)*10**(-3)/deltat
-                vel.y = (updated_center.y - previous_center.y)*10**(-3)/deltat
-                vel.z = (updated_center.z - previous_center.z)*10**(-3)/deltat
+                msg.velocity = speed
+                msg.id = previous_center.id
+                msg.Class = previous_center.Class
 
-
-
-            
-
-
-
-            if self.updated_center.size == self.previous_center.size or len(self.previous_center.shape) == 1:
-                
-                try:
-                    speed = self.updated_center[:,:3] - self.previous_center[:,:3]
-                    speed = speed*10**(-3)/deltat
-                    speed = np.column_stack((speed, self.previous_center[:,3]))
-
-                except IndexError as ie:
-                    try:
-                        speed = self.updated_center[:3] - self.previous_center[:3]
-                        speed = speed*10**(-3)/deltat
-                        speed = np.append(speed, self.previous_center[3])
-                
-                    except ValueError as ve:
-                        speed = self.updated_center[0,:3] - self.previous_center[:3]
-                        speed = speed*10**(-3)/deltat
-                        speed = np.append(speed, self.previous_center[3])
-            else:
-                n = self.previous_center.shape[0]
-                speed = self.updated_center[:n,:3] - self.previous_center[:,:3]
-                speed = speed*10**(-3)/deltat
-                speed = np.column_stack((speed, self.previous_center[:,3]))
-            
-            return speed
+                self.pub_speed.publish(msg)
 
 
     def run(self):
