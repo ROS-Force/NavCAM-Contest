@@ -39,7 +39,10 @@ class Find_Speed():
         
         self.updatePositions(array.reshape(-1,4))
         
-        self.computeSpeed()
+        speed = self.computeSpeed()
+
+        if not speed.size == 0:
+            self.publishSpeed(speed)
         
         self.previous_center = np.copy(self.updated_center)
         self.previous_time = self.new_time
@@ -70,32 +73,57 @@ class Find_Speed():
     def computeSpeed(self):
         
         if self.previous_center.size == 0:
-            pass
+            return np.array([])
+        
         else:
             deltat = (self.new_time - self.previous_time)
+            deltat = deltat.to_sec()
 
             if self.updated_center.size == self.previous_center.size or len(self.previous_center.shape) == 1:
                 
                 try:
                     speed = self.updated_center[:,:3] - self.previous_center[:,:3]
-                    #speed = np.hstack((speed, self.previous_center[:,3]) )
-                
+                    speed = speed*10**(-3)/deltat
+                    speed = np.column_stack((speed, self.previous_center[:,3]))
+
                 except IndexError as ie:
                     try:
                         speed = self.updated_center[:3] - self.previous_center[:3]
-                        #speed = np.hstack((speed, self.previous_center[3]) )
+                        speed = speed*10**(-3)/deltat
+                        speed = np.append(speed, self.previous_center[3])
                 
                     except ValueError as ve:
                         speed = self.updated_center[0,:3] - self.previous_center[:3]
-                        #speed = np.hstack((speed, self.previous_center[3]) )
+                        speed = speed*10**(-3)/deltat
+                        speed = np.append(speed, self.previous_center[3])
             else:
                 n = self.previous_center.shape[0]
                 speed = self.updated_center[:n,:3] - self.previous_center[:,:3]
-                print(speed)
-                #speed = np.hstack((speed, self.previous_center[:,3]) )
+                speed = speed*10**(-3)/deltat
+                speed = np.column_stack((speed, self.previous_center[:,3]))
+            
+            return speed
 
 
+    def publishSpeed(self, speed):
+        vector = Vector3()
+        msg = object_speed()
+        if len(speed.shape) == 1:
+            vector.x = speed[0]
+            vector.y = speed[1]
+            vector.z = speed[2]
+            id = int(speed[3])
 
+        else:
+            for row in speed:
+                vector.x = row[0]
+                vector.y = row[1]
+                vector.z = row[2]
+                id = int(row[3])
+            
+        msg.velocity = vector
+        msg.id = id
+        self.pub.publish(msg)
 
     def run(self):
 
