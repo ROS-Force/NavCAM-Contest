@@ -12,10 +12,11 @@ from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
-#from object_detection.msg import BoundingBox
+from object_detection.msg import BoundingBox
 from object_detection.msg import BoundingBoxes
 from object_detection.msg import CenterID
-from object_detection.msg import CenterIDList
+from packagedeps.sort.msg import TrackerBoxes
+from geometry_msgs.msg import Vector3
 
 class Sort_tracking():
 
@@ -30,7 +31,9 @@ class Sort_tracking():
         self.existImage = False
         self.existnewBboxYolo = False
 
-        self.previous_center = CenterIDList()
+        self.previous_time = rospy.Time.now()
+
+        self.previous_centers = {}
 
         self.bridge = CvBridge()
         self.intrinsics = None
@@ -127,11 +130,12 @@ class Sort_tracking():
 
     def computeRealCenter(self, trackers_msg):
         
-        tmp=[]
         center = CenterID()
-        center_list = CenterIDList()
-        h = Header()
+        center_list = {}
         trackers = trackers_msg.tracker_boxes
+
+        new_time = trackers_msg.header.stamp #Tempo dos centros atuais
+
 
         for t in trackers:
 
@@ -144,29 +148,40 @@ class Sort_tracking():
             center.z = result[2]
             center.id = id
             center.Class = t.Class
-            tmp.append(center)
-        
-        h.stamp = rospy.Time.now()
-        h.frame_id = "sort"
-        center_list.header = h
-        center_list.centers = tmp
+            center_list[id] = center
 
-        return center_list
-
-    def computeSpeed(self, centers):
-
-        previous_time = self.previous_center.header.stamp #Tempo dos centros anteriores
-        new_time = centers.header.stamp #Tempo dos centros atuais
+        return center_list, new_time
 
 
-        if self.previous_center.centers == 0:
+
+
+
+    def computeSpeed(self, centers, new_time):
+
+        vel = Vector3()
+
+
+        if len(self.previous_center) == 0:
             return None
         
         else:
-            deltat = (new_time - previous_time)
+            deltat = (new_time - self.previous_time)
             deltat = deltat.to_sec()
 
-        for(previous_center, center) in zip(self.previous_center, centers):
+            for id in self.previous_centers:
+                previous_center = self.previous_centers.get(id)
+                updated_center = centers.get(id)
+
+                if not updated_center == None:
+                    continue
+
+
+                vel.x = (updated_center.x - previous_center.x)*10**(-3)/deltat
+                vel.y = (updated_center.y - previous_center.y)*10**(-3)/deltat
+                vel.z = (updated_center.z - previous_center.z)*10**(-3)/deltat
+
+
+
             
 
 
@@ -206,9 +221,9 @@ class Sort_tracking():
                 self.existnewBboxYolo = False
                 trackers = self.mo_tracker.update(self.list_bbox)
 
-                center_list = self.computeRealCenter(trackers)
+                center_list, new_time = self.computeRealCenter(trackers)
 
-                speed = self.computeSpeed(center_list)
+                speed = self.computeSpeed(center_list, new_time)
 
                 #img = self.draw_labels(objects_box, objects_id, self.list_classid, self.cv_image)
                 #image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
