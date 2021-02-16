@@ -18,8 +18,10 @@ class Find_Speed():
 
     def __init__(self):
 
-        self.previous_center = np.array([[1234, 3241, 5634, 1], [65, 6574,234, 0]])
+        self.previous_center = np.array([])
         self.updated_center = np.array([])
+        self.deslocamento = np.array([])
+        self.previous_time = rospy.Time.now()
         
         #Publisher
         self.pub = rospy.Publisher("/tracking/speed", object_speed, queue_size=10)
@@ -31,31 +33,67 @@ class Find_Speed():
 #Callbacks
     def centerCallback(self, data):
         
-        self.updated_center = self.previous_center
-
+        self.new_time = data.header.stamp
         array = data.data
         array = np.asarray(array)
         
         self.updatePositions(array.reshape(-1,4))
         
-        self.previous_center = self.updated_center
-        print(self.updated_center)
-        #self.list_positions = array.reshape(-1,4)
-
-        #print(self.list_center)
-
+        self.computeSpeed()
+        
+        self.previous_center = np.copy(self.updated_center)
+        self.previous_time = self.new_time
 
     def updatePositions(self, new_data):
         
         for id in new_data:
 
-            if id[3] in self.previous_center:
+            if self.previous_center.size == 0: #lista esta vazia
+                self.updated_center = id
 
-                itemindex = np.where(self.previous_center[:, -1]==id[3])
+            else:
+                if id[3] in self.previous_center:    # O ID ja existe
+                    
+                    try:
+                        itemindex = np.where(self.previous_center[:, -1]==id[3])
+                        self.updated_center[itemindex[0]] = id
+                    
+                    except: # Para apanhar o erro de a updated_center ser 1D
+                        self.updated_center = id
+                    
+                    
 
-                self.updated_center[itemindex[0]] = id
-            
-            
+                else:       # O ID ainda nao existe
+                    self.updated_center = np.vstack((self.updated_center, id) )
+                    
+
+    def computeSpeed(self):
+        
+        if self.previous_center.size == 0:
+            pass
+        else:
+            deltat = (self.new_time - self.previous_time)
+
+            if self.updated_center.size == self.previous_center.size or len(self.previous_center.shape) == 1:
+                
+                try:
+                    speed = self.updated_center[:,:3] - self.previous_center[:,:3]
+                    #speed = np.hstack((speed, self.previous_center[:,3]) )
+                
+                except IndexError as ie:
+                    try:
+                        speed = self.updated_center[:3] - self.previous_center[:3]
+                        #speed = np.hstack((speed, self.previous_center[3]) )
+                
+                    except ValueError as ve:
+                        speed = self.updated_center[0,:3] - self.previous_center[:3]
+                        #speed = np.hstack((speed, self.previous_center[3]) )
+            else:
+                n = self.previous_center.shape[0]
+                speed = self.updated_center[:n,:3] - self.previous_center[:,:3]
+                print(speed)
+                #speed = np.hstack((speed, self.previous_center[:,3]) )
+
 
 
 

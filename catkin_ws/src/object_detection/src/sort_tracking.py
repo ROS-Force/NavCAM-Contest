@@ -7,7 +7,7 @@ import imp
 import rospkg
 import pyrealsense2 as rs2
 
-from std_msgs.msg import String
+from std_msgs.msg import Header
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
@@ -152,6 +152,7 @@ class Sort_tracking():
 
         center = real_center()
         center_msg = []
+        h = Header()
 
         for (id, box) in zip(object_id, boxes):
 
@@ -163,9 +164,13 @@ class Sort_tracking():
             result.append(id)
             center_msg.append(result)
         
+        h.stamp = rospy.Time.now()
+        h.frame_id = "sort"
+
         array = np.array(center_msg)
         array=array.flatten()
         center.data = array.tolist()
+        center.header = h
         self.pub_center.publish(center)
 
 
