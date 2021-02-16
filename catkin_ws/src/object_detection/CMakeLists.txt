@@ -57,8 +57,6 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    BoundingBox.msg
    BoundingBoxes.msg
-   TrackerBox.msg
-   TrackerBoxes.msg
    CenterID.msg
    CenterIDList.msg
    object_speed.msg
