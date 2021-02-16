@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  sort
   message_generation
 )
 
@@ -58,6 +57,8 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    BoundingBox.msg
    BoundingBoxes.msg
+   TrackerBox.msg
+   TrackerBoxes.msg
    CenterID.msg
    CenterIDList.msg
    ObjectSpeed.msg
@@ -84,7 +85,6 @@ catkin_package(CATKIN_DEPENDS
     message_runtime 
     geometry_msgs
     std_msgs
-    sort
 )
 
 ################################################
@@ -178,6 +178,7 @@ include_directories(
    src/watershed_detection.py
    src/sort_tracking.py
    src/find_speed.py
+   include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

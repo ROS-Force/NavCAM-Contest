@@ -12,12 +12,8 @@ from object_detection import ObjectSpeed
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
-from object_detection.msg import BoundingBox
-from object_detection.msg import BoundingBoxes
-from object_detection.msg import CenterID
-from packagedeps.sort.msg import TrackerBoxes
+from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID
 from geometry_msgs.msg import Vector3
-
 class Sort_tracking():
 
     def __init__(self):
