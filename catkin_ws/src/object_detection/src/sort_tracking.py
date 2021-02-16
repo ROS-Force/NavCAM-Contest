@@ -8,7 +8,7 @@ import rospkg
 import pyrealsense2 as rs2
 
 from std_msgs.msg import Header
-from object_detection import ObjectSpeed
+from object_detection.msg import ObjectSpeed
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
@@ -84,7 +84,7 @@ class Sort_tracking():
     
     def bboxCallback(self,data):
 
-        self.list_bbox = data.bounding_boxes
+        self.list_bbox = data
         self.existnewBboxYolo = True
 
     def imageDepthInfoCallback(self, cameraInfo):
