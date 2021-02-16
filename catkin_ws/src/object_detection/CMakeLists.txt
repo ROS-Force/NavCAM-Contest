@@ -178,6 +178,7 @@ include_directories(
    src/watershed_detection.py
    src/sort_tracking.py
    src/find_speed.py
+   include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

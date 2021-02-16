@@ -14,8 +14,6 @@ from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID
 from geometry_msgs.msg import Vector3
-from sort import Sort
-
 class Sort_tracking():
 
     def __init__(self):
