@@ -59,7 +59,7 @@ class Sort_tracking():
 
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
         self.sub_depth = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
-
+        
 
 #Callbacks
     def imageCallback(self, data):
@@ -157,8 +157,6 @@ class Sort_tracking():
         for (id, box) in zip(object_id, boxes):
 
             pix = [box[0] + (box[2]-box[0])//2, box[1] + (box[3]-box[1])//2] # coordenadas do pixel central
-            
-
             depth = self.cv_image_depth[pix[1], pix[0]]
             result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth)
             result.append(id)

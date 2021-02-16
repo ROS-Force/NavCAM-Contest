@@ -45,6 +45,7 @@ class Find_Speed():
             self.publishSpeed(speed)
         
         self.previous_center = np.copy(self.updated_center)
+
         self.previous_time = self.new_time
 
     def updatePositions(self, new_data):
@@ -63,12 +64,10 @@ class Find_Speed():
                     
                     except: # Para apanhar o erro de a updated_center ser 1D
                         self.updated_center = id
-                    
-                    
 
                 else:       # O ID ainda nao existe
                     self.updated_center = np.vstack((self.updated_center, id) )
-                    
+
 
     def computeSpeed(self):
         
@@ -113,6 +112,9 @@ class Find_Speed():
             vector.y = speed[1]
             vector.z = speed[2]
             id = int(speed[3])
+            msg.velocity = vector
+            msg.id = id
+            self.pub.publish(msg)
 
         else:
             for row in speed:
@@ -121,9 +123,9 @@ class Find_Speed():
                 vector.z = row[2]
                 id = int(row[3])
             
-        msg.velocity = vector
-        msg.id = id
-        self.pub.publish(msg)
+                msg.velocity = vector
+                msg.id = id
+                self.pub.publish(msg)
 
     def run(self):
 
