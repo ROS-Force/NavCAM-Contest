@@ -1,4 +1,4 @@
-float64 probability
+float64 score
 int64 xmin
 int64 ymin
 int64 xmax
