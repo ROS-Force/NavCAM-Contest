@@ -61,7 +61,7 @@ find_package(catkin REQUIRED COMPONENTS
    TrackerBoxes.msg
    CenterID.msg
    CenterIDList.msg
-   object_speed.msg
+   ObjectSpeed.msg
  )
 
 ## Generate services in the 'srv' folder
