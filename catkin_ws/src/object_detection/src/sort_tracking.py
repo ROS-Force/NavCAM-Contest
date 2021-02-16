@@ -12,9 +12,10 @@ from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
-from object_detection.msg import bbox_msgs
-from object_detection.msg import real_center
-
+#from object_detection.msg import BoundingBox
+from object_detection.msg import BoundingBoxes
+from object_detection.msg import CenterID
+from object_detection.msg import CenterIDList
 
 class Sort_tracking():
 
@@ -24,14 +25,12 @@ class Sort_tracking():
         MIN_HITS = 3 #Minimum number of associated detections before track is initialised
         MAX_AGE = 20 #Maximum number of frames to keep alive a track without associated detections.
 
-        self.list_bbox = np.array([])
-        self.list_classid = np.array([])
-        self.list_bbox_watershed = np.array([])
-        self.list_classid_watershed = np.array([])
+        self.list_bbox = BoundingBoxes()
 
         self.existImage = False
         self.existnewBboxYolo = False
-        self.existnewBboxWatershed = False
+
+        self.previous_center = CenterIDList()
 
         self.bridge = CvBridge()
         self.intrinsics = None
@@ -48,13 +47,9 @@ class Sort_tracking():
 
         #Publisher
         self.pub = rospy.Publisher("/tracking/yolo/objects_image", Image, queue_size=10)
-        self.pub_water = rospy.Publisher("/tracking/watershed/objects_image", Image, queue_size=10)
-        self.pub_bbox = rospy.Publisher("/tracking/yolo/bbox", bbox_msgs, queue_size=10)
-        self.pub_center = rospy.Publisher("/tracking/yolo/center", real_center, queue_size=10)
 
         #Subscribers
-        self.sub_bbox_yolo = rospy.Subscriber("/detection/yolo/bbox", bbox_msgs,self.bboxCallback, queue_size=10)
-        self.sub_bbox_watershed = rospy.Subscriber("/detection/watershed/bbox", bbox_msgs,self.bboxWatershedCallback, queue_size=10)
+        self.sub_bbox_yolo = rospy.Subscriber("/detection/yolo/bboxes", BoundingBoxes,self.bboxCallback, queue_size=10)
         self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
 
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
@@ -88,25 +83,9 @@ class Sort_tracking():
             return
     
     def bboxCallback(self,data):
-        
-        flatten_bbox = data.bbox_list
-        flatten_bbox = np.asarray(flatten_bbox) 
-        
-        self.list_classid = data.classid
 
-        self.list_bbox = flatten_bbox.reshape(-1,5)
+        self.list_bbox = data.bounding_boxes
         self.existnewBboxYolo = True
-
-    def bboxWatershedCallback(self,data):
-        
-        flatten_bbox = data.bbox_list
-        flatten_bbox = np.asarray(flatten_bbox) 
-        
-        self.list_classid_watershed = data.classid
-
-        self.list_bbox_watershed = flatten_bbox.reshape(-1,5)
-
-        self.existnewBboxWatershed = True
 
     def imageDepthInfoCallback(self, cameraInfo):
         try:
@@ -132,13 +111,11 @@ class Sort_tracking():
 
     def draw_labels(self, boxes, object_id, classes, img): 
         font = cv2.FONT_HERSHEY_PLAIN
-        pub_box= []
+
         # iteracao em paralelo
         for (classid, id1, box) in zip(classes, object_id, boxes):
             label = "ID : %i" % (int(id1))
             color = self.colors[int(classid) % len(self.colors)]
-
-            pub_box.append(box)
 
             box[2] = box[2]-box[0]
             box[3] = box[3]-box[1]
@@ -148,28 +125,76 @@ class Sort_tracking():
         return img
 
 
-    def publishCenter(self, boxes, object_id):
-
-        center = real_center()
-        center_msg = []
+    def computeRealCenter(self, trackers_msg):
+        
+        tmp=[]
+        center = CenterID()
+        center_list = CenterIDList()
         h = Header()
+        trackers = trackers_msg.tracker_boxes
 
-        for (id, box) in zip(object_id, boxes):
+        for t in trackers:
 
-            pix = [box[0] + (box[2]-box[0])//2, box[1] + (box[3]-box[1])//2] # coordenadas do pixel central
+            pix = [t.xmin + (t.xmax-t.xmin)//2, t.ymin + (t.ymax-t.ymin)//2] # coordenadas do pixel central
             depth = self.cv_image_depth[pix[1], pix[0]]
             result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth)
-            result.append(id)
-            center_msg.append(result)
+            
+            center.x = result[0]
+            center.y = result[1]
+            center.z = result[2]
+            center.id = id
+            center.Class = t.Class
+            tmp.append(center)
         
         h.stamp = rospy.Time.now()
         h.frame_id = "sort"
+        center_list.header = h
+        center_list.centers = tmp
 
-        array = np.array(center_msg)
-        array=array.flatten()
-        center.data = array.tolist()
-        center.header = h
-        self.pub_center.publish(center)
+        return center_list
+
+    def computeSpeed(self, centers):
+
+        previous_time = self.previous_center.header.stamp #Tempo dos centros anteriores
+        new_time = centers.header.stamp #Tempo dos centros atuais
+
+
+        if self.previous_center.centers == 0:
+            return None
+        
+        else:
+            deltat = (new_time - previous_time)
+            deltat = deltat.to_sec()
+
+        for(previous_center, center) in zip(self.previous_center, centers):
+            
+
+
+
+            if self.updated_center.size == self.previous_center.size or len(self.previous_center.shape) == 1:
+                
+                try:
+                    speed = self.updated_center[:,:3] - self.previous_center[:,:3]
+                    speed = speed*10**(-3)/deltat
+                    speed = np.column_stack((speed, self.previous_center[:,3]))
+
+                except IndexError as ie:
+                    try:
+                        speed = self.updated_center[:3] - self.previous_center[:3]
+                        speed = speed*10**(-3)/deltat
+                        speed = np.append(speed, self.previous_center[3])
+                
+                    except ValueError as ve:
+                        speed = self.updated_center[0,:3] - self.previous_center[:3]
+                        speed = speed*10**(-3)/deltat
+                        speed = np.append(speed, self.previous_center[3])
+            else:
+                n = self.previous_center.shape[0]
+                speed = self.updated_center[:n,:3] - self.previous_center[:,:3]
+                speed = speed*10**(-3)/deltat
+                speed = np.column_stack((speed, self.previous_center[:,3]))
+            
+            return speed
 
 
     def run(self):
@@ -181,27 +206,14 @@ class Sort_tracking():
                 self.existnewBboxYolo = False
                 trackers = self.mo_tracker.update(self.list_bbox)
 
-                objects_id = trackers[:,-1]
-                objects_box = np.array(trackers[:,0:4], dtype=np.int64)
+                center_list = self.computeRealCenter(trackers)
 
-                self.publishCenter(objects_box, objects_id)
+                speed = self.computeSpeed(center_list)
 
-                img = self.draw_labels(objects_box, objects_id, self.list_classid, self.cv_image)
-                image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
+                #img = self.draw_labels(objects_box, objects_id, self.list_classid, self.cv_image)
+                #image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
 
-                self.pub.publish(image_message)
-
-            if self.existImage and self.existnewBboxWatershed:
-                
-                self.existnewBboxWatershed = False
-                trackers_watershed = self.mo_tracker_watershed.update(self.list_bbox_watershed)
-
-                objects_id_w = trackers_watershed[:,-1]
-                objects_box_w = np.array(trackers_watershed[:,0:4], dtype=np.int64)
-
-                img_w = self.draw_labels(objects_box_w, objects_id_w, self.list_classid_watershed, self.cv_image)
-                image_message1 = self.bridge.cv2_to_imgmsg(img_w, encoding = self.data_encoding)
-                self.pub_water.publish(image_message1)
+                #self.pub.publish(image_message)
 
 
 def main():

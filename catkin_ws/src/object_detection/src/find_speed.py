@@ -20,7 +20,7 @@ class Find_Speed():
 
         self.previous_center = np.array([])
         self.updated_center = np.array([])
-        self.deslocamento = np.array([])
+
         self.previous_time = rospy.Time.now()
         
         #Publisher
