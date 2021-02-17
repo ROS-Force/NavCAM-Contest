@@ -25,6 +25,7 @@ class Sort_tracking():
         self.list_bbox = BoundingBoxes()
 
         self.previous_time = rospy.Time.now()
+        self.old_time = rospy.Time.now()
 
         self.previous_centers = {}
 
