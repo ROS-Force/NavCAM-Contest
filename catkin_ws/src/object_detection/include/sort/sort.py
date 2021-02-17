@@ -240,7 +240,7 @@ class Sort(object):
 
     dets = np.zeros((len(bblist.bounding_boxes), 5))
     for (t, det) in enumerate(dets):       
-      det[:] = [bblist.bounding_boxes[t].xmin, bblist.bounding_boxes[t].ymin, bblist.bounding_boxes[t].xmax, bblist.bounding_boxes[t].ymax, bblist.bounding_boxes[t].score]
+      det[:] = [int(bblist.bounding_boxes[t].xmin), int(bblist.bounding_boxes[t].ymin), int(bblist.bounding_boxes[t].xmax), int(bblist.bounding_boxes[t].ymax), float(bblist.bounding_boxes[t].score)]
 
     # get predicted locations from existing trackers.
     trks = np.zeros((len(self.trackers), 5))
@@ -258,7 +258,10 @@ class Sort(object):
     for t in reversed(to_del):
       self.trackers.pop(t)
     matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
-
+    print("Matched: ", matched)
+    print("Unmatched dets: ", unmatched_dets)
+    print("Unmatched trks: ", unmatched_trks)
+    print("---")
     # update matched trackers with assigned detections
     for m in matched:
       self.trackers[m[1]].update(dets[m[0], :])

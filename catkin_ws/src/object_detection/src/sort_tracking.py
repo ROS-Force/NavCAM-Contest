@@ -183,7 +183,6 @@ class Sort_tracking():
             deltat = (new_time - self.previous_time)
             self.previous_time = new_time
             deltat = deltat.to_sec()
-            print(deltat)
 
 
             for id in self.previous_centers:
