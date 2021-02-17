@@ -24,15 +24,16 @@ class Sort_tracking():
 
         self.list_bbox = BoundingBoxes()
 
-        self.existImage = False
-        self.existnewBboxYolo = False
-
         self.previous_time = rospy.Time.now()
 
         self.previous_centers = {}
 
-        self.bridge = CvBridge()
+        self.cv_image_depth = None
+        self.cv_image = None
         self.intrinsics = None
+
+        self.bridge = CvBridge()
+        
         abs_path = rospkg.RosPack().get_path("object_detection")
 
         si = imp.load_source('sort', abs_path + "/include/sort/" + 'sort.py')
@@ -85,7 +86,18 @@ class Sort_tracking():
     def bboxCallback(self,data):
 
         self.list_bbox = data
-        self.existnewBboxYolo = True
+
+        if self.cv_image is not None and self.cv_image_depth is not None:
+
+                trackers = self.mo_tracker.update(self.list_bbox)
+
+                center_list, new_time = self.computeRealCenter(trackers)
+                
+                speed = self.computeSpeed(center_list, new_time)
+
+                img = self.draw_labels(trackers)
+                image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
+                self.pub.publish(image_message)
 
     def imageDepthInfoCallback(self, cameraInfo):
         try:
@@ -109,19 +121,18 @@ class Sort_tracking():
 
 
 
-    def draw_labels(self, boxes, object_id, classes, img): 
+    def draw_labels(self, tracker_boxes): 
         font = cv2.FONT_HERSHEY_PLAIN
+        img = self.cv_image
 
         # iteracao em paralelo
-        for (classid, id1, box) in zip(classes, object_id, boxes):
-            label = "ID : %i" % (int(id1))
-            color = self.colors[int(classid) % len(self.colors)]
+        for t in tracker_boxes.tracker_boxes:
+            label = "%s #%i" % (t.Class, t.id)
+            color = self.colors[int(t.id) % len(self.colors)]
 
-            box[2] = box[2]-box[0]
-            box[3] = box[3]-box[1]
 
-            cv2.rectangle(img, box, color, 2)
-            cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+            cv2.rectangle(img, (int(t.xmin), int(t.ymin), int(t.xmax) - int(t.xmin), int(t.ymax) - int(t.ymin)), color, 2)
+            cv2.putText(img, label, (int(t.xmin), int(t.ymin - 10)), font, 1, color, 1)
         return img
 
 
@@ -136,16 +147,16 @@ class Sort_tracking():
 
         for t in trackers:
 
-            pix = [t.xmin + (t.xmax-t.xmin)//2, t.ymin + (t.ymax-t.ymin)//2] # coordenadas do pixel central
+            pix = [int(t.xmin + (t.xmax-t.xmin)//2), int(t.ymin + (t.ymax-t.ymin)//2)] # coordenadas do pixel central
             depth = self.cv_image_depth[pix[1], pix[0]]
             result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth)
             
             center.x = result[0]
             center.y = result[1]
             center.z = result[2]
-            center.id = id
+            center.id = t.id
             center.Class = t.Class
-            center_list[id] = center
+            center_list[t.id] = center
             
         return center_list, new_time
 
@@ -159,55 +170,47 @@ class Sort_tracking():
 
         msg = ObjectSpeed()
         
-        if len(self.previous_center) == 0:
+        
+        if len(self.previous_centers) == 0:
+            self.previous_centers = centers
+            self.previous_time = new_time
             return None
         
         else:
+
+            #new_time = rospy.Time.now()
             deltat = (new_time - self.previous_time)
+            self.previous_time = new_time
             deltat = deltat.to_sec()
+            print(deltat)
+
 
             for id in self.previous_centers:
+                
                 previous_center = self.previous_centers.get(id)
                 updated_center = centers.get(id)
 
-                if not updated_center == None:
-                    continue
+                if updated_center is not None and previous_center is not None:
+                    
+                    speed.x = (updated_center.x - previous_center.x)*10**(-3)/deltat
+                    speed.y = (updated_center.y - previous_center.y)*10**(-3)/deltat
+                    speed.z = (updated_center.z - previous_center.z)*10**(-3)/deltat
 
-                speed.x = (updated_center.x - previous_center.x)*10**(-3)/deltat
-                speed.y = (updated_center.y - previous_center.y)*10**(-3)/deltat
-                speed.z = (updated_center.z - previous_center.z)*10**(-3)/deltat
+                    msg.velocity = speed
+                    msg.id = previous_center.id
+                    msg.Class = previous_center.Class
+                    
+                    self.pub_speed.publish(msg)
 
-                msg.velocity = speed
-                msg.id = previous_center.id
-                msg.Class = previous_center.Class
+            self.previous_centers = centers
+        
 
-                self.pub_speed.publish(msg)
-
-
-    def run(self):
-
-        while not rospy.is_shutdown():
-
-            if self.existImage and self.existnewBboxYolo:
-                
-                self.existnewBboxYolo = False
-                trackers = self.mo_tracker.update(self.list_bbox)
-
-                center_list, new_time = self.computeRealCenter(trackers)
-
-                speed = self.computeSpeed(center_list, new_time)
-
-                #img = self.draw_labels(objects_box, objects_id, self.list_classid, self.cv_image)
-                #image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
-
-                #self.pub.publish(image_message)
 
 
 def main():
 
     rospy.init_node('sort_tracking')
     st = Sort_tracking()
-    st.run()
     rospy.spin()
 
 if __name__ == "__main__":
