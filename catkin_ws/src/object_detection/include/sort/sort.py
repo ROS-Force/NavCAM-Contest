@@ -255,12 +255,11 @@ class Sort(object):
       if np.any(np.isnan(pos)):
         to_del.append(t)
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
+
     for t in reversed(to_del):
       self.trackers.pop(t)
+    print("Trackers: ",trks)
     matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
-    print("Matched: ", matched)
-    print("Unmatched dets: ", unmatched_dets)
-    print("Unmatched trks: ", unmatched_trks)
     print("---")
     # update matched trackers with assigned detections
     for m in matched:
