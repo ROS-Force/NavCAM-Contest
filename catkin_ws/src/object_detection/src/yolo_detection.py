@@ -118,7 +118,7 @@ class Yolo_Detection():
         h = Header()
 
         h.stamp = rospy.Time.now()
-        h.frame_id = "Yolo Frame"
+        #h.frame_id = "Yolo Frame"
 
         bboxes.header = h
 

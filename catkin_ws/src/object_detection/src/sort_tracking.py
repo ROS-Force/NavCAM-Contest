@@ -8,11 +8,11 @@ import rospkg
 import pyrealsense2 as rs2
 
 from std_msgs.msg import Header
-from object_detection.msg import ObjectSpeed
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID
+from object_detection.msg import ObjectSpeed
 from geometry_msgs.msg import Vector3
 class Sort_tracking():
 
