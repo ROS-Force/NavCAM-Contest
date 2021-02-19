@@ -1,56 +1,71 @@
 #!/usr/bin/env python
 
 import rospy
-import math
-import sys
 import numpy as np
 import cv2
+import sys
 
 import ctypes
+from rospy.topics import Subscriber
 
 from std_msgs.msg import Header
-from std_msgs.msg import String
-from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
-from object_detection.msg import BoundingBox
-from object_detection.msg import BoundingBoxes
+from object_detection.msg import BoundingBox, BoundingBoxes
 import rospkg
 
 class Yolo_Detection():
-    CONFIDENCE_THRESHOLD = 0.3
-    NMS_THRESHOLD = 0.4
 
     def __init__(self):
 
+        #Initialize variables
         self.bridge = CvBridge()
+
+        self.YOLO_MODEL = rospy.get_param("~yolo_model", "yolov4")
+        self.YOLO_LIGHT_MODEL = rospy.get_param("~yolo_light_model", "yolov3-tiny")
+        self.output_image = rospy.get_param("~output_image", True)
+
+        self.CONFIDENCE_THRESHOLD = rospy.get_param("~conf_threshold", 0.3)
+        self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4)
+
         cuda = True
 
+        #Check if this computer have CUDA libraries, loads a light model in case of missing CUDA library. 
+        # This light model decreases accuracy but improves frame rate
+        
         libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
         for libname in libnames:
             try:
                 cuda = ctypes.CDLL(libname)
-                print(cuda)
             except OSError:
                 continue
             else:
                 break
         else:
             cuda = False
-            print("CUDA no found, loading light YOLO model...")
+            print("CUDA not found, loading light YOLO model...")
+            
 
-        abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
+        abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/" # Gets the path to folder where the models are
         
-        if cuda:
-            self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
-        else:
-            self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov3-tiny.cfg", abs_path + "yolov3-tiny.weights")
+        try:
+            if cuda:
+                self.net = cv2.dnn.readNetFromDarknet(abs_path + self.YOLO_MODEL +".cfg", abs_path + self.YOLO_MODEL + ".weights")
+            else:
+                self.net = cv2.dnn.readNetFromDarknet(abs_path + self.YOLO_LIGHT_MODEL + ".cfg", abs_path + self.YOLO_LIGHT_MODEL + ".weights")
+        except:
+            print("Failed to find the models: %s and %s. Please ensure that the .cnf and .weights files are inside object_detection/cnf folder and/or you're calling the right model name" % (self.YOLO_MODEL, self.YOLO_LIGHT_MODEL))
+            sys.exit()
+            
+
 
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
         self.model = cv2.dnn_DetectionModel(self.net)
         self.model.setInputParams(scale=0.00392, size=(320,320), mean=(0, 0, 0), swapRB=True, crop=False)
         self.classes = []
+
+        #read the coco file (where the class names are stored)
         with open(abs_path + "coco.names", "r") as f:
             self.classes = [line.strip() for line in f.readlines()]
 
@@ -58,19 +73,24 @@ class Yolo_Detection():
         self.output_layers = [layers_names[i[0]-1] for i in self.net.getUnconnectedOutLayers()]
         self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
+        #Subscriber
+        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
 
         #Publisher
         self.pub = rospy.Publisher("/detection/yolo/objects_image", Image, queue_size=1)
         self.pub_bbox = rospy.Publisher("/detection/yolo/bboxes", BoundingBoxes, queue_size=10)
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
-    def imageCallback(self, data):
+    def imageCallback(self, data): #Function that runs when an image arrives
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-            classes, scores, boxes = self.model.detect(cv_image, self.CONFIDENCE_THRESHOLD, self.NMS_THRESHOLD)
-            cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image)
-            image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=data.encoding)
-            self.pub.publish(image_message)
+            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+            classes, scores, boxes = self.model.detect(cv_image, self.CONFIDENCE_THRESHOLD, self.NMS_THRESHOLD) #Runs the YOLO model
+            cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image) #function that publish/draws the bounding boxes
+
+            if self.output_image:
+                image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=data.encoding) #Convert back the image to ROS format
+                self.pub.publish(image_message) #publish the image (with drawn bounding boxes)
+        
         except CvBridgeError as e:
             print(e)
             return
@@ -82,21 +102,20 @@ class Yolo_Detection():
     def draw_labels(self, boxes, classes, scores, img): 
         font = cv2.FONT_HERSHEY_PLAIN
         bbox = BoundingBox()
-        
         list_tmp = []
 
-        # iteracao em paralelo
         for (classid, score, box) in zip(classes, scores, boxes):
             label = "%s : %f" % (self.classes[classid[0]], score)
             color = self.colors[int(classid) % len(self.colors)]
-            cv2.rectangle(img, box, color, 2)
-            cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1)
+            cv2.rectangle(img, box, color, 2) #draws a rectangle in the original image
+            cv2.putText(img, label, (box[0], box[1] - 10), font, 1, color, 1) #writes the Class and score in the original image
             
                 
-            # juntar o score a bbox
+            #Change the formar of Bounding Boxes from [xmin, ymin, weight, heigh] to [xmin, ymin, xmax, ymax]
             box[2] = box[0] + box[2]
             box[3] = box[1] + box[3]
 
+            #Create the Bounding Box object
             bbox = BoundingBox()
             bbox.xmin = box[0]
             bbox.ymin = box[1]
@@ -106,9 +125,9 @@ class Yolo_Detection():
             bbox.id = int(classid)
             bbox.Class = self.classes[classid[0]]
 
-            list_tmp.append(bbox)
+            list_tmp.append(bbox) #append the bounding box to a list with all previous Bounding Box
 
-        self.publishBbox(list_tmp)
+        self.publishBbox(list_tmp) #function to publish the list of Bounding Boxes
         
         return img
 
@@ -117,14 +136,15 @@ class Yolo_Detection():
         bboxes = BoundingBoxes()
         h = Header()
 
+        #Create a Time stamp
         h.stamp = rospy.Time.now()
-        #h.frame_id = "Yolo Frame"
+        h.frame_id = "Yolo Frame"
 
         bboxes.header = h
 
         bboxes.bounding_boxes = list_bbox
         
-        self.pub_bbox.publish(bboxes)
+        self.pub_bbox.publish(bboxes) # Publish the list of Bounding Boxes
 
 
 def main():
