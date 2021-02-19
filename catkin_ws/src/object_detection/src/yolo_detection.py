@@ -6,7 +6,6 @@ import cv2
 import sys
 
 import ctypes
-from rospy.topics import Subscriber
 
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
@@ -90,8 +89,14 @@ class Yolo_Detection():
     def imageCallback(self, data): #Function that runs when an image arrives
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+
+            h = Header()
+            #Create a Time stamp
+            h.stamp = rospy.Time.now()
+            h.frame_id = "Yolo Frame"
+
             classes, scores, boxes = self.model.detect(cv_image, self.CONFIDENCE_THRESHOLD, self.NMS_THRESHOLD) #Runs the YOLO model
-            cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image) #function that publish/draws the bounding boxes
+            cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image, h) #function that publish/draws the bounding boxes
 
             if self.output_image:
                 image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=data.encoding) #Convert back the image to ROS format
@@ -105,7 +110,7 @@ class Yolo_Detection():
             return
 
 
-    def draw_labels(self, boxes, classes, scores, img): 
+    def draw_labels(self, boxes, classes, scores, img, header): 
         font = cv2.FONT_HERSHEY_PLAIN
         bbox = BoundingBox()
         list_tmp = []
@@ -132,25 +137,14 @@ class Yolo_Detection():
             bbox.Class = self.classes[classid[0]]
 
             list_tmp.append(bbox) #append the bounding box to a list with all previous Bounding Box
-
-        self.publishBbox(list_tmp) #function to publish the list of Bounding Boxes
-        
-        return img
-
-    def publishBbox(self, list_bbox):
         
         bboxes = BoundingBoxes()
-        h = Header()
+        bboxes.header = header
+        bboxes.bounding_boxes = list_tmp
 
-        #Create a Time stamp
-        h.stamp = rospy.Time.now()
-        h.frame_id = "Yolo Frame"
-
-        bboxes.header = h
-
-        bboxes.bounding_boxes = list_bbox
-        
         self.pub_bbox.publish(bboxes) # Publish the list of Bounding Boxes
+        return img
+
 
 
 def main():
