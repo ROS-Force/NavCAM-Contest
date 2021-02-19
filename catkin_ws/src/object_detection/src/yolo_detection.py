@@ -25,8 +25,14 @@ class Yolo_Detection():
         self.YOLO_LIGHT_MODEL = rospy.get_param("~yolo_light_model", "yolov3-tiny")
         self.output_image = rospy.get_param("~output_image", True)
 
-        self.CONFIDENCE_THRESHOLD = rospy.get_param("~conf_threshold", 0.3)
-        self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4)
+        #Model Variables
+        self.size = rospy.get_param("~model_size", (320, 320)) #New input size.
+        self.mean = rospy.get_param("~model_mean", (0, 0, 0)) #Scalar with mean values which are subtracted from channels.
+        self.scale = rospy.get_param("~model_scale", 0.00392) #Multiplier for frame values. 
+        self.swapRB = rospy.get_param("~model_swapRGB", True) #Flag which indicates that swap first and last channels.
+        self.crop = rospy.get_param("~model_crop", False) #Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
+        self.CONFIDENCE_THRESHOLD = rospy.get_param("~conf_threshold", 0.3) #A threshold used to filter boxes by confidences.
+        self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4) #A threshold used in non maximum suppression. 
 
         cuda = True
 
@@ -62,7 +68,7 @@ class Yolo_Detection():
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
         self.model = cv2.dnn_DetectionModel(self.net)
-        self.model.setInputParams(scale=0.00392, size=(320,320), mean=(0, 0, 0), swapRB=True, crop=False)
+        self.model.setInputParams(scale=self.scale, size=self.size, mean=self.mean, swapRB=self.swapRB, crop=self.crop)
         self.classes = []
 
         #read the coco file (where the class names are stored)
