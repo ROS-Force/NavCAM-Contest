@@ -94,10 +94,10 @@ class Yolo_Detection():
             
                 
             # juntar o score a bbox
-            box = box.tolist()
             box[2] = box[0] + box[2]
             box[3] = box[1] + box[3]
 
+            bbox = BoundingBox()
             bbox.xmin = box[0]
             bbox.ymin = box[1]
             bbox.xmax = box[2]

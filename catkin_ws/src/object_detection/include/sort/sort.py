@@ -115,7 +115,7 @@ class KalmanBoxTracker(object):
   This class represents the internal state of individual tracked objects observed as bbox.
   """
   count = 0
-  def __init__(self,bbox):
+  def __init__(self,bbox, classname):
     """
     Initialises a tracker using initial bounding box.
     """
@@ -138,6 +138,7 @@ class KalmanBoxTracker(object):
     self.hits = 0
     self.hit_streak = 0
     self.age = 0
+    self.className = classname
 
   def update(self,bbox):
     """
@@ -257,16 +258,16 @@ class Sort(object):
 
     for t in reversed(to_del):
       self.trackers.pop(t)
-    print("Trackers: ",trks)
+
     matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
-    print("---")
+
     # update matched trackers with assigned detections
     for m in matched:
       self.trackers[m[1]].update(dets[m[0], :])
 
     # create and initialise new trackers for unmatched detections
     for i in unmatched_dets:
-        trk = KalmanBoxTracker(dets[i,:])
+        trk = KalmanBoxTracker(dets[i,:], bblist.bounding_boxes[i].Class)
         self.trackers.append(trk)
     i = len(self.trackers)
     for trk in reversed(self.trackers):
@@ -277,7 +278,7 @@ class Sort(object):
           tb.ymin = d[1]
           tb.xmax = d[2]
           tb.ymax = d[3]
-          tb.Class = "trk.className"
+          tb.Class = trk.className
           tb.id = trk.id + 1
           tblist.append(tb)
         i -= 1
