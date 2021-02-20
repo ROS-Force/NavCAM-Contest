@@ -159,9 +159,6 @@ class Sort_tracking():
         return center_list, new_time
 
 
-
-
-
     def computeSpeed(self, centers, new_time):
 
         speed = Vector3()
