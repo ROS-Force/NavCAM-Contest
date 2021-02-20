@@ -1,0 +1,10 @@
+<launch>
+
+    <node pkg="object_detection" type="yolo_detection.py" name="Yolo" output="screen" />
+
+    <node pkg="object_detection" type="sort_tracking.py" name="SORT" output="screen" />
+
+    <node pkg="object_detection" type="find_speed.py" name="find_speed" output="screen" />
+
+
+</launch>

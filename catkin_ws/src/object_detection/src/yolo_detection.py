@@ -6,11 +6,15 @@ import sys
 import numpy as np
 import cv2
 
+import ctypes
+
+from std_msgs.msg import Header
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
-from object_detection.msg import bbox_msgs
+from object_detection.msg import BoundingBox
+from object_detection.msg import BoundingBoxes
 import rospkg
 
 class Yolo_Detection():
@@ -20,12 +24,28 @@ class Yolo_Detection():
     def __init__(self):
 
         self.bridge = CvBridge()
-        self.list_bbox = []
-        self.list_id = []
+        cuda = True
+
+        libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
+        for libname in libnames:
+            try:
+                cuda = ctypes.CDLL(libname)
+                print(cuda)
+            except OSError:
+                continue
+            else:
+                break
+        else:
+            cuda = False
+            print("CUDA no found, loading light YOLO model...")
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/"
         
-        self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
+        if cuda:
+            self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov4.cfg", abs_path + "yolov4.weights")
+        else:
+            self.net = cv2.dnn.readNetFromDarknet(abs_path + "yolov3-tiny.cfg", abs_path + "yolov3-tiny.weights")
+
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA) 
         self.model = cv2.dnn_DetectionModel(self.net)
@@ -41,7 +61,7 @@ class Yolo_Detection():
 
         #Publisher
         self.pub = rospy.Publisher("/detection/yolo/objects_image", Image, queue_size=1)
-        self.pub_bbox = rospy.Publisher("/detection/yolo/bbox", bbox_msgs, queue_size=10)
+        self.pub_bbox = rospy.Publisher("/detection/yolo/bboxes", BoundingBoxes, queue_size=10)
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
     def imageCallback(self, data):
@@ -61,9 +81,10 @@ class Yolo_Detection():
 
     def draw_labels(self, boxes, classes, scores, img): 
         font = cv2.FONT_HERSHEY_PLAIN
+        bbox = BoundingBox()
         
-        list_bbox = []
-        list_id = []
+        list_tmp = []
+
         # iteracao em paralelo
         for (classid, score, box) in zip(classes, scores, boxes):
             label = "%s : %f" % (self.classes[classid[0]], score)
@@ -73,24 +94,37 @@ class Yolo_Detection():
             
                 
             # juntar o score a bbox
-            list_id.append(int(classid))
-            bbox = box.tolist()
-            bbox[2] = box[0] + box[2]
-            bbox[3] = box[1] + box[3]
-            bbox.append(float(score))
-            list_bbox.append(bbox)
+            box[2] = box[0] + box[2]
+            box[3] = box[1] + box[3]
 
-        self.publishBbox(list_bbox, list_id)
+            bbox = BoundingBox()
+            bbox.xmin = box[0]
+            bbox.ymin = box[1]
+            bbox.xmax = box[2]
+            bbox.ymax = box[3]
+            bbox.score = float(score)
+            bbox.id = int(classid)
+            bbox.Class = self.classes[classid[0]]
+
+            list_tmp.append(bbox)
+
+        self.publishBbox(list_tmp)
         
         return img
 
-    def publishBbox(self, list_bbox, list_classid):
+    def publishBbox(self, list_bbox):
         
-        bboxs = bbox_msgs()
-        bboxs.bbox_list = sum(list_bbox, [])
-        bboxs.classid = list_classid
+        bboxes = BoundingBoxes()
+        h = Header()
 
-        self.pub_bbox.publish(bboxs)
+        h.stamp = rospy.Time.now()
+        #h.frame_id = "Yolo Frame"
+
+        bboxes.header = h
+
+        bboxes.bounding_boxes = list_bbox
+        
+        self.pub_bbox.publish(bboxes)
 
 
 def main():
