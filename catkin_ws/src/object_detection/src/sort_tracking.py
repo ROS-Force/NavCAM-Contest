@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
+from numpy.core.fromnumeric import mean
 import rospy
 import numpy as np
 import cv2
 import imp
+from colorutils import Color
 import rospkg
 import pyrealsense2 as rs2
 
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID, ObjectSpeed
+from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID, Object
 from geometry_msgs.msg import Vector3
 
 class Sort_tracking():
@@ -28,6 +30,7 @@ class Sort_tracking():
         self.list_bbox = BoundingBoxes()
         self.previous_time = rospy.Time.now()
         self.previous_centers = {}
+        self.color_labels = []
 
         self.cv_image_depth = None
         self.cv_image = None
@@ -46,7 +49,7 @@ class Sort_tracking():
 
         #Publishers
         self.pub = rospy.Publisher("/tracking/" + self.method + "/objects_image", Image, queue_size=10)
-        self.pub_speed = rospy.Publisher("/tracking/" + self.method + "/speed", ObjectSpeed, queue_size=10)
+        self.pub_speed = rospy.Publisher("/tracking/" + self.method + "/speed", Object, queue_size=10)
 
         #Subscribers
         self.sub_bbox_yolo = rospy.Subscriber("/detection/"+self.method+"/bboxes", BoundingBoxes,self.bboxCallback, queue_size=10)
@@ -106,18 +109,91 @@ class Sort_tracking():
     def bboxCallback(self,data): #Function that runs when a Bounding Box list arrives (main code is here)
 
         self.list_bbox = data
+        center_list = {}
 
         if self.cv_image is not None and self.cv_image_depth is not None: # if RGB and Depth images are available runs the code
 
                 trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
 
-                center_list, new_time = self.computeRealCenter(trackers) #compute the Real pixels values
+                for t in trackers.tracker_boxes:
+
+                    center_pose = self.computeRealCenter(t) #compute the Real pixels values
                 
-                self.computeSpeed(center_list, new_time) #compute the velocity vector of the diferent objects
+                    speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
+
+                    center_list[t.id] = center_pose #add this center to the dictionary of centers
+                    self.computeFeatures(t)
+
+                self.previous_centers = center_list #set the current center dictionary as previous dictionary
+                self.previous_time = trackers.header.stamp
+                
 
                 img = self.draw_labels(trackers) #draws the labels in the original image
                 image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
                 self.pub.publish(image_message) #publish the labelled image
+
+
+
+
+    def computeRealCenter(self, tracker):
+        
+        center = Vector3()
+
+        pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of central pixel
+        depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
+        result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+            
+        #Create a vectot with the coordinates
+        center.x = result[0]
+        center.y = result[1]
+        center.z = result[2]
+
+        return center
+
+
+    def computeSpeed(self, center, id, new_time):
+
+        speed = Vector3()
+
+        if len(self.previous_centers) == 0:
+            
+            return None
+        
+        else:
+
+            deltat = (new_time - self.previous_time) #Compute the diference in times between the previous time and this frame, 
+                                                    # The time of the current tracker was created when the image arrived (in 
+            deltat = deltat.to_sec()                 # the code "yolo_detection.py" inside the imageCallback() function).
+
+            
+            previous_center = self.previous_centers.get(id) #get the center of previous object with that id, if the id isn't fouund return a None that is treated in the next IF
+
+            if previous_center is not None: #If exists a center in the last frame computes the speed
+                    
+                speed.x = (center.x - previous_center.x)*10**(-3)/deltat
+                speed.y = (center.y - previous_center.y)*10**(-3)/deltat
+                speed.z = (center.z - previous_center.z)*10**(-3)/deltat
+
+            return speed
+
+    def computeFeatures(self, t):
+
+
+        img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV)
+        roi = img[int(t.ymin):int(t.ymax), int(t.xmin):int(t.xmax)]
+
+        [counts, values] = np.histogram(roi[0], bins=18, range=(0,180))
+        m = max(counts)
+        dic = dict(zip(counts, values))
+        hue = int(dic[m])
+        sat = int(mean(roi[1]))
+        
+        ilumination = int(mean(roi[2]))
+        c = Color(hsv=(hue, sat/255.0, ilumination/255.0))
+        c1 = Color((int(c.red), int(c.green), int(c.blue)))
+
+        print(c1.web)
+
 
 
 
@@ -132,69 +208,6 @@ class Sort_tracking():
             cv2.putText(img, label, (int(t.xmin), int(t.ymin - 10)), font, 1, color, 1) #writes the Class and Object ID in the original image
 
         return img
-
-
-    def computeRealCenter(self, trackers_msg):
-        
-        center = CenterID()
-        center_list = {}
-        trackers = trackers_msg.tracker_boxes
-
-        new_time = trackers_msg.header.stamp #Time of the current trackers (Time was created when the image arrived in the code "yolo_detection.py" inside the imageCallback() function)
-
-        for t in trackers:
-
-            pix = [int(t.xmin + (t.xmax-t.xmin)//2), int(t.ymin + (t.ymax-t.ymin)//2)] #Coordinates of centrar pixel
-            depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
-            result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
-            
-            #Create the CenterID object
-            center.x = result[0]
-            center.y = result[1]
-            center.z = result[2]
-            center.id = t.id
-            center.Class = t.Class
-            center_list[t.id] = center
-        
-        return center_list, new_time
-
-
-    def computeSpeed(self, centers, new_time):
-
-        speed = Vector3()
-        msg = ObjectSpeed()
-
-        if len(self.previous_centers) == 0:
-            self.previous_centers = centers
-            self.previous_time = new_time
-            return None
-        
-        else:
-
-            deltat = (new_time - self.previous_time) #Compute the diference in times between the previous time and this frame
-            self.previous_time = new_time
-            deltat = deltat.to_sec() #Transform the time in sec
-
-
-            for id in self.previous_centers: #go through all objects detected in the previous frame (The ID is unique to each object)
-                
-                previous_center = self.previous_centers.get(id) #get the center of previous object with that id
-                updated_center = centers.get(id) #get the center of current object with that id, if the id isn't fouund return a None that is treated in the next IF
-
-                if updated_center is not None and previous_center is not None: #If both of ID are found it computes the speed 
-                    
-                    speed.x = (updated_center.x - previous_center.x)*10**(-3)/deltat
-                    speed.y = (updated_center.y - previous_center.y)*10**(-3)/deltat
-                    speed.z = (updated_center.z - previous_center.z)*10**(-3)/deltat
-
-                    msg.velocity = speed
-                    msg.id = previous_center.id
-                    msg.Class = previous_center.Class
-                    
-                    self.pub_speed.publish(msg) #publish the speed of current object
-
-            self.previous_centers = centers #set the current object as previous objects
-
 
 
 

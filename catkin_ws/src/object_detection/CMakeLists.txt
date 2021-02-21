@@ -61,7 +61,7 @@ find_package(catkin REQUIRED COMPONENTS
    TrackerBoxes.msg
    CenterID.msg
    CenterIDList.msg
-   ObjectSpeed.msg
+   Object.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -177,7 +177,6 @@ include_directories(
    src/yolo_detection.py
    src/watershed_detection.py
    src/sort_tracking.py
-   src/find_speed.py
    include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
