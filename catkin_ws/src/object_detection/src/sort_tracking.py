@@ -49,7 +49,7 @@ class Sort_tracking():
 
         #Publishers
         self.pub = rospy.Publisher("/tracking/" + self.method + "/objects_image", Image, queue_size=10)
-        self.pub_speed = rospy.Publisher("/tracking/" + self.method + "/speed", Object, queue_size=10)
+        self.pub_obj = rospy.Publisher("/tracking/" + self.method + "/object", Object, queue_size=10)
 
         #Subscribers
         self.sub_bbox_yolo = rospy.Subscriber("/detection/"+self.method+"/bboxes", BoundingBoxes,self.bboxCallback, queue_size=10)
@@ -113,40 +113,56 @@ class Sort_tracking():
 
         if self.cv_image is not None and self.cv_image_depth is not None: # if RGB and Depth images are available runs the code
 
+                img = np.copy(self.cv_image)
                 trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
 
-                for t in trackers.tracker_boxes:
-
+                for t in trackers.tracker_boxes: #Go through every detected object
+                    
+                    obj = Object()
                     center_pose = self.computeRealCenter(t) #compute the Real pixels values
-                
+                    
                     speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
 
+                    [color, sat, il], shape = self.computeFeatures(t) #compute diferent features, like color and shape
+
                     center_list[t.id] = center_pose #add this center to the dictionary of centers
-                    self.computeFeatures(t)
+
+                    #Construct the object with its atributes
+                    obj.id = t.id
+                    obj.Class = t.Class
+                    obj.real_pose = center_pose
+                    obj.velocity = speed
+                    obj.bbox = [int(t.xmin), int(t.ymin), int(t.xmax), int(t.ymax)]
+                    obj.color = color
+                    obj.saturation = sat
+                    obj.ilumination = il 
+                    obj.shape = shape
+
+                    self.pub_obj.publish(obj) # publish the object
+
 
                 self.previous_centers = center_list #set the current center dictionary as previous dictionary
                 self.previous_time = trackers.header.stamp
+
+                img_labels = self.draw_labels(trackers, img) #draws the labels in the original image
                 
-
-                img = self.draw_labels(trackers) #draws the labels in the original image
-                image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
+                
+                image_message = self.bridge.cv2_to_imgmsg(img_labels, encoding = self.data_encoding)
                 self.pub.publish(image_message) #publish the labelled image
-
-
 
 
     def computeRealCenter(self, tracker):
         
         center = Vector3()
 
-        pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of central pixel
+        pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
         depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
         result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
-            
-        #Create a vectot with the coordinates
-        center.x = result[0]
-        center.y = result[1]
-        center.z = result[2]
+
+        #Create a vector with the coordinates, in meters
+        center.x = result[0]*10^(-3)
+        center.y = result[1]*10^(-3)
+        center.z = result[2]*10^(-3)
 
         return center
 
@@ -170,36 +186,74 @@ class Sort_tracking():
 
             if previous_center is not None: #If exists a center in the last frame computes the speed
                     
-                speed.x = (center.x - previous_center.x)*10**(-3)/deltat
-                speed.y = (center.y - previous_center.y)*10**(-3)/deltat
-                speed.z = (center.z - previous_center.z)*10**(-3)/deltat
+                speed.x = (center.x - previous_center.x)/deltat
+                speed.y = (center.y - previous_center.y)/deltat
+                speed.z = (center.z - previous_center.z)/deltat
 
-            return speed
+            return speed #in meters/sec
 
     def computeFeatures(self, t):
 
+        img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV) # change image from bgr to hsv
 
-        img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV)
-        roi = img[int(t.ymin):int(t.ymax), int(t.xmin):int(t.xmax)]
+        thr_img, roi = self.computeRoi(img, self.cv_image_depth, t) #select the roi of the object
 
-        [counts, values] = np.histogram(roi[0], bins=18, range=(0,180))
+        [counts, values] = np.histogram(thr_img[0], bins=18, range=(1,180)) #create an histogram to see the most present color
         m = max(counts)
         dic = dict(zip(counts, values))
-        hue = int(dic[m])
-        sat = int(mean(roi[1]))
-        
-        ilumination = int(mean(roi[2]))
-        c = Color(hsv=(hue, sat/255.0, ilumination/255.0))
+        hue = int(dic[m] * 2) # hue valor of the most present color
+        sat = mean(roi[1])/255.0 # sat mean of image (E PARA MUDAR ISTO)
+        ilumination = mean(roi[2])/255.0
+
+        shape = self.computeShape(thr_img);
+
+        c = Color(hsv=(hue, sat, ilumination))
         c1 = Color((int(c.red), int(c.green), int(c.blue)))
+        
+        return [c1.web, sat, ilumination], shape 
 
-        print(c1.web)
+    def computeShape(self, img):
+
+        return "Feature in development"
 
 
+    def computeRoi(self, img, depth, t):
+
+        roi = img[int(t.ymin):int(t.ymax), int(t.xmin):int(t.xmax)] #select the region of interess of rgb and depth images
+        roi_depth = depth[int(t.ymin):int(t.ymax), int(t.xmin):int(t.xmax)]
+        
+        m = mean(roi_depth)
+        std = np.std(roi_depth)
+        ret, thresh = cv2.threshold(roi_depth, m+std, np.amax(roi_depth),cv2.THRESH_BINARY_INV) #threshold to try to minimize the backgound influence
+        mask = self.map_uint16_to_uint8(thresh, lower_bound=0, upper_bound=255)
+        thr_img = cv2.bitwise_and(roi, roi,mask = mask) #apply the mask created to the rgb image
+        
+        return thr_img, roi
 
 
-    def draw_labels(self, tracker_boxes): 
+    def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
+        if not(0 <= lower_bound < 2**16) and lower_bound is not None:
+            raise ValueError(
+                '"lower_bound" must be in the range [0, 65535]')
+        if not(0 <= upper_bound < 2**16) and upper_bound is not None:
+            raise ValueError(
+                '"upper_bound" must be in the range [0, 65535]')
+        if lower_bound is None:
+            lower_bound = np.min(img)
+        if upper_bound is None:
+            upper_bound = np.max(img)
+        if lower_bound >= upper_bound:
+            raise ValueError(
+                '"lower_bound" must be smaller than "upper_bound"')
+        lut = np.concatenate([
+            np.zeros(lower_bound, dtype=np.uint16),
+            np.linspace(0, 255, upper_bound - lower_bound).astype(np.uint16),
+            np.ones(2**16 - upper_bound, dtype=np.uint16) * 255
+        ])
+        return lut[img].astype(np.uint8)
+
+    def draw_labels(self, tracker_boxes, img): 
         font = cv2.FONT_HERSHEY_PLAIN
-        img = self.cv_image
 
         for t in tracker_boxes.tracker_boxes:
             label = "%s #%i" % (t.Class, t.id)
