@@ -116,6 +116,7 @@ class Sort_tracking():
                 img = np.copy(self.cv_image)
                 trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
 
+
                 for t in trackers.tracker_boxes: #Go through every detected object
                     
                     obj = Object()
@@ -123,20 +124,20 @@ class Sort_tracking():
                     
                     speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
 
-                    [color, sat, il], shape = self.computeFeatures(t) #compute diferent features, like color and shape
+                    hsv, shape = self.computeFeatures(t) #compute diferent features, like color and shape
 
                     center_list[t.id] = center_pose #add this center to the dictionary of centers
-
-                    #Construct the object with its atributes
-                    obj.id = t.id
-                    obj.Class = t.Class
-                    obj.real_pose = center_pose
-                    obj.velocity = speed
-                    obj.bbox = [int(t.xmin), int(t.ymin), int(t.xmax), int(t.ymax)]
-                    obj.color = color
-                    obj.saturation = sat
-                    obj.ilumination = il 
-                    obj.shape = shape
+                    if speed is not None:
+                        #Construct the object with its atributes
+                        obj.id = t.id
+                        obj.Class = t.Class
+                        obj.real_pose = center_pose
+                        obj.velocity = speed
+                        obj.bbox = [int(t.xmin), int(t.ymin), int(t.xmax), int(t.ymax)]
+                        obj.color = hsv[0]
+                        obj.saturation = hsv[1]
+                        obj.ilumination = hsv[2] 
+                        obj.shape = shape
 
                     self.pub_obj.publish(obj) # publish the object
 
@@ -147,8 +148,8 @@ class Sort_tracking():
                 img_labels = self.draw_labels(trackers, img) #draws the labels in the original image
                 
                 
-                image_message = self.bridge.cv2_to_imgmsg(img_labels, encoding = self.data_encoding)
-                self.pub.publish(image_message) #publish the labelled image
+                #image_message = self.bridge.cv2_to_imgmsg(img_labels, encoding = self.data_encoding)
+                #self.pub.publish(image_message) #publish the labelled image
 
 
     def computeRealCenter(self, tracker):
@@ -160,9 +161,9 @@ class Sort_tracking():
         result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
 
         #Create a vector with the coordinates, in meters
-        center.x = result[0]*10^(-3)
-        center.y = result[1]*10^(-3)
-        center.z = result[2]*10^(-3)
+        center.x = result[0]*10**(-3)
+        center.y = result[1]*10**(-3)
+        center.z = result[2]*10**(-3)
 
         return center
 
@@ -198,19 +199,53 @@ class Sort_tracking():
 
         thr_img, roi = self.computeRoi(img, self.cv_image_depth, t) #select the roi of the object
 
-        [counts, values] = np.histogram(thr_img[0], bins=18, range=(1,180)) #create an histogram to see the most present color
-        m = max(counts)
-        dic = dict(zip(counts, values))
-        hue = int(dic[m] * 2) # hue valor of the most present color
-        sat = mean(roi[1])/255.0 # sat mean of image (E PARA MUDAR ISTO)
-        ilumination = mean(roi[2])/255.0
+        sat = mean(roi[:,:,1])/255.0 # sat mean of image (E PARA MUDAR ISTO)
+        ilumination = mean(roi[:,:,2])/255.0
+
+
+        if(t.Class == "traffic light"):
+            
+            m = mean(thr_img[:,:,2])
+
+            ret, mask = cv2.threshold(thr_img[:,:,2], m, np.amax(thr_img[:,:,2]),cv2.THRESH_BINARY) #threshold to try to minimize the backgound influence
+            #mask = self.map_uint16_to_uint8(thresh, lower_bound=0, upper_bound=255)
+            ilu_img = cv2.bitwise_and(roi, roi,mask = mask)
+            rgb_img = cv2.cvtColor(ilu_img, cv2.COLOR_HSV2RGB) # change image from bgr to hsv
+
+            ret, mask1 = cv2.threshold(rgb_img[:,:,0], 20, 255,cv2.THRESH_BINARY_INV) #threshold to try to minimize the background influence
+            #mask1 = self.map_uint16_to_uint8(thresh1, lower_bound=0, upper_bound=255)
+            red_img = cv2.bitwise_and(rgb_img, rgb_img,mask = mask1)
+
+            [counts, values] = np.histogram(ilu_img[:,:,0], bins=4, range=(1,180)) #create an histogram to see the most present color
+            m = max(counts)
+            dic = dict(zip(counts, values))
+            
+            if (dic[m] * 2 <= 20):
+                color = "Red"
+            elif (dic[m] * 2 >= 70):
+                color = "Green"
+            else:
+                color = "Yellow"
+
+            image_message = self.bridge.cv2_to_imgmsg(red_img)
+            self.pub.publish(image_message) #publish the labelled image
+
+
+        else:
+            [counts, values] = np.histogram(thr_img[:,:,0], bins=36, range=(1,180)) #create an histogram to see the most present color
+            m = max(counts)
+            dic = dict(zip(counts, values))
+            hue = int(dic[m] * 2) # hue valor of the most present color
+
+            #mask = ((thr_img[:,:,0] >= hue/2) & (thr_img[0] <= hue/2+10))
+            #index = np.where(mask == True)
+            c = Color(hsv=(hue, sat, ilumination))
+            color = c.web
 
         shape = self.computeShape(thr_img);
 
-        c = Color(hsv=(hue, sat, ilumination))
-        c1 = Color((int(c.red), int(c.green), int(c.blue)))
-        
-        return [c1.web, sat, ilumination], shape 
+        return [color, sat, ilumination], shape 
+
 
     def computeShape(self, img):
 
