@@ -17,6 +17,14 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+find_package(PCL 1.5 REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -149,6 +157,9 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
+add_executable (region_growing_rgb_segmentation src/region_growing_rgb_segmentation.cpp)
+target_link_libraries (region_growing_rgb_segmentation ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -162,7 +173,7 @@ include_directories(
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
-# )
+#)
 
 #############
 ## Install ##
