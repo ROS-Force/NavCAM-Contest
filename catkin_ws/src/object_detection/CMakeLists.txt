@@ -25,8 +25,8 @@ find_package(Eigen3 REQUIRED)
 #include(FindCUDA)
 #cuda_add_executable (object_detection src/cluster_extration.cpp)
 
-link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
+link_directories(${PCL_LIBRARY_DIRS})
 #target_link_libraries (object_detection ${PCL_LIBRARIES})
 
 
@@ -165,7 +165,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
 add_executable (cluster_extraction src/cluster_extraction.cpp)
-target_link_libraries (cluster_extraction ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${CUDA})
+target_link_libraries (cluster_extraction ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

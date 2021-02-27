@@ -36,8 +36,8 @@ private:
 
     void pcCallback(const sensor_msgs::PointCloud2 input)
     {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::fromROSMsg(input, *cloud_filtered);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>); 
+        pcl::fromROSMsg(input, *cloud_rgb);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::copyPointCloud(*cloud_rgb, *cloud_filtered);
