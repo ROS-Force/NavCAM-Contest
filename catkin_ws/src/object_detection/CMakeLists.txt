@@ -19,11 +19,15 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(PCL 1.5 REQUIRED)
+find_package(CUDA)
+
+include(FindCUDA)
+cuda_add_executable (object_detection src/region_growing_rgb_segmentation.cpp)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
-
+target_link_libraries (object_detection ${PCL_LIBRARIES})
 
 
 ## System dependencies are found with CMake's conventions
