@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-find_package(PCL 1.5 REQUIRED)
+find_package(PCL 1.11 REQUIRED)
 find_package(CUDA)
 
 #include(FindCUDA)

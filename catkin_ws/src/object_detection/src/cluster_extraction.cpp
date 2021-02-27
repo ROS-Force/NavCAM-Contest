@@ -16,6 +16,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 // The GPU specific stuff here
 #include <pcl/gpu/octree/octree.hpp>
@@ -36,9 +37,9 @@ private:
     void pcCallback(const sensor_msgs::PointCloud2 input)
     {
 
-        pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::cuda::PointXYZRGB>);
+        pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
 
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::cuda::PointXYZRGB>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromROSMsg(input, *cloud_filtered);
 
         //pcl::IndicesPtr indices(new std::vector<int>);
