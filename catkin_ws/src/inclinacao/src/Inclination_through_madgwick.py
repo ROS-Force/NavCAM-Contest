@@ -32,12 +32,7 @@ class orientation():
 
 		#para subescrever a este tópico é necessário usar o filtro magwick, o que inclui ter ambos o tópico de giroscopio e aceleração unidos no momento da gravação
 		angles_subscriber=rospy.Subscriber("/imu/data", Imu, self.anglesCallback)
-
-
-
-
-
-			
+		
 	def anglesCallback(self,angles_message):
 
 		self.x = angles_message.orientation.x
@@ -46,13 +41,25 @@ class orientation():
 		self.w = angles_message.orientation.w
 
 
-		theta=math.asin(-(self.x*self.z-self.w*self.y))
+		theta=math.asin(-2*(self.x*self.z-self.w*self.y))
 
-		phi=math.asin((self.w*self.z+self.x*self.y)/math.cos(theta))
+		phi=math.asin(2*(self.w*self.z+self.x*self.y)/math.cos(theta))
 
-		psi=math.acos((self.w**2+self.z**2-0.5)/math.cos(theta))
+		#por alguma razão eles são 180-psi=psi2 sao complementares mas devido ao facto de usar o inverso
+		#do coseno em vez do inverso do seno em um deles
 
-		rospy.loginfo("Inclinação em theta=%s em phi=%s em psi=%s rad"%(self.x,self.y ,self.z))
+		#psi=math.acos(2*((self.w**2)+(self.z**2)-0.5)/math.cos(theta))
+
+		psi2=math.asin(2*(self.w*self.x+self.y*self.z)/math.cos(theta))
+
+
+		theta=(theta*180)/(math.pi)
+		phi=(phi*180)/(math.pi)
+		#psi=(psi*180)/(math.pi)
+		psi2=(psi2*180)/(math.pi)
+		#psi3=psi-psi2
+
+		rospy.loginfo("Rotação em torno de y=%s de z=%s de x=%s degrees"%(theta,phi,psi2))
 
 		
 	def acelCallback(self,accel_message):
