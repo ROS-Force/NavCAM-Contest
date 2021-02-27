@@ -18,10 +18,10 @@
 //#include <pcl/segmentation/extract_clusters.h>
 
 // The GPU specific stuff here
-//#include <pcl/gpu/octree/octree.hpp>
-//#include <pcl/gpu/containers/device_array.hpp>
+#include <pcl/gpu/octree/octree.hpp>
+#include <pcl/gpu/containers/device_array.hpp>
 #include <pcl/gpu/segmentation/gpu_extract_clusters.h>
-//#include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
+#include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 #include <pcl_conversions/pcl_conversions.h>
 
 class RGBD_Segmentation
@@ -73,14 +73,15 @@ private:
         gec.setSearchMethod(octree_device);
         gec.setHostCloud(cloud_filtered);
         gec.extract(cluster_indices_gpu);
-        octree_device->clear();
+        //octree_device->clear();
 
         printf("GPU Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        std::cout << "INFO: stopped with the GPU version" << std::endl;
 
         int j = 0;
         for (const pcl::PointIndices &cluster : cluster_indices_gpu)
         {
+            printf("%i\n",j);
+
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu(new pcl::PointCloud<pcl::PointXYZ>);
             for (const auto &index : (cluster.indices))
                 cloud_cluster_gpu->push_back((*cloud_filtered)[index]); //*
