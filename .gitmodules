@@ -12,3 +12,6 @@
 [submodule "depends/pcl"]
 	path = depends/pcl
 	url = https://github.com/PointCloudLibrary/pcl
+[submodule "catkin_ws/src/packagedeps/pcl_conversions"]
+	path = catkin_ws/src/packagedeps/pcl_conversions
+	url = git@github.com:ROS-Force/pcl_conversions.git

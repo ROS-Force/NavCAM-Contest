@@ -18,10 +18,10 @@
 //#include <pcl/segmentation/extract_clusters.h>
 
 // The GPU specific stuff here
-//#include <pcl/gpu/octree/octree.hpp>
-//#include <pcl/gpu/containers/device_array.hpp>
+#include <pcl/gpu/octree/octree.hpp>
+#include <pcl/gpu/containers/device_array.hpp>
 #include <pcl/gpu/segmentation/gpu_extract_clusters.h>
-//#include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
+#include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 #include <pcl_conversions/pcl_conversions.h>
 
 class RGBD_Segmentation
@@ -37,6 +37,7 @@ private:
     void pcCallback(const sensor_msgs::PointCloud2 input)
     {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::fromROSMsg(input, *cloud_rgb);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromROSMsg(input, *cloud_filtered);
