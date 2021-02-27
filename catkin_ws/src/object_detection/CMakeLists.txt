@@ -18,13 +18,13 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-find_package(PCL 1.5 REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common gpu cuda)
 find_package(CUDA)
+find_package(Eigen3 REQUIRED)
 
 #include(FindCUDA)
 #cuda_add_executable (object_detection src/cluster_extration.cpp)
 
-include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 #target_link_libraries (object_detection ${PCL_LIBRARIES})
@@ -130,10 +130,10 @@ catkin_package(CATKIN_DEPENDS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES object_detection
-#  CATKIN_DEPENDS cv_bridge geometry_msgs roscpp rospy sensor_msgs std_msgs
-#  DEPENDS system_lib
+  CATKIN_DEPENDS cv_bridge geometry_msgs roscpp rospy sensor_msgs std_msgs pcl_conversions
+  DEPENDS EIGEN3 PCL
 )
 
 ###########
@@ -143,8 +143,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -199,9 +201,9 @@ target_link_libraries (cluster_extraction ${PCL_LIBRARIES} ${catkin_LIBRARIES} $
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS cluster_extraction
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html

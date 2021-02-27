@@ -5,23 +5,24 @@
 #include <thread>
 #include <vector>
 
-#include <pcl/ModelCoefficients.h>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/kdtree/kdtree.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_clusters.h>
+//#include <pcl/ModelCoefficients.h>
+//#include <pcl/point_types.h>
+//#include <pcl/io/pcd_io.h>
+//#include <pcl/filters/extract_indices.h>
+//#include <pcl/filters/voxel_grid.h>
+//#include <pcl/features/normal_3d.h>
+//#include <pcl/kdtree/kdtree.h>
+//#include <pcl/sample_consensus/method_types.h>
+//#include <pcl/sample_consensus/model_types.h>
+//#include <pcl/segmentation/sac_segmentation.h>
+//#include <pcl/segmentation/extract_clusters.h>
 
 // The GPU specific stuff here
-#include <pcl/gpu/octree/octree.hpp>
-#include <pcl/gpu/containers/device_array.hpp>
+//#include <pcl/gpu/octree/octree.hpp>
+//#include <pcl/gpu/containers/device_array.hpp>
 #include <pcl/gpu/segmentation/gpu_extract_clusters.h>
-#include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
+//#include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
+#include <pcl_conversions/pcl_conversions.h>
 
 class RGBD_Segmentation
 {
@@ -35,12 +36,11 @@ private:
 
     void pcCallback(const sensor_msgs::PointCloud2 input)
     {
-
-        pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::cuda::PointXYZRGB>);
-
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::cuda::PointXYZRGB>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromROSMsg(input, *cloud_filtered);
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::copyPointCloud(*cloud_rgb, *cloud_filtered);
         //pcl::IndicesPtr indices(new std::vector<int>);
         //pcl::PassThrough<pcl::PointXYZRGB> pass;
         //pass.setInputCloud(cloud);
@@ -56,7 +56,7 @@ private:
 
         std::cout << "INFO: starting with the GPU version" << std::endl;
 
-        tStart = clock();
+        clock_t tStart = clock();
 
         pcl::gpu::Octree::PointCloud cloud_device;
         cloud_device.upload(cloud_filtered->points);
@@ -73,12 +73,12 @@ private:
         gec.setSearchMethod(octree_device);
         gec.setHostCloud(cloud_filtered);
         gec.extract(cluster_indices_gpu);
-        //  octree_device.clear();
+        octree_device->clear();
 
         printf("GPU Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         std::cout << "INFO: stopped with the GPU version" << std::endl;
 
-        j = 0;
+        int j = 0;
         for (const pcl::PointIndices &cluster : cluster_indices_gpu)
         {
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu(new pcl::PointCloud<pcl::PointXYZ>);
