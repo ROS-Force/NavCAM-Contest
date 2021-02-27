@@ -86,7 +86,7 @@ class orientation():
 
 
 def main():
-	rospy.init_node('orientacao_inicial', anonymous=True)
+	rospy.init_node('orientation', anonymous=True)
 	obst = orientation()
 
 	rospy.spin()
