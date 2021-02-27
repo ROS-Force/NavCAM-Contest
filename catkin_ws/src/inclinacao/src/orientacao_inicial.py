@@ -31,40 +31,98 @@ class orientation():
 		self.y=0
 		self.z=0
 
-		aceleracao_grav=-9.86
+		#aceleracao_grav=-9.86
 
 		acel_subscriber=rospy.Subscriber("/camera/accel/sample", Imu, self.acelCallback)
 		
-		self.rate = rospy.Rate(50)
+		gyro_subscriber=rospy.Subscriber("/camera/gyro/sample", Imu, self.gyroCallback)
 
+		frequency=250
+
+		self.rate = rospy.Rate(frequency)
+		i=0
+		acel_grav_array=[]
+		indicator=0;
 		while not rospy.is_shutdown():
 
-				if(abs(self.x)<9.86 and abs(self.y)<9.86 and abs(self.z)<9.86):
+			#tempo de calibração
+			while(i<frequency*1.2):
 
-					self.angulo_x=math.acos(self.x/aceleracao_grav)
-					self.angulo_y=math.acos(self.y/aceleracao_grav)
-					self.angulo_z=math.acos(self.z/aceleracao_grav)
+				while (self.y==0 and self.y==self.x):
+					i=i;
 
-					self.angulo_x=(self.angulo_x*180)/(math.pi)-90
-					self.angulo_y=(self.angulo_y*180)/(math.pi)
-					self.angulo_z=(self.angulo_z*180)/(math.pi)-90
+				acel_grav=math.sqrt(((self.x**2)+(self.y**2))+(self.z**2))
 
-					rospy.loginfo("Inclinação em x=%s em y=%s em z=%s rad"%(self.angulo_x,self.angulo_y,self.angulo_z))
-				else:
-					rospy.loginfo("Terminado-->dispositivo em movimento")
-					break
+				acel_grav_array.append(acel_grav)
+
+				i=i+1
 
 				self.rate.sleep()
+
+
+			acel_grav_ref=sum(acel_grav_array)/len(acel_grav_array)
+
+			while(indicator==0):
+
+				rospy.loginfo("Acelera gravitica média é x=%s m/s²"%(acel_grav_ref))
+				#calculo do angulo inicial
+				if(abs(self.x)<acel_grav_ref and abs(self.y)<acel_grav_ref and abs(self.z)<acel_grav_ref):
+
+						self.angulo_x=math.acos(self.x/acel_grav_ref)
+						self.angulo_y=math.acos(self.y/acel_grav_ref)
+						self.angulo_z=math.acos(self.z/acel_grav_ref)
+
+						#self.angulo_x=(self.angulo_x*180)/(math.pi)
+						#self.angulo_y=(self.angulo_y*180)/(math.pi)
+						#self.angulo_z=(self.angulo_z*180)/(math.pi)
+
+						indicator=1
+			self.rate.sleep()
+			#calculo da variação angulo seguinte
+			self.angulo_z=self.angulo_x+self.x_gyro*frequency**(-1)
+
+			self.angulo_y=self.angulo_y+self.y_gyro*frequency**(-1)
+
+			self.angulo_x=self.angulo_z+self.z_gyro*frequency**(-1)
+
+			#passagem para graus, posso fazer alguma coisa relativamente a dar uma valor precentual à rotação em torno de cada eixo mas isto necessitaria de varios calculos mais avançados sem certeza que de facto funcionaria
+			self.angulo_x_graus=(self.angulo_x*180)/(math.pi)
+			self.angulo_y_graus=(self.angulo_y*180)/(math.pi)
+			self.angulo_z_graus=(self.angulo_z*180)/(math.pi)
+
+			self.rate.sleep()
+
+				#else:
+				#	rospy.loginfo("Terminado-->dispositivo em movimento")
+				#	break
+			rospy.loginfo("Inclinação em x=%s em y=%s em z=%s rad"%(self.angulo_x_graus,self.angulo_y_graus,self.angulo_z_graus))
+
+
+
+
+			
 
 
 			
 	def acelCallback(self,accel_message):
 		
 
-		self.header=accel_message.header.seq
+		#self.header=accel_message.header.seq
 		self.x=accel_message.linear_acceleration.x
 		self.y=accel_message.linear_acceleration.y
 		self.z=accel_message.linear_acceleration.z
+
+
+		##rospy.loginfo("sequência= %s"%(self.header))
+
+	def gyroCallback(self,velocity_message):
+		
+
+		#self.header_gyro=accel_message.header.seq
+		self.x_gyro=velocity_message.angular_velocity.x
+		self.y_gyro=velocity_message.angular_velocity.y
+		self.z_gyro=velocity_message.angular_velocity.z
+
 
 		##rospy.loginfo("sequência= %s"%(self.header))
 
