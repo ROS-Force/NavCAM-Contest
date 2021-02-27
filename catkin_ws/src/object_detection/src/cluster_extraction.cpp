@@ -74,14 +74,15 @@ private:
         gec.setSearchMethod(octree_device);
         gec.setHostCloud(cloud_filtered);
         gec.extract(cluster_indices_gpu);
-        octree_device->clear();
+        //octree_device->clear();
 
         printf("GPU Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        std::cout << "INFO: stopped with the GPU version" << std::endl;
 
         int j = 0;
         for (const pcl::PointIndices &cluster : cluster_indices_gpu)
         {
+            printf("%i\n",j);
+
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu(new pcl::PointCloud<pcl::PointXYZ>);
             for (const auto &index : (cluster.indices))
                 cloud_cluster_gpu->push_back((*cloud_filtered)[index]); //*
