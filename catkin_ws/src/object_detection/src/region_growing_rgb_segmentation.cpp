@@ -5,10 +5,10 @@
 #include <thread>
 #include <vector>
 
-#include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
+#include <pcl/cuda/common/include/pcl/cuda/point_types.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/region_growing_rgb.h>
@@ -29,9 +29,9 @@ private:
     void pcCallback(const sensor_msgs::PointCloud2 input)
     {
 
-        pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+        pcl::search::Search<pcl::cuda::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::cuda::PointXYZRGB>);
 
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<pcl::cuda::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::cuda::PointXYZRGB>);
         pcl::fromROSMsg(input, *cloud);
 
         //pcl::IndicesPtr indices(new std::vector<int>);
@@ -41,7 +41,7 @@ private:
         //pass.setFilterLimits(0.0, 1.0);
         //pass.filter(*indices);
 
-        pcl::RegionGrowingRGB<pcl::PointXYZRGB> reg;
+        pcl::RegionGrowingRGB<pcl::cuda::PointXYZRGB> reg;
         reg.setInputCloud(cloud);
         //reg.setIndices(indices);
         reg.setSearchMethod(tree);
@@ -53,7 +53,7 @@ private:
         std::vector<pcl::PointIndices> clusters;
         reg.extract(clusters);
 
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud();
+        pcl::PointCloud<pcl::cuda::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud();
 
         sensor_msgs::PointCloud2 pc_output;
         pcl::toROSMsg(*colored_cloud, pc_output);

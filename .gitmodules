@@ -9,3 +9,6 @@
 [submodule "depends/eigen"]
 	path = depends/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "depends/pcl"]
+	path = depends/pcl
+	url = https://github.com/PointCloudLibrary/pcl

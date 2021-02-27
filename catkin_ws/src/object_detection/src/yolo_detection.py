@@ -20,7 +20,7 @@ class Yolo_Detection():
         #Initialize variables
         self.bridge = CvBridge()
 
-        self.YOLO_MODEL = rospy.get_param("~yolo_model", "yolov4")
+        self.YOLO_MODEL = rospy.get_param("~yolo_model", "yolov3")
         self.YOLO_LIGHT_MODEL = rospy.get_param("~yolo_light_model", "yolov3-tiny")
         self.output_image = rospy.get_param("~output_image", True)
 
