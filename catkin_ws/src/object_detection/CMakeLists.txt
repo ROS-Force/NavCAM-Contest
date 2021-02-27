@@ -21,13 +21,13 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PCL 1.5 REQUIRED)
 find_package(CUDA)
 
-include(FindCUDA)
-cuda_add_executable (object_detection src/region_growing_rgb_segmentation.cpp)
+#include(FindCUDA)
+#cuda_add_executable (object_detection src/cluster_extration.cpp)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
-target_link_libraries (object_detection ${PCL_LIBRARIES})
+#target_link_libraries (object_detection ${PCL_LIBRARIES})
 
 
 ## System dependencies are found with CMake's conventions
@@ -162,8 +162,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
-add_executable (region_growing_rgb_segmentation src/region_growing_rgb_segmentation.cpp)
-target_link_libraries (region_growing_rgb_segmentation ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+add_executable (cluster_extraction src/cluster_extraction.cpp)
+target_link_libraries (cluster_extraction ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${CUDA})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
