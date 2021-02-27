@@ -274,8 +274,16 @@ class Sort(object):
         d = trk.get_state()[0]
         if (trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits):
           tb = TrackerBox()
-          tb.xmin = d[0]
-          tb.ymin = d[1]
+          if (d[0] <= 0):
+            tb.xmin = 0
+          else:
+            tb.xmin = d[0]
+
+          if(d[1] <=0):
+            tb.ymin = 0
+          else:
+            tb.ymin = d[1]
+            
           tb.xmax = d[2]
           tb.ymax = d[3]
           tb.Class = trk.className
