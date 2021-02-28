@@ -17,12 +17,17 @@
 //#include <pcl/segmentation/sac_segmentation.h>
 //#include <pcl/segmentation/extract_clusters.h>
 
+#include <pcl/console/parse.h>
+#include <pcl/console/print.h>
+#include <pcl/gpu/containers/initialization.h>
 // The GPU specific stuff here
 #include <pcl/gpu/octree/octree.hpp>
 #include <pcl/gpu/containers/device_array.hpp>
 #include <pcl/gpu/segmentation/gpu_extract_clusters.h>
 #include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 #include <pcl_conversions/pcl_conversions.h>
+
+namespace pc = pcl::console;
 
 class RGBD_Segmentation
 {
@@ -36,12 +41,18 @@ private:
 
     void pcCallback(const sensor_msgs::PointCloud2 input)
     {
+        int device = 0;
+        //pc::parse_argument(argc, argv, "-gpu", device);
+        pcl::gpu::setDevice(device);
+        pcl::gpu::printShortCudaDeviceInfo(device);
+
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromROSMsg(input, *cloud_rgb);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromROSMsg(input, *cloud_filtered);
         pcl::copyPointCloud(*cloud_rgb, *cloud_filtered);
+
         //pcl::IndicesPtr indices(new std::vector<int>);
         //pcl::PassThrough<pcl::PointXYZRGB> pass;
         //pass.setInputCloud(cloud);
@@ -56,9 +67,7 @@ private:
         /////////////////////////////////////////////
 
         std::cout << "INFO: starting with the GPU version" << std::endl;
-
         clock_t tStart = clock();
-
         pcl::gpu::Octree::PointCloud cloud_device;
         cloud_device.upload(cloud_filtered->points);
 
@@ -69,11 +78,12 @@ private:
         std::vector<pcl::PointIndices> cluster_indices_gpu;
         pcl::gpu::EuclideanClusterExtraction gec;
         gec.setClusterTolerance(0.02); // 2cm
-        gec.setMinClusterSize(100);
+        gec.setMinClusterSize(1000);
         gec.setMaxClusterSize(25000);
         gec.setSearchMethod(octree_device);
         gec.setHostCloud(cloud_filtered);
-        gec.extract(cluster_indices_gpu);
+
+        //gec.extract(cluster_indices_gpu);
         //octree_device->clear();
 
         printf("GPU Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
@@ -81,7 +91,6 @@ private:
         int j = 0;
         for (const pcl::PointIndices &cluster : cluster_indices_gpu)
         {
-            printf("%i\n",j);
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu(new pcl::PointCloud<pcl::PointXYZ>);
             for (const auto &index : (cluster.indices))
