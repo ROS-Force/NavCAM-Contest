@@ -44,7 +44,7 @@ private:
         int device = 0;
         //pc::parse_argument(argc, argv, "-gpu", device);
         pcl::gpu::setDevice(device);
-        pcl::gpu::printShortCudaDeviceInfo(device);
+        //pcl::gpu::printShortCudaDeviceInfo(device);
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromROSMsg(input, *cloud_rgb);
@@ -78,7 +78,7 @@ private:
         std::vector<pcl::PointIndices> cluster_indices_gpu;
         pcl::gpu::EuclideanClusterExtraction gec;
         gec.setClusterTolerance(0.02); // 2cm
-        gec.setMinClusterSize(1000);
+        gec.setMinClusterSize(100);
         gec.setMaxClusterSize(25000);
         gec.setSearchMethod(octree_device);
         gec.setHostCloud(cloud_filtered);

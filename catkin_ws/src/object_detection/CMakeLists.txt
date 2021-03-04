@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(object_detection)
+cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.2/bin/nvcc")
+project(object_detection LANGUAGES CXX CUDA)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -14,13 +15,17 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  message_generation
   pcl_conversions
+  message_generation
 )
 
-find_package(PCL 1.5 REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common gpu cuda)
+find_package(CUDA 11.2 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(${PCL_INCLUDE_DIRS})
+include(FindCUDA)
+cuda_add_executable (object_detection src/cluster_extraction.cpp)
+
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
@@ -94,7 +99,6 @@ catkin_package(CATKIN_DEPENDS
     message_runtime 
     geometry_msgs
     std_msgs
-    pcl_conversions
 )
 
 ################################################
@@ -128,9 +132,9 @@ catkin_package(CATKIN_DEPENDS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  #LIBRARIES object_detection
+#  LIBRARIES object_detection
   CATKIN_DEPENDS cv_bridge geometry_msgs roscpp rospy sensor_msgs std_msgs pcl_conversions
-  DEPENDS PCL
+  DEPENDS EIGEN3 PCL
 )
 
 ###########
@@ -142,6 +146,8 @@ catkin_package(
 include_directories(
  include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -160,7 +166,10 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
 add_executable (cluster_extraction src/cluster_extraction.cpp)
-target_link_libraries (cluster_extraction ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries (cluster_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_LIBRARIES})
+add_executable (rgb_seg src/rgb_seg.cpp)
+target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -196,9 +205,9 @@ target_link_libraries (cluster_extraction ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
+#install(TARGETS cluster_extraction
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+#)
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
