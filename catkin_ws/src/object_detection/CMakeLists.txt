@@ -19,12 +19,12 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-find_package(PCL REQUIRED COMPONENTS common gpu cuda)
+find_package(PCL REQUIRED)
 find_package(CUDA 11.2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-include(FindCUDA)
-cuda_add_executable (object_detection src/cluster_extraction.cpp)
+#include(FindCUDA)
+#cuda_add_executable (object_detection src/cluster_extraction.cpp)
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -167,8 +167,8 @@ include_directories(
 
 add_executable (cluster_extraction src/cluster_extraction.cpp)
 target_link_libraries (cluster_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_LIBRARIES})
-add_executable (rgb_seg src/rgb_seg.cpp)
-target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_executable (rgb_seg src/rgb_seg.cpp)
+#target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
 ## Rename C++ executable without prefix
