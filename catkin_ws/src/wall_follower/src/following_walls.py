@@ -28,6 +28,12 @@ class following_walls():
 
 
         #Initialize variables
+        self.cv_image_depth = None
+        self.cv_image = None
+        self.intrinsics = None
+
+        self.bridge = CvBridge()
+        
         self.pub_velocities=rospy.Publisher("cmd_vel", Twist ,queue_size=10)
 
         self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
@@ -35,21 +41,7 @@ class following_walls():
         self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
 
         self.sub_depth = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
-
-
-#Callbacks
-    def imageCallback(self, data): #Function that runs when a RGB image arrives
-        try:
-            self.data_encoding = data.encoding #Stores the encoding of original image
-            self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)  # Transforms the format of image into OpenCV 2
-
-        except CvBridgeError as e:
-            print(e)
-            return
-        except ValueError as e:
-            print(e)
-            return
-
+    
 
     def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
         try:
@@ -61,27 +53,6 @@ class following_walls():
             print(e)
             return
         except ValueError as e:
-            print(e)
-            return
-
-
-    def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
-        try:
-            if self.intrinsics:
-                return
-            self.intrinsics = rs2.intrinsics()
-            self.intrinsics.width = cameraInfo.width
-            self.intrinsics.height = cameraInfo.height
-            self.intrinsics.ppx = cameraInfo.K[2]
-            self.intrinsics.ppy = cameraInfo.K[5]
-            self.intrinsics.fx = cameraInfo.K[0]
-            self.intrinsics.fy = cameraInfo.K[4]
-            if cameraInfo.distortion_model == 'plumb_bob':
-                self.intrinsics.model = rs2.distortion.brown_conrady
-            elif cameraInfo.distortion_model == 'equidistant':
-                self.intrinsics.model = rs2.distortion.kannala_brandt4
-            self.intrinsics.coeffs = [i for i in cameraInfo.D]
-        except CvBridgeError as e:
             print(e)
             return
 
