@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Image.h>
 #include <std_msgs/Header.h>
 #include <iostream>
 #include <thread>
@@ -24,6 +25,7 @@ private:
     ros::NodeHandle n;
     // A publisher to publish messages
     ros::Publisher pc_pub;
+    ros::Publisher img_pub;
     // A subscriber
     ros::Subscriber pc_sub;
 
@@ -67,8 +69,12 @@ private:
         sensor_msgs::PointCloud2 pc_output;
         pcl::toROSMsg(*colored_cloud, pc_output);
         pc_output.header.frame_id = "camera_link";
-
         this->pc_pub.publish(pc_output);
+
+        sensor_msgs::Image img_output;
+        pcl::toROSMsg(*colored_cloud, img_output);
+
+        this->img_pub.publish(img_output);
     }
 
 public:
@@ -85,6 +91,7 @@ public:
 
         // Create a publisher object, able to push messages
         this->pc_pub = n.advertise<sensor_msgs::PointCloud2>("cmd_vel", 1);
+        this->img_pub = n.advertise<sensor_msgs::Image>("image", 1);
         // Create a subscriber object, able to push messages
         this->pc_sub = n.subscribe<sensor_msgs::PointCloud2>("/camera/depth/color/points", 10, &RGBD_Segmentation::pcCallback, this);
     }
