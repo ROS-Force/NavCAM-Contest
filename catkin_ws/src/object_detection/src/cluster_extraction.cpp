@@ -23,6 +23,7 @@
 // The GPU specific stuff here
 #include <pcl/gpu/octree/octree.hpp>
 #include <pcl/gpu/containers/device_array.hpp>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/gpu/segmentation/gpu_extract_clusters.h>
 #include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 #include <pcl_conversions/pcl_conversions.h>
@@ -50,15 +51,22 @@ private:
         pcl::fromROSMsg(input, *cloud_rgb);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromROSMsg(input, *cloud_filtered);
-        pcl::copyPointCloud(*cloud_rgb, *cloud_filtered);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::fromROSMsg(input, *cloud);
+        pcl::copyPointCloud(*cloud_rgb, *cloud);
 
         //pcl::IndicesPtr indices(new std::vector<int>);
-        //pcl::PassThrough<pcl::PointXYZRGB> pass;
-        //pass.setInputCloud(cloud);
+        //pcl::PassThrough<pcl::PointXYZ> pass;
+        //pass.setInputCloud(cloud_filtered);
         //pass.setFilterFieldName("z");
         //pass.setFilterLimits(0.0, 1.0);
         //pass.filter(*indices);
+
+        pcl::VoxelGrid<pcl::PointXYZ> sor;
+        sor.setInputCloud(cloud);
+        sor.setLeafSize(0.1f, 0.1f, 0.1f);
+        sor.setDownsampleAllData(true);
+        sor.filter(*cloud_filtered);
 
         //INICIO DO ALGORITMO
 
@@ -66,9 +74,11 @@ private:
         /// GPU VERSION
         /////////////////////////////////////////////
 
-        std::cout << "INFO: starting with the GPU version" << std::endl;
+        //std::cout << "INFO: starting with the GPU version" << std::endl;
+
         clock_t tStart = clock();
         pcl::gpu::Octree::PointCloud cloud_device;
+
         cloud_device.upload(cloud_filtered->points);
 
         pcl::gpu::Octree::Ptr octree_device(new pcl::gpu::Octree);
@@ -76,19 +86,21 @@ private:
         octree_device->build();
 
         std::vector<pcl::PointIndices> cluster_indices_gpu;
+
         pcl::gpu::EuclideanClusterExtraction gec;
         gec.setClusterTolerance(0.02); // 2cm
         gec.setMinClusterSize(100);
-        gec.setMaxClusterSize(25000);
+        gec.setMaxClusterSize(10000);
         gec.setSearchMethod(octree_device);
         gec.setHostCloud(cloud_filtered);
 
-        //gec.extract(cluster_indices_gpu);
+        gec.extract(cluster_indices_gpu);
         //octree_device->clear();
 
         printf("GPU Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
         int j = 0;
+
         for (const pcl::PointIndices &cluster : cluster_indices_gpu)
         {
 
@@ -104,6 +116,7 @@ private:
             sensor_msgs::PointCloud2 pc_output;
             pcl::toROSMsg(*cloud_cluster_gpu, pc_output);
             pc_output.header.frame_id = "camera_link";
+
             this->pc_pub.publish(pc_output);
         }
 
@@ -123,7 +136,7 @@ public:
         //nh.param<std::string>("spawn_turtle_name", this->turtle_name, "");
 
         // Create a publisher object, able to push messages
-        this->pc_pub = n.advertise<sensor_msgs::PointCloud2>("cmd_vel", 1);
+        this->pc_pub = n.advertise<sensor_msgs::PointCloud2>("cmd_vel", 10);
         // Create a subscriber object, able to push messages
         this->pc_sub = n.subscribe<sensor_msgs::PointCloud2>("/camera/depth/color/points", 10, &RGBD_Segmentation::pcCallback, this);
     }

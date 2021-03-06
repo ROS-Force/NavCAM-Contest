@@ -11,6 +11,7 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/region_growing_rgb.h>
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -32,27 +33,35 @@ private:
         pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+
         pcl::fromROSMsg(input, *cloud);
 
-        //pcl::IndicesPtr indices(new std::vector<int>);
-        //pcl::PassThrough<pcl::PointXYZRGB> pass;
-        //pass.setInputCloud(cloud);
-        //pass.setFilterFieldName("z");
-        //pass.setFilterLimits(0.0, 1.0);
-        //pass.filter(*indices);
+        pcl::IndicesPtr indices(new std::vector<int>);
+        pcl::PassThrough<pcl::PointXYZRGB> pass;
+        pass.setInputCloud(cloud);
+        pass.setFilterFieldName("z");
+        pass.setFilterLimits(0.0, 5.0);
+        pass.filter(*indices);
+
+        pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+        sor.setInputCloud(cloud);
+        sor.setIndices(indices);
+        sor.setLeafSize(0.01f, 0.01f, 0.01f);
+        sor.filter(*cloud_filtered);
+        //
+        //std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height
+        //          << " data points (" << pcl::getFieldsList(*cloud_filtered) << ")." << std::endl;
 
         pcl::RegionGrowingRGB<pcl::PointXYZRGB> reg;
-        reg.setInputCloud(cloud);
-        //reg.setIndices(indices);
+        reg.setInputCloud(cloud_filtered);
         reg.setSearchMethod(tree);
         reg.setDistanceThreshold(10);
         reg.setPointColorThreshold(6);
         reg.setRegionColorThreshold(5);
         reg.setMinClusterSize(600);
-
         std::vector<pcl::PointIndices> clusters;
         reg.extract(clusters);
-
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud();
 
         sensor_msgs::PointCloud2 pc_output;
