@@ -165,8 +165,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
-add_executable (cluster_extraction src/cluster_extraction.cpp)
-target_link_libraries (cluster_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_LIBRARIES})
 add_executable (rgb_seg src/rgb_seg.cpp)
 target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
