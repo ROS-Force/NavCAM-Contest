@@ -197,7 +197,6 @@ target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
    src/yolo_detection.py
-   src/watershed_detection.py
    src/sort_tracking.py
    include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
