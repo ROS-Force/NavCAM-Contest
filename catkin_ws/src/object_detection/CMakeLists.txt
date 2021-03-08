@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
-set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.2/bin/nvcc")
-project(object_detection LANGUAGES CXX CUDA)
+#set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.2/bin/nvcc")
+project(object_detection)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -20,11 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(PCL REQUIRED)
-find_package(CUDA 11.2 REQUIRED)
+#find_package(CUDA 11.2 REQUIRED)
 find_package(Eigen3 REQUIRED)
-
-#include(FindCUDA)
-#cuda_add_executable (object_detection src/cluster_extraction.cpp)
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -165,8 +162,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
-add_executable (cluster_extraction src/cluster_extraction.cpp)
-target_link_libraries (cluster_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_LIBRARIES})
 add_executable (rgb_seg src/rgb_seg.cpp)
 target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
