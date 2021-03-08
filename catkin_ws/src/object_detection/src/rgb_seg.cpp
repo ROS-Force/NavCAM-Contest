@@ -70,11 +70,6 @@ private:
         pcl::toROSMsg(*colored_cloud, pc_output);
         pc_output.header.frame_id = "camera_link";
         this->pc_pub.publish(pc_output);
-
-        sensor_msgs::Image img_output;
-        pcl::toROSMsg(*colored_cloud, img_output);
-
-        this->img_pub.publish(img_output);
     }
 
 public:
@@ -90,8 +85,8 @@ public:
         //nh.param<std::string>("spawn_turtle_name", this->turtle_name, "");
 
         // Create a publisher object, able to push messages
-        this->pc_pub = n.advertise<sensor_msgs::PointCloud2>("cmd_vel", 1);
-        this->img_pub = n.advertise<sensor_msgs::Image>("image", 1);
+        this->pc_pub = n.advertise<sensor_msgs::PointCloud2>("segmentation/rgb", 1);
+
         // Create a subscriber object, able to push messages
         this->pc_sub = n.subscribe<sensor_msgs::PointCloud2>("/camera/depth/color/points", 10, &RGBD_Segmentation::pcCallback, this);
     }
