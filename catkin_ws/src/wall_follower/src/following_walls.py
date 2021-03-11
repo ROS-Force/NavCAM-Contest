@@ -55,8 +55,8 @@ class following_walls():
             j1=0
             x_left=[]
 
-            while i1<=self.bottom_limit:
-                while j1<=self.left_squadron_limit:
+            while (i1<=self.bottom_limit):
+                while (j1<=self.left_squadron_limit):
 
                     depth = self.cv_image_depth[pix[i1], pix[j1]] #Depth of the central pixel
                     result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[i1], pix[j1]], depth) # Real coordenates, in mm, of the central pixel
@@ -73,8 +73,8 @@ class following_walls():
             j2=self.rigth_squadron_limit
             x_right=[]
             
-            while i2<=self.bottom_limit:
-                while j2<=self.pixel_width:
+            while (i2<=self.bottom_limit):
+                while (j2<=self.pixel_width):
 
                     depth = self.cv_image_depth[pix[i2], pix[j2]] #Depth of the central pixel
                     result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[i2], pix[j2]], depth) # Real coordenates, in mm, of the central pixel
