@@ -1,0 +1,48 @@
+<launch>
+
+    <arg name="camera" default="camera" />
+    <include file="$(find realsense_tools)/launch/rs_camera.launch" />
+
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.0 0.0 0.0 0.0 0.0 0.0 camera_link laser 40" />
+
+    <node pkg="rviz" type="rviz" name="rviz" />
+
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
+
+        <remap from="image" to="/camera/depth/image_rect_raw" />
+        <remap from="scan" to="/camera/scan" />
+
+        <rosparam>
+            output_frame_id: "laser"
+            scan_height: 1
+            scan_time: 0.033
+            range_min: 0.45
+            range_max: 10.0
+        </rosparam>
+
+    </node>
+
+    <node pkg="laser_scan_matcher" type="laser_scan_matcher_node" name="laser_scan_matcher_node" output="screen">
+        <param name="fixed_frame" value="odom" />
+        <param name="use_alpha_beta" value="true" />
+        <param name="max_iterations" value="10" />
+        <param name="base_frame" value="camera_link" />
+
+        <param name="use_cloud_input" value="false" />
+        <remap from="scan" to="/camera/scan" />
+
+        <!-- Tentar subscrever a pointclouds (n funciona mas esta a info na linha 144 do laser_scan_matcher/src/laser_scan_matcher.cpp)
+            <param name="use_cloud_input" value="true" />
+            <remap from="cloud" to="/camera/depth/color/points" />
+        -->
+
+    </node>
+
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
+        <param name="map_update_interval" value="1.0" />
+        <param name="delta" value="0.02" />
+        <remap from="scan" to="/camera/scan" />
+        <param name="base_frame" value="camera_link" />
+    </node>
+
+</launch>
