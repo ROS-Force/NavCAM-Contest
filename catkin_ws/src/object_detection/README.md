@@ -89,7 +89,7 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
 #### Parameters:
 
-- **`blue_humans`**
+- **`blur_humans`**
 
   The option to blur the detected humans.
 
