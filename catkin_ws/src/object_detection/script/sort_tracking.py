@@ -21,7 +21,7 @@ class Sort_tracking():
 
 
         #Initialize variables
-        self.method = rospy.get_param("~method", "yolo")
+        #self.method = rospy.get_param("~method", "yolo")
         self.IoU_THRESHOLD = rospy.get_param("~sort_threshold", 0.1) #Minimum IOU for match
         self.MIN_HITS = rospy.get_param("~min_hits", 3) #Minimum number of associated detections before track is initialised
         self.MAX_AGE = rospy.get_param("~max_age", 20) #Maximum number of frames to keep alive a track without associated detections.
@@ -48,14 +48,14 @@ class Sort_tracking():
         self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
         #Publishers
-        self.pub = rospy.Publisher("/tracking/" + self.method + "/objects_image", Image, queue_size=10)
-        self.pub_obj = rospy.Publisher("/tracking/" + self.method + "/object", Object, queue_size=10)
+        self.pub = rospy.Publisher("output_image", Image, queue_size=10)
+        self.pub_obj = rospy.Publisher("object", Object, queue_size=10)
 
         #Subscribers
-        self.sub_bbox_yolo = rospy.Subscriber("/detection/"+self.method+"/bboxes", BoundingBoxes,self.bboxCallback, queue_size=10)
-        self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
-        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
-        self.sub_depth = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
+        self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=10)
+        self.sub_info = rospy.Subscriber("camera_info", CameraInfo, self.imageDepthInfoCallback)
+        self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
+        self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
 
 
 #Callbacks
