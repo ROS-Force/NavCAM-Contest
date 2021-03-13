@@ -25,6 +25,7 @@ class Sort_tracking():
         self.IoU_THRESHOLD = rospy.get_param("~sort_threshold", 0.1) #Minimum IOU for match
         self.MIN_HITS = rospy.get_param("~min_hits", 3) #Minimum number of associated detections before track is initialised
         self.MAX_AGE = rospy.get_param("~max_age", 20) #Maximum number of frames to keep alive a track without associated detections.
+        self.BLUR_HUMANS = rospy.get_param("~blur_humans", True) #Maximum number of frames to keep alive a track without associated detections.
 
 
         self.list_bbox = BoundingBoxes()
@@ -114,6 +115,7 @@ class Sort_tracking():
         if self.cv_image is not None and self.cv_image_depth is not None: # if RGB and Depth images are available runs the code
 
                 img = np.copy(self.cv_image)
+                img_depth = np.copy(self.cv_image_depth)
                 trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
 
 
@@ -124,7 +126,7 @@ class Sort_tracking():
                     
                     speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
 
-                    color, sat, ilu, shape = self.computeFeatures(t) #compute diferent features, like color and shape
+                    img, color, sat, ilu, shape = self.computeFeatures(t, img, img_depth) #compute diferent features, like color and shape
 
                     center_list[t.id] = center_pose #add this center to the dictionary of centers
                     if speed is not None:
@@ -193,14 +195,18 @@ class Sort_tracking():
 
             return speed #in meters/sec
 
-    def computeFeatures(self, t):
+    def computeFeatures(self, t, img, img_depth):
 
-        img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV) # change image from bgr to hsv
+        #img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV) # change image from bgr to hsv
 
-        thr_img, roi = self.computeRoi(img, self.cv_image_depth, t) #select the roi of the object
+        thr_img, roi = self.computeRoi(img, img_depth, t) #select the roi of the object
 
         sat = mean(roi[:,:,1])/255.0 # sat mean of image (E PARA MUDAR ISTO)
         ilumination = mean(roi[:,:,2])/255.0
+
+        if(t.Class == "person" and self.BLUR_HUMANS):
+
+            img[int(t.ymin):int(t.ymax), int(t.xmin):int(t.xmax)] = cv2.blur(img[int(t.ymin):int(t.ymax), int(t.xmin):int(t.xmax)] ,(25,25))
 
 
         if(t.Class == "traffic light"):
@@ -236,7 +242,7 @@ class Sort_tracking():
 
         shape = self.computeShape(thr_img);
 
-        return color, sat*100, ilumination*100, shape 
+        return img, color, sat*100, ilumination*100, shape 
 
 
     def computeShape(self, img):
