@@ -25,7 +25,8 @@ class Sort_tracking():
         self.IoU_THRESHOLD = rospy.get_param("~sort_threshold", 0.1) #Minimum IOU for match
         self.MIN_HITS = rospy.get_param("~min_hits", 3) #Minimum number of associated detections before track is initialised
         self.MAX_AGE = rospy.get_param("~max_age", 20) #Maximum number of frames to keep alive a track without associated detections.
-        self.BLUR_HUMANS = rospy.get_param("~blur_humans", True) 
+        self.BLUR_HUMANS = rospy.get_param("~blur_humans", True)
+        self.DRAW_SPEED = rospy.get_param("~draw_speed", False)
 
 
         self.list_bbox = BoundingBoxes()
@@ -140,17 +141,16 @@ class Sort_tracking():
                         obj.saturation = sat
                         obj.ilumination = ilu 
                         obj.shape = shape
+                        img = self.draw_labels(obj, img) #draws the labels in the original image
 
                     self.pub_obj.publish(obj) # publish the object
 
 
                 self.previous_centers = center_list #set the current center dictionary as previous dictionary
                 self.previous_time = trackers.header.stamp
-
-                img_labels = self.draw_labels(trackers, img) #draws the labels in the original image
                 
                 
-                image_message = self.bridge.cv2_to_imgmsg(img_labels, encoding = self.data_encoding)
+                image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
                 self.pub.publish(image_message) #publish the labelled image
 
 
@@ -285,14 +285,18 @@ class Sort_tracking():
         ])
         return lut[img].astype(np.uint8)
 
-    def draw_labels(self, tracker_boxes, img): 
+    def draw_labels(self, obj, img): 
         font = cv2.FONT_HERSHEY_PLAIN
 
-        for t in tracker_boxes.tracker_boxes:
-            label = "%s #%i" % (t.Class, t.id)
-            color = self.colors[int(t.id) % len(self.colors)]
-            cv2.rectangle(img, (int(t.xmin), int(t.ymin), int(t.xmax) - int(t.xmin), int(t.ymax) - int(t.ymin)), color, 2) #draws a rectangle in the original image
-            cv2.putText(img, label, (int(t.xmin), int(t.ymin - 10)), font, 1, color, 1) #writes the Class and Object ID in the original image
+
+        label = "%s #%i" % (obj.Class, obj.id)
+        color = self.colors[int(obj.id) % len(self.colors)]
+        cv2.rectangle(img, (int(obj.bbox[0]), int(obj.bbox[1]), int(obj.bbox[2]) - int(obj.bbox[0]), int(obj.bbox[3]) - int(obj.bbox[1])), color, 2) #draws a rectangle in the original image
+        cv2.putText(img, label, (int(obj.bbox[0]), int(obj.bbox[1] - 10)), font, 1, color, 1) #writes the Class and Object ID in the original image
+        
+        if(self.DRAW_SPEED):
+            speed_label = "Vx = %.1f; Vy = %.1f; Vz = %.1f; " % (obj.velocity.x, obj.velocity.y, obj.velocity.z)
+            cv2.putText(img, speed_label, (int(obj.bbox[0]), int(obj.bbox[3] + 10)), font, 1, color, 1) #writes the Class and Object ID in the original image
 
         return img
 
