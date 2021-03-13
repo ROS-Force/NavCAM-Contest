@@ -3,6 +3,7 @@
     <arg name="camera" default="camera" />
 
     <node pkg="rviz" type="rviz" name="rviz" />
+    <!--<include file="$(find realsense_tools)/launch/rs_camera.launch" />-->
 
     <node pkg="object_detection" type="yolo_detection.py" name="Yolo" output="screen">
 
