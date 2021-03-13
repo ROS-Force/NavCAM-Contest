@@ -6,3 +6,12 @@
 	path = catkin_ws/src/packagedeps/imu_tools
 	url = git@github.com:ccny-ros-pkg/imu_tools.git
 	branch = melodic
+[submodule "depends/eigen"]
+	path = depends/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "depends/pcl"]
+	path = depends/pcl
+	url = https://github.com/PointCloudLibrary/pcl
+[submodule "catkin_ws/src/packagedeps/pcl_conversions"]
+	path = catkin_ws/src/packagedeps/pcl_conversions
+	url = git@github.com:ROS-Force/pcl_conversions.git
