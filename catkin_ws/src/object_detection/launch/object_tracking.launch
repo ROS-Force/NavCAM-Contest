@@ -1,10 +1,33 @@
 <launch>
 
-    <node pkg="object_detection" type="yolo_detection.py" name="Yolo" output="screen" />
+    <arg name="camera" default="camera" />
+
+    <node pkg="rviz" type="rviz" name="rviz" />
+
+    <node pkg="object_detection" type="yolo_detection.py" name="Yolo" output="screen">
+
+        <remap from="image" to="/camera/color/image_raw" />
+        <remap from="output_image" to="/detection/yolo/objects_image" />
+        <remap from="bounding_boxes" to="/detection/yolo/bboxes" />
+
+        <param name="yolo_model" value="yolov4" />
+        <param name="model_scale" value="0.00392" />
+        <param name="conf_threshold" value="0.3" />
+        <param name="nms_threshold" value="0.4" />
+
+        <!--
+        model_size:  New input size.
+        model_mean:  Scalar with mean values which are subtracted from channels.
+        model_scale:  Multiplier for frame values. 
+        model_swapRGB:  Flag which indicates that swap first and last channels.
+        model_crop:  Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
+        conf_threshold:  A threshold used to filter boxes by confidences.
+        nms_threshold:  A threshold used in non maximum suppression.-->
+
+    </node>
 
     <node pkg="object_detection" type="sort_tracking.py" name="SORT" output="screen" />
 
-    <node pkg="object_detection" type="find_speed.py" name="find_speed" output="screen" />
-
+    <!--<node pkg="rosbag" type="play" name="play" args="$(find laser_scan_matcher)/demo/demo.bag - -delay=5 - -clock"/>-->
 
 </launch>

@@ -20,18 +20,18 @@ class Yolo_Detection():
         #Initialize variables
         self.bridge = CvBridge()
 
-        self.YOLO_MODEL = rospy.get_param("~yolo_model", "yolov3")
+        self.YOLO_MODEL = rospy.get_param("~yolo_model", "yolov4")
         self.YOLO_LIGHT_MODEL = rospy.get_param("~yolo_light_model", "yolov3-tiny")
-        self.output_image = rospy.get_param("~output_image", True)
+        self.output_rgb = rospy.get_param("~show_output", True)
 
         #Model Variables
-        self.size = rospy.get_param("~model_size", (320, 320)) #New input size.
-        self.mean = rospy.get_param("~model_mean", (0, 0, 0)) #Scalar with mean values which are subtracted from channels.
-        self.scale = rospy.get_param("~model_scale", 0.00392) #Multiplier for frame values. 
-        self.swapRB = rospy.get_param("~model_swapRGB", True) #Flag which indicates that swap first and last channels.
-        self.crop = rospy.get_param("~model_crop", False) #Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
+        self.size = rospy.get_param("~model_size", (320, 320))              #New input size.
+        self.mean = rospy.get_param("~model_mean", (0, 0, 0))               #Scalar with mean values which are subtracted from channels.
+        self.scale = rospy.get_param("~model_scale", 0.00392)               #Multiplier for frame values. 
+        self.swapRB = rospy.get_param("~model_swapRGB", True)               #Flag which indicates that swap first and last channels.
+        self.crop = rospy.get_param("~model_crop", False)                   #Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
         self.CONFIDENCE_THRESHOLD = rospy.get_param("~conf_threshold", 0.3) #A threshold used to filter boxes by confidences.
-        self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4) #A threshold used in non maximum suppression. 
+        self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4)         #A threshold used in non maximum suppression. 
 
         cuda = True
 
@@ -48,20 +48,21 @@ class Yolo_Detection():
                 break
         else:
             cuda = False
-            print("CUDA not found, loading light YOLO model...")
-            
+
 
         abs_path = rospkg.RosPack().get_path("object_detection") + "/cfg/" # Gets the path to folder where the models are
         
         try:
             if cuda:
                 self.net = cv2.dnn.readNetFromDarknet(abs_path + self.YOLO_MODEL +".cfg", abs_path + self.YOLO_MODEL + ".weights")
+                rospy.loginfo("CUDA was found, loading %s model" % self.YOLO_MODEL);
             else:
                 self.net = cv2.dnn.readNetFromDarknet(abs_path + self.YOLO_LIGHT_MODEL + ".cfg", abs_path + self.YOLO_LIGHT_MODEL + ".weights")
+                rospy.loginfo("CUDA was NOT found, loading %s model" % self.YOLO_LIGHT_MODEL);
         except:
-            print("Failed to find the models: %s and %s. Please ensure that the .cnf and .weights files are inside object_detection/cnf folder and/or you're calling the right model name" % (self.YOLO_MODEL, self.YOLO_LIGHT_MODEL))
+            rospy.logerr("Failed to find the models: %s and %s. Please ensure that the .cnf and .weights files are inside object_detection/cnf folder and/or you're calling the right model name" % (self.YOLO_MODEL, self.YOLO_LIGHT_MODEL))
             sys.exit()
-            
+
 
 
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
@@ -79,17 +80,16 @@ class Yolo_Detection():
         self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
         #Subscriber
-        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
+        self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
 
         #Publisher
-        self.pub = rospy.Publisher("/detection/yolo/objects_image", Image, queue_size=1)
-        self.pub_bbox = rospy.Publisher("/detection/yolo/bboxes", BoundingBoxes, queue_size=10)
-        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
+        self.pub = rospy.Publisher("output_image", Image, queue_size=1)
+        self.pub_bbox = rospy.Publisher("bounding_boxes", BoundingBoxes, queue_size=10)
+        #self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
     def imageCallback(self, data): #Function that runs when an image arrives
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
-
             h = Header()
             #Create a Time stamp
             h.stamp = rospy.Time.now()
@@ -98,7 +98,7 @@ class Yolo_Detection():
             classes, scores, boxes = self.model.detect(cv_image, self.CONFIDENCE_THRESHOLD, self.NMS_THRESHOLD) #Runs the YOLO model
             cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image, h) #function that publish/draws the bounding boxes
 
-            if self.output_image:
+            if self.output_rgb:
                 image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=data.encoding) #Convert back the image to ROS format
                 self.pub.publish(image_message) #publish the image (with drawn bounding boxes)
         
