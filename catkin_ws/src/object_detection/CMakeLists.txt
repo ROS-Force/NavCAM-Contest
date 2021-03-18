@@ -165,6 +165,9 @@ include_directories(
 add_executable (rgb_seg src/rgb_seg.cpp)
 target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
+add_executable (yolo_rgbseg src/yolo_rgbseg.cpp)
+target_link_libraries (yolo_rgbseg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

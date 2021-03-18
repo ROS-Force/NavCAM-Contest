@@ -10,6 +10,7 @@ import ctypes
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
+from object_msgs.msg import Object
 from object_detection.msg import BoundingBox, BoundingBoxes
 import rospkg
 
