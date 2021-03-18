@@ -165,6 +165,9 @@ include_directories(
 add_executable (rgb_seg src/rgb_seg.cpp)
 target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
+add_executable (yolo_rgbseg src/yolo_rgbseg.cpp)
+target_link_libraries (yolo_rgbseg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -191,8 +194,8 @@ target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-   src/yolo_detection.py
-   src/sort_tracking.py
+   script/yolo_detection.py
+   script/sort_tracking.py
    include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
