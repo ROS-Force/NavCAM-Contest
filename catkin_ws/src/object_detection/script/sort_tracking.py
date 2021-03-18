@@ -12,7 +12,7 @@ import pyrealsense2 as rs2
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID, Object
+from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID, Object_info
 from geometry_msgs.msg import Vector3
 
 class Sort_tracking():
@@ -51,7 +51,7 @@ class Sort_tracking():
 
         #Publishers
         self.pub = rospy.Publisher("output_image", Image, queue_size=10)
-        self.pub_obj = rospy.Publisher("object", Object, queue_size=10)
+        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=10)
 
         #Subscribers
         self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=10)
@@ -122,7 +122,7 @@ class Sort_tracking():
 
                 for t in trackers.tracker_boxes: #Go through every detected object
                     
-                    obj = Object()
+                    obj = Object_info()
                     center_pose = self.computeRealCenter(t) #compute the Real pixels values
                     
                     speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects

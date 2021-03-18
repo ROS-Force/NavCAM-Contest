@@ -72,7 +72,7 @@ add_definitions(${PCL_DEFINITIONS})
    TrackerBoxes.msg
    CenterID.msg
    CenterIDList.msg
-   Object.msg
+   Object_info.msg
  )
 
 ## Generate services in the 'srv' folder
