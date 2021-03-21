@@ -199,7 +199,7 @@ class Sort_tracking():
 
         #img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV) # change image from bgr to hsv
 
-        thr_img, roi = self.computeRoi(img, img_depth, t) #select the roi of the object
+        thr_img, depth_thresh, roi = self.computeRoi(img, img_depth, t) #select the roi of the object
 
         sat = mean(roi[:,:,1])/255.0 # sat mean of image (E PARA MUDAR ISTO)
         ilumination = mean(roi[:,:,2])/255.0
@@ -227,8 +227,6 @@ class Sort_tracking():
             
             color = "Red" #tenho de mudar isto
 
-
-
         else:
             [counts, values] = np.histogram(thr_img[:,:,0], bins=36, range=(1,180)) #create an histogram to see the most present color
             m = max(counts)
@@ -240,14 +238,34 @@ class Sort_tracking():
             c = Color(hsv=(hue, sat, ilumination))
             color = c.web
 
-        shape = self.computeShape(thr_img);
+        shape = self.computeShape(depth_thresh);
 
         return img, color, sat*100, ilumination*100, shape 
 
 
-    def computeShape(self, img):
+    def computeShape(self, thresh):
 
-        return "Feature in development"
+        contours, hierarchy = cv2.findContours(self.map_uint16_to_uint8(thresh), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        c = contours[0]
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.1*peri, True)
+
+        if len(approx) == 3:
+            shape = "triangle"
+
+        elif len(approx) == 4:
+
+            (x, y, w, h) = cv2.boundingRect(approx)
+            ar = w / float(h)
+            shape = "square" if ar >= 0.95 and ar <= 1.05 else "rectangle"
+
+        elif len(approx) == 5:
+            shape = "pentagon"
+
+        else:
+            shape = "circle"
+
+        return shape
 
 
     def computeRoi(self, img, depth, t):
@@ -257,11 +275,12 @@ class Sort_tracking():
         
         m = mean(roi_depth)
         std = np.std(roi_depth)
-        ret, thresh = cv2.threshold(roi_depth, m+std, np.amax(roi_depth),cv2.THRESH_BINARY_INV) #threshold to try to minimize the backgound influence
+        
+        ret, thresh = cv2.threshold(roi_depth, m, np.amax(roi_depth),cv2.THRESH_BINARY_INV) #threshold to try to minimize the backgound influence
         mask = self.map_uint16_to_uint8(thresh, lower_bound=0, upper_bound=255)
         thr_img = cv2.bitwise_and(roi, roi,mask = mask) #apply the mask created to the rgb image
         
-        return thr_img, roi
+        return thr_img, thresh, roi
 
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
