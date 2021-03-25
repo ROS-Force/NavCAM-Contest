@@ -22,7 +22,7 @@
 
 //using namespace std::chrono_literals;
 
-#define DEBUG
+//#define DEBUG
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> PCLPointCloudRGB;
 
@@ -41,9 +41,9 @@ private:
     // A subscriber
     ros::Subscriber yolo_sub;
 
-//    pcl::RegionGrowingRGB<pcl::PointXYZRGB> segmentationRGRGB;
+    pcl::RegionGrowingRGB<pcl::PointXYZRGB> segmentationRGRGB;
     pcl::VoxelGrid<pcl::PointXYZRGB> filterVoxelGrid;
-//    pcl::search::Search<pcl::PointXYZRGB>::Ptr searchAlgorithm;
+    pcl::search::Search<pcl::PointXYZRGB>::Ptr searchAlgorithm;
 
     PCLPointCloudRGB::Ptr latestPointCloud = nullptr;
 
@@ -53,6 +53,7 @@ private:
         PCLPointCloudRGB::Ptr colored_cloud(new PCLPointCloudRGB()), // total colored cloud
             currentClusterCloud(new PCLPointCloudRGB());             // cloud for each cluster
 
+        //#pragma omp parallel for ordered schedule(dynamic)
         for (size_t idx = 0; idx < clusters.size(); idx++)
         {
             auto indices = clusters.at(idx);
@@ -60,12 +61,14 @@ private:
             int32_t rgb = (static_cast<uint32_t>(r) << 16 |
                         static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
 
+            //#pragma omp parallel for
             for (size_t idx_1 = 0; idx_1 < indices.indices.size(); idx_1++){
 
-                auto p = cloud_filtered->at(indices.indices.at(idx_1));
+                auto p = cloud_filtered->at(indices.indices.at(idx));
                 p.rgb = rgb;
                 currentClusterCloud->push_back(p);
             }
+            //#pragma omp ordered
             *colored_cloud += *currentClusterCloud;
         }
 
@@ -110,10 +113,10 @@ private:
 
         PCLPointCloudRGB::Ptr coloredCloud(new PCLPointCloudRGB());
 
-//        #pragma omp parallel for 
-        for (size_t idx_box = 0; idx_box < boxes.bounding_boxes.size(); idx_box++)
+        //#pragma omp parallel for ordered schedule(dynamic)
+        for (size_t idx = 0; idx < boxes.bounding_boxes.size(); idx++)
         {
-            auto box = boxes.bounding_boxes.at(idx_box);
+            auto box = boxes.bounding_boxes.at(idx);
 
             PCLPointCloudRGB::Ptr clusterCloud(new PCLPointCloudRGB());
 
@@ -123,7 +126,7 @@ private:
             range_filt.setKeepOrganized(false);
 
             pcl::ConditionAnd<pcl::PointXYZRGB>::Ptr range_cond(new pcl::ConditionAnd<pcl::PointXYZRGB>());
-            std::cerr << "(" << box.bottomright.x << "," << box.bottomright.y << "," << box.bottomright.z << ")" << "(" << box.topleft.x << "," << box.topleft.y <<  "," << box.topleft.z << ")" << std::endl;
+//            std::cerr << "(" << box.bottomright.x << "," << box.bottomright.y << ")" << "(" << box.topleft.x << "," << box.topleft.y << ")" << std::endl;
 
             range_cond->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::Ptr(new pcl::FieldComparison<pcl::PointXYZRGB>("x", pcl::ComparisonOps::GT, std::min(box.bottomright.x, box.topleft.x))));
             range_cond->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::Ptr(new pcl::FieldComparison<pcl::PointXYZRGB>("x", pcl::ComparisonOps::LT, std::max(box.bottomright.x, box.topleft.x))));
@@ -131,32 +134,24 @@ private:
             range_cond->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::Ptr(new pcl::FieldComparison<pcl::PointXYZRGB>("y", pcl::ComparisonOps::GT, std::min(box.bottomright.y, box.topleft.y))));
             range_cond->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::Ptr(new pcl::FieldComparison<pcl::PointXYZRGB>("y", pcl::ComparisonOps::LT, std::max(box.bottomright.y, box.topleft.y))));
             
-            range_cond->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::Ptr(new pcl::FieldComparison<pcl::PointXYZRGB>("z", pcl::ComparisonOps::GT, std::min(box.bottomright.z, box.topleft.z) - 0.35)));
-            range_cond->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::Ptr(new pcl::FieldComparison<pcl::PointXYZRGB>("z", pcl::ComparisonOps::LT, std::max(box.bottomright.z, box.topleft.z) + 0.35)));
-            
             range_filt.setCondition(range_cond);
             range_filt.filter(*clusterCloud);
 
-#ifdef DEBUG
-            std::cerr << "PointCloud rgb Segmentation Cluster: " << this->latestPointCloud->width * this->latestPointCloud->height
-                      << " data points (" << pcl::getFieldsList(*this->latestPointCloud) << ")." << std::endl;
-#endif
-/*
             std::vector<pcl::PointIndices> clusters;
 
-            pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>());
-            pcl::RegionGrowingRGB<pcl::PointXYZRGB> segmentationRGRGB = pcl::RegionGrowingRGB<pcl::PointXYZRGB>();
-            segmentationRGRGB.setSearchMethod(tree);
-            segmentationRGRGB.setDistanceThreshold(0.1);
-            segmentationRGRGB.setPointColorThreshold(1);
-            segmentationRGRGB.setRegionColorThreshold(2);
-            segmentationRGRGB.setMinClusterSize(600);
-            segmentationRGRGB.setInputCloud(clusterCloud);
-            segmentationRGRGB.extract(clusters);
+            //pcl::search::Search<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>());
+            //pcl::RegionGrowingRGB<pcl::PointXYZRGB> segmentationRGRGB = pcl::RegionGrowingRGB<pcl::PointXYZRGB>();
+            //segmentationRGRGB.setSearchMethod(tree);
+            //segmentationRGRGB.setDistanceThreshold(1);
+            //segmentationRGRGB.setPointColorThreshold(6);
+            //segmentationRGRGB.setRegionColorThreshold(10);
+            //segmentationRGRGB.setMinClusterSize(600);
+            //segmentationRGRGB.setInputCloud(clusterCloud);
+            //segmentationRGRGB.extract(clusters);
 
-            // this->segmentationRGRGB.setInputCloud(clusterCloud);
-            // this->segmentationRGRGB.extract(clusters);
-*/
+            this->segmentationRGRGB.setInputCloud(clusterCloud);
+            this->segmentationRGRGB.extract(clusters);
+
 //            std::cerr << "after rgbseg" << std::endl;
 //            auto cloud = getColoredCloud(clusterCloud, clusters);
 
@@ -164,17 +159,19 @@ private:
             std::cerr << "PointCloud rgb Segmentation Cluster: " << clusterCloud->width * clusterCloud->height
                       << " data points (" << pcl::getFieldsList(*clusterCloud) << ")." << std::endl;
 #endif
-             int r = rand() % 256, b = rand() % 256, g = rand() % 256; // rng color
-             int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-                            static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
- //
-             for (auto &p : clusterCloud->points)
-                 p.rgb = rgb;
+            //int r = rand() % 256, b = rand() % 256, g = rand() % 256; // rng color
+            //int32_t rgb = (static_cast<uint32_t>(r) << 16 |
+            //               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+//
+            //for (auto &p : clusterCloud->points)
+            //    p.rgb = rgb;
 
             //#pragma omp ordered
             //{
-                
-            *coloredCloud += *clusterCloud; //*getColoredCloud(clusterCloud, clusters);
+            auto cloud = getColoredCloud(clusterCloud, clusters);
+            if (cloud){
+                *coloredCloud += *cloud;
+            }
             //}
         }
 
@@ -188,18 +185,18 @@ public:
         this->n = ros::NodeHandle();
         ros::NodeHandle nh("~");
 
-//        this->searchAlgorithm = pcl::search::Search<pcl::PointXYZRGB>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGB>());
-//        this->segmentationRGRGB = pcl::RegionGrowingRGB<pcl::PointXYZRGB>();
-//        this->segmentationRGRGB.setSearchMethod(this->searchAlgorithm);
-//        this->segmentationRGRGB.setDistanceThreshold(1);
-//        this->segmentationRGRGB.setPointColorThreshold(6);
-//        this->segmentationRGRGB.setRegionColorThreshold(10);
-//        this->segmentationRGRGB.setMinClusterSize(600);
+        this->searchAlgorithm = pcl::search::Search<pcl::PointXYZRGB>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGB>());
+        this->segmentationRGRGB = pcl::RegionGrowingRGB<pcl::PointXYZRGB>();
+        this->segmentationRGRGB.setSearchMethod(this->searchAlgorithm);
+        this->segmentationRGRGB.setDistanceThreshold(1);
+        this->segmentationRGRGB.setPointColorThreshold(6);
+        this->segmentationRGRGB.setRegionColorThreshold(10);
+        this->segmentationRGRGB.setMinClusterSize(600);
 
         this->filterVoxelGrid = pcl::VoxelGrid<pcl::PointXYZRGB>();
         this->filterVoxelGrid.setLeafSize(0.025f, 0.025f, 0.025f);
         this->filterVoxelGrid.setFilterFieldName("z");
-        this->filterVoxelGrid.setFilterLimits(-5.0f, 5.0f);
+        this->filterVoxelGrid.setFilterLimits(-8.0f, 8.0f);
 
         //this->filterVoxelGrid->setMinimumPointsNumberPerVoxel(5); // may not work
 
