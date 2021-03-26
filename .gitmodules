@@ -35,3 +35,6 @@
 [submodule "depends/opencv"]
 	path = depends/opencv
 	url = git@github.com:opencv/opencv.git
+[submodule "depends/opencv_contrib"]
+	path = depends/opencv_contrib
+	url = git@github.com:opencv/opencv_contrib.git
