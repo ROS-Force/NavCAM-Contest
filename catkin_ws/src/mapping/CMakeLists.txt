@@ -1,6 +1,5 @@
-cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
-#set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.2/bin/nvcc")
-project(object_detection)
+cmake_minimum_required(VERSION 3.0.2)
+project(mapping)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,26 +7,10 @@ project(object_detection)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
-  geometry_msgs
-  roscpp
-  rospy
-  sensor_msgs
-  std_msgs
-  pcl_conversions
-  message_generation
-)
+find_package(catkin REQUIRED)
+find_package(octomap REQUIRED)
 
-#find_package(OpenMP REQUIRED)
-find_package(PCL REQUIRED)
-#find_package(CUDA 11.2 REQUIRED)
-find_package(Eigen3 REQUIRED)
-
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
-
+link_libraries(${OCTOMAP_LIBRARIES})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -62,19 +45,12 @@ add_definitions(${PCL_DEFINITIONS})
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-
-
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   BoundingBox.msg
-   BoundingBoxes.msg
-   TrackerBox.msg
-   TrackerBoxes.msg
-   CenterID.msg
-   CenterIDList.msg
-   Object.msg
- )
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -91,13 +67,10 @@ add_definitions(${PCL_DEFINITIONS})
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(DEPENDENCIES geometry_msgs std_msgs)
-
-catkin_package(CATKIN_DEPENDS 
-    message_runtime 
-    geometry_msgs
-    std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -129,10 +102,10 @@ catkin_package(CATKIN_DEPENDS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES object_detection
-  CATKIN_DEPENDS cv_bridge geometry_msgs roscpp rospy sensor_msgs std_msgs pcl_conversions
-  DEPENDS EIGEN3 PCL
+#  INCLUDE_DIRS include
+#  LIBRARIES mapping
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
 )
 
 ###########
@@ -142,15 +115,14 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
-  ${catkin_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
+# include
+# ${catkin_INCLUDE_DIRS}
+${OCTOMAP_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/object_detection.cpp
+#   src/${PROJECT_NAME}/mapping.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -161,19 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
-
-add_executable (rgb_seg src/rgb_seg.cpp)
-target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-
-add_executable (yolo_rgbseg src/yolo_rgbseg.cpp)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(yolo_rgbseg PUBLIC ${catkin_LIBRARIES} ${PCL_LIBRARIES} OpenMP::OpenMP_CXX)
-else()
-    target_link_libraries (yolo_rgbseg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-endif()
-
-add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_executable(${PROJECT_NAME}_node src/mapping_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -188,7 +148,7 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
-#)
+# )
 
 #############
 ## Install ##
@@ -199,18 +159,16 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
- catkin_install_python(PROGRAMS
-   script/yolo_detection.py
-   script/sort_tracking.py
-   include/sort/sort.py
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# catkin_install_python(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-#install(TARGETS cluster_extraction
+# install(TARGETS ${PROJECT_NAME}_node
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
+# )
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
@@ -239,7 +197,7 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_object_detection.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_mapping.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

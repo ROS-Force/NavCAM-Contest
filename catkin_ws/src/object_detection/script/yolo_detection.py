@@ -9,9 +9,11 @@ import ctypes
 
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes
 import rospkg
+from geometry_msgs.msg import Vector3
+import pyrealsense2 as rs2
 
 class Yolo_Detection():
 
@@ -32,6 +34,10 @@ class Yolo_Detection():
         self.crop = rospy.get_param("~model_crop", False)                   #Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
         self.CONFIDENCE_THRESHOLD = rospy.get_param("~conf_threshold", 0.3) #A threshold used to filter boxes by confidences.
         self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4)         #A threshold used in non maximum suppression. 
+
+        self.cv_image_depth = None
+        self.cv_image = None
+        self.intrinsics = None
 
         cuda = True
 
@@ -81,11 +87,12 @@ class Yolo_Detection():
 
         #Subscriber
         self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
+        self.sub_info = rospy.Subscriber("camera_info", CameraInfo, self.imageDepthInfoCallback)
+        self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
 
         #Publisher
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         self.pub_bbox = rospy.Publisher("bounding_boxes", BoundingBoxes, queue_size=10)
-        #self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
     
     def imageCallback(self, data): #Function that runs when an image arrives
         try:
@@ -109,6 +116,38 @@ class Yolo_Detection():
             print(e)
             return
 
+    def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
+        try:
+            self.data_encoding_depth = data.encoding
+            self.cv_image_depth = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+
+        except CvBridgeError as e:
+            print(e)
+            return
+        except ValueError as e:
+            print(e)
+            return
+
+
+    def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
+        try:
+            if self.intrinsics:
+                return
+            self.intrinsics = rs2.intrinsics()
+            self.intrinsics.width = cameraInfo.width
+            self.intrinsics.height = cameraInfo.height
+            self.intrinsics.ppx = cameraInfo.K[2]
+            self.intrinsics.ppy = cameraInfo.K[5]
+            self.intrinsics.fx = cameraInfo.K[0]
+            self.intrinsics.fy = cameraInfo.K[4]
+            if cameraInfo.distortion_model == 'plumb_bob':
+                self.intrinsics.model = rs2.distortion.brown_conrady
+            elif cameraInfo.distortion_model == 'equidistant':
+                self.intrinsics.model = rs2.distortion.kannala_brandt4
+            self.intrinsics.coeffs = [i for i in cameraInfo.D]
+        except CvBridgeError as e:
+            print(e)
+            return
 
     def draw_labels(self, boxes, classes, scores, img, header): 
         font = cv2.FONT_HERSHEY_PLAIN
@@ -132,6 +171,14 @@ class Yolo_Detection():
             bbox.ymin = box[1]
             bbox.xmax = box[2]
             bbox.ymax = box[3]
+            
+            bbox.topleft = self.computeRealCoor(box[0], box[1])
+
+            bbox.topleft.z = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2], self.cv_image_depth[(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2])[2]*(10**-3)
+            
+            bbox.bottomright = self.computeRealCoor(box[2], box[3])
+            bbox.bottomright.z = bbox.topleft.z 
+
             bbox.score = float(score)
             bbox.id = int(classid)
             bbox.Class = self.classes[classid[0]]
@@ -142,9 +189,30 @@ class Yolo_Detection():
         bboxes.header = header
         bboxes.bounding_boxes = list_tmp
 
-        self.pub_bbox.publish(bboxes) # Publish the list of Bounding Boxes
+        if len(list_tmp) != 0:
+            self.pub_bbox.publish(bboxes) # Publish the list of Bounding Boxes
+        
         return img
 
+    def computeRealCoor(self, x, y):
+        
+        coor = Vector3()
+        
+        if(x == 640):
+            x = 639
+        if(y == 480):
+            y = 479
+
+        pix = [x, y] #Coordinates of the central point (in pixeis)
+        depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
+        result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+
+        #Create a vector with the coordinates, in meters
+        coor.x = result[0]*10**(-3)
+        coor.y = result[1]*10**(-3)
+        coor.z = result[2]*10**(-3)
+
+        return coor
 
 
 def main():
