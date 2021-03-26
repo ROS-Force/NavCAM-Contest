@@ -3,8 +3,8 @@
     <arg name="camera" default="camera" />
 
     <node pkg="rviz" type="rviz" name="rviz" />
-    <include file="$(find realsense_tools)/launch/rs_camera.launch" />
-
+    <!--<include file="$(find realsense_tools)/launch/rs_camera.launch" />
+    -->
     <node pkg="object_detection" type="yolo_detection.py" name="Yolo" output="screen">
 
         <remap from="image" to="/camera/color/image_raw" />
@@ -13,7 +13,7 @@
         <remap from="camera_info" to="/camera/aligned_depth_to_color/camera_info" />
         <remap from="depth_image" to="/camera/aligned_depth_to_color/image_raw" />
 
-        <param name="yolo_model" value="yolov4" />
+        <param name="yolo_model" value="yolov3" />
         <param name="model_scale" value="0.00392" />
         <param name="conf_threshold" value="0.3" />
         <param name="nms_threshold" value="0.4" />

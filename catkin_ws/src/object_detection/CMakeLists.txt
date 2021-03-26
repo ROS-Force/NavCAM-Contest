@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+#find_package(OpenMP REQUIRED)
 find_package(PCL REQUIRED)
 #find_package(CUDA 11.2 REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -166,8 +167,13 @@ add_executable (rgb_seg src/rgb_seg.cpp)
 target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable (yolo_rgbseg src/yolo_rgbseg.cpp)
-target_link_libraries (yolo_rgbseg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(yolo_rgbseg PUBLIC ${catkin_LIBRARIES} ${PCL_LIBRARIES} OpenMP::OpenMP_CXX)
+else()
+    target_link_libraries (yolo_rgbseg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+endif()
 
+add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -10,7 +10,6 @@ import ctypes
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from object_msgs.msg import Object
 from object_detection.msg import BoundingBox, BoundingBoxes
 import rospkg
 from geometry_msgs.msg import Vector3
@@ -172,8 +171,14 @@ class Yolo_Detection():
             bbox.ymin = box[1]
             bbox.xmax = box[2]
             bbox.ymax = box[3]
+            
             bbox.topleft = self.computeRealCoor(box[0], box[1])
+
+            bbox.topleft.z = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2], self.cv_image_depth[(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2])[2]*(10**-3)
+            
             bbox.bottomright = self.computeRealCoor(box[2], box[3])
+            bbox.bottomright.z = bbox.topleft.z 
+
             bbox.score = float(score)
             bbox.id = int(classid)
             bbox.Class = self.classes[classid[0]]
