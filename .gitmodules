@@ -32,3 +32,6 @@
 	path = catkin_ws/src/packagedeps/scan_tools
 	url = git@github.com:ccny-ros-pkg/scan_tools.git
 	branch = ros1
+[submodule "depends/opencv"]
+	path = depends/opencv
+	url = git@github.com:opencv/opencv.git
