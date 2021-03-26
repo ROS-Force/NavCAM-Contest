@@ -1,8 +1,8 @@
 <launch>
-  <arg name="output" default="screen" />
-  <arg name="fisheye_width" default="640" />
-  <arg name="fisheye_height" default="480" />
-  <arg name="enable_fisheye" default="false" />
+    <arg name="output"                    default="screen"/>
+    <arg name="fisheye_width"             default="640"/>
+    <arg name="fisheye_height"            default="480"/>
+    <arg name="enable_fisheye"            default="false"/>
 
   <arg name="depth_width" default="640" />
   <arg name="depth_height" default="480" />

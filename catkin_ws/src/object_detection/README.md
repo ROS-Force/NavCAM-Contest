@@ -1,4 +1,4 @@
-# Object Detection Sub-Package
+# Object Detection
 
 This sub-package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort),[SORT paper](https://arxiv.org/abs/1602.00763).
 
@@ -89,7 +89,7 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
 #### Parameters:
 
-- **`blue_humans`**
+- **`blur_humans`**
 
   The option to blur the detected humans.
 
