@@ -44,11 +44,11 @@ class identify_irregularity():
 
 		while not rospy.is_shutdown():
 
-			#tempo de calibração
+			#Calibration Time
 			if(inclination_identifier==1):
 				i1=0
 				i2=0
-				rospy.loginfo("Recalibrando")
+				rospy.loginfo("Recalibrating...")
 
 				while(i1<frequency*0.75):
 
@@ -82,7 +82,7 @@ class identify_irregularity():
 
 				if(self.y>(acel_med+2*standart_dev) or self.y<(acel_med-2*standart_dev)):
 
-					rospy.loginfo("Foi encontrada uma intabilidade do terreno ou mudança de inclinação")
+					rospy.loginfo("It was detected a terrain intolerence or a change in slope")
 
 					inclination_identifier=1
 

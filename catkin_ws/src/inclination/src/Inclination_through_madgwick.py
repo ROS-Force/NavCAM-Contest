@@ -30,7 +30,7 @@ class orientation():
 		
 		#gyro_subscriber=rospy.Subscriber("/camera/gyro/sample", Imu, self.gyroCallback)
 
-		#para subescrever a este tópico é necessário usar o filtro magwick, o que inclui ter ambos o tópico de giroscopio e aceleração unidos no momento da gravação
+		#to subscribe to this topic you must use the magwick filter. So both accel and gyro topics must be united
 		angles_subscriber=rospy.Subscriber("/imu/data", Imu, self.anglesCallback)
 		
 	def anglesCallback(self,angles_message):
@@ -59,7 +59,7 @@ class orientation():
 		psi2=(psi2*180)/(math.pi)
 		#psi3=psi-psi2
 
-		rospy.loginfo("Rotação em torno de y=%s de z=%s de x=%s degrees"%(theta,phi,psi2))
+		rospy.loginfo("Rotation around y=%s de z=%s de x=%s degrees"%(theta,phi,psi2))
 
 		
 	def acelCallback(self,accel_message):
@@ -71,7 +71,7 @@ class orientation():
 		self.z_accel=accel_message.linear_acceleration.z
 
 
-		##rospy.loginfo("sequência= %s"%(self.header))
+		##rospy.loginfo("sequency= %s"%(self.header))
 
 	def gyroCallback(self,velocity_message):
 		
@@ -82,7 +82,7 @@ class orientation():
 		self.z_gyro=velocity_message.angular_velocity.z
 
 
-		##rospy.loginfo("sequência= %s"%(self.header))
+		##rospy.loginfo("sequency= %s"%(self.header))
 
 
 def main():

@@ -45,7 +45,7 @@ class orientation():
 		indicator=0;
 		while not rospy.is_shutdown():
 
-			#tempo de calibração
+			#Calibration Time
 			while(i<frequency*1.2):
 
 				while (self.y==0 and self.y==self.x):
@@ -64,8 +64,8 @@ class orientation():
 
 			while(indicator==0):
 
-				rospy.loginfo("Acelera gravitica média é x=%s m/s²"%(acel_grav_ref))
-				#calculo do angulo inicial
+				rospy.loginfo("Mean gravity acceleration: x=%s m/s²"%(acel_grav_ref))
+				#Compute initial angle
 				if(abs(self.x)<acel_grav_ref and abs(self.y)<acel_grav_ref and abs(self.z)<acel_grav_ref):
 
 						self.angulo_x=math.acos(self.x/acel_grav_ref)
@@ -78,7 +78,8 @@ class orientation():
 
 						indicator=1
 			self.rate.sleep()
-			#calculo da variação angulo seguinte
+			
+			#Compute next angle variation
 			self.angulo_z=self.angulo_x+self.x_gyro*frequency**(-1)
 
 			self.angulo_y=self.angulo_y+self.y_gyro*frequency**(-1)
@@ -93,9 +94,9 @@ class orientation():
 			self.rate.sleep()
 
 				#else:
-				#	rospy.loginfo("Terminado-->dispositivo em movimento")
+				#	rospy.loginfo("Terminated--> device is moving")
 				#	break
-			rospy.loginfo("Inclinação em x=%s em y=%s em z=%s rad"%(self.angulo_x_graus,self.angulo_y_graus,self.angulo_z_graus))
+			rospy.loginfo("Inclination in x=%s em y=%s em z=%s rad"%(self.angulo_x_graus,self.angulo_y_graus,self.angulo_z_graus))
 
 
 
@@ -113,7 +114,7 @@ class orientation():
 		self.z=accel_message.linear_acceleration.z
 
 
-		##rospy.loginfo("sequência= %s"%(self.header))
+		##rospy.loginfo("sequency= %s"%(self.header))
 
 	def gyroCallback(self,velocity_message):
 		
@@ -124,7 +125,7 @@ class orientation():
 		self.z_gyro=velocity_message.angular_velocity.z
 
 
-		##rospy.loginfo("sequência= %s"%(self.header))
+		##rospy.loginfo("sequency= %s"%(self.header))
 
 
 def main():
