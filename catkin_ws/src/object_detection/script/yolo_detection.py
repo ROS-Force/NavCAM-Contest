@@ -22,18 +22,18 @@ class Yolo_Detection():
         #Initialize variables
         self.bridge = CvBridge()
 
-        self.YOLO_MODEL = rospy.get_param("~yolo_model", "yolov4")
-        self.YOLO_LIGHT_MODEL = rospy.get_param("~yolo_light_model", "yolov3-tiny")
+        self.YOLO_MODEL = rospy.get_param("~yolo/model", "yolov4")
+        self.YOLO_LIGHT_MODEL = rospy.get_param("~yolo/light_model", "yolov3-tiny")
         self.output_rgb = rospy.get_param("~show_output", True)
 
-        #Model Variables
-        self.size = rospy.get_param("~model_size", (320, 320))              #New input size.
-        self.mean = rospy.get_param("~model_mean", (0, 0, 0))               #Scalar with mean values which are subtracted from channels.
-        self.scale = rospy.get_param("~model_scale", 0.00392)               #Multiplier for frame values. 
-        self.swapRB = rospy.get_param("~model_swapRGB", True)               #Flag which indicates that swap first and last channels.
-        self.crop = rospy.get_param("~model_crop", False)                   #Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
-        self.CONFIDENCE_THRESHOLD = rospy.get_param("~conf_threshold", 0.3) #A threshold used to filter boxes by confidences.
-        self.NMS_THRESHOLD = rospy.get_param("~nms_threshold", 0.4)         #A threshold used in non maximum suppression. 
+        #Yolo model Variables
+        self.size = rospy.get_param("~yolo/input_size", (320, 320))              #New input size.
+        self.mean = rospy.get_param("~yolo/model_mean", (0, 0, 0))               #Scalar with mean values which are subtracted from channels.
+        self.scale = rospy.get_param("~yolo/model_scale", 0.00392)               #Multiplier for frame values. 
+        self.swapRB = rospy.get_param("~yolo/model_swapRGB", True)               #Flag which indicates that swap first and last channels.
+        self.crop = rospy.get_param("~yolo/model_crop", False)                   #Flag which indicates whether image will be cropped after resize or not. blob(n, c, y, x) = scale * resize( frame(y, x, c) ) - mean(c) )
+        self.CONFIDENCE_THRESHOLD = rospy.get_param("~yolo/conf_threshold", 0.3) #A threshold used to filter boxes by confidences.
+        self.NMS_THRESHOLD = rospy.get_param("~yolo/nms_threshold", 0.4)         #A threshold used in non maximum suppression. 
 
         self.cv_image_depth = None
         self.cv_image = None

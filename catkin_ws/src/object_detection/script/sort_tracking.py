@@ -21,11 +21,10 @@ class Sort_tracking():
 
 
         #Initialize variables
-        #self.method = rospy.get_param("~method", "yolo")
-        self.IoU_THRESHOLD = rospy.get_param("~sort_threshold", 0.1) #Minimum IOU for match
-        self.MIN_HITS = rospy.get_param("~min_hits", 3) #Minimum number of associated detections before track is initialised
-        self.MAX_AGE = rospy.get_param("~max_age", 20) #Maximum number of frames to keep alive a track without associated detections.
-        self.BLUR_HUMANS = rospy.get_param("~blur_humans", True)
+        self.IoU_THRESHOLD = rospy.get_param("~sort/threshold", 0.1) #Minimum IOU for match
+        self.MIN_HITS = rospy.get_param("~sort/min_hits", 3) #Minimum number of associated detections before track is initialised
+        self.MAX_AGE = rospy.get_param("~sort/max_age", 20) #Maximum number of frames to keep alive a track without associated detections.
+        self.BLUR_HUMANS = rospy.get_param("~blur_humans", False)
         self.DRAW_SPEED = rospy.get_param("~draw_speed", False)
 
 
