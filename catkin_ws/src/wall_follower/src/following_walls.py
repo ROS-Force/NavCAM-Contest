@@ -33,6 +33,11 @@ class following_walls():
         self.intrinsics = None
         self.check_resolution=True
 
+        self.left_squadron_limit=0
+        self.rigth_squadron_limit=0
+        self.top_limit=0
+        self.bottom_limit=0
+
 
         self.bridge = CvBridge()
         self.rate = rospy.Rate(10)
@@ -41,16 +46,17 @@ class following_walls():
         target_distance=1000
 
         #self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
+        self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
 
         self.sub_depth = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
 
-        self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
+        
 
         while not rospy.is_shutdown():
 
             #left_side_distance
             i1=self.top_limit
-            j1=0
+            j1=00
             x_left=[]
 
             while (i1<=self.bottom_limit):
@@ -87,15 +93,20 @@ class following_walls():
 
             if(wall_in_the_right):
 
+                rospy.loginfo("Distance to the right= %f " %(distance_right))
+
                 if(distance_right<=target_distance):
 
-                    #take action
+                        rospy.loginfo("To close")
+
             
             else:
                 
-                 if(distance_left<=target_distance):
+                rospy.loginfo("Distance to the left= %f " %(distance_left))
 
-                    #take action
+                if(distance_left<=target_distance):
+
+                    rospy.loginfo("To close")
 
 
 
@@ -149,45 +160,46 @@ class following_walls():
                           
                 self.check_resolution=False
 
-                except CvBridgeError as e:
-                    print(e)
-                    return
-                except ValueError as e:
-                    print(e)
-                    return
+        except CvBridgeError as e:
+            print(e)
+            return
+        except ValueError as e:
+            print(e)
+            return
 
-        def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
-            try:
-                if self.intrinsics:
-                    return
-                self.intrinsics = rs2.intrinsics()
-                self.intrinsics.width = cameraInfo.width
-                self.intrinsics.height = cameraInfo.height
-                self.intrinsics.ppx = cameraInfo.K[2]
-                self.intrinsics.ppy = cameraInfo.K[5]
-                self.intrinsics.fx = cameraInfo.K[0]
-                self.intrinsics.fy = cameraInfo.K[4]
-                if cameraInfo.distortion_model == 'plumb_bob':
-                    self.intrinsics.model = rs2.distortion.brown_conrady
-                elif cameraInfo.distortion_model == 'equidistant':
-                    self.intrinsics.model = rs2.distortion.kannala_brandt4
-                self.intrinsics.coeffs = [i for i in cameraInfo.D]
-            except CvBridgeError as e:
-                print(e)
+    def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
+        try:
+            if self.intrinsics:
                 return
+            self.intrinsics = rs2.intrinsics()
+            self.intrinsics.width = cameraInfo.width
+            self.intrinsics.height = cameraInfo.height
+            self.intrinsics.ppx = cameraInfo.K[2]
+            self.intrinsics.ppy = cameraInfo.K[5]
+            self.intrinsics.fx = cameraInfo.K[0]
+            self.intrinsics.fy = cameraInfo.K[4]
+            if cameraInfo.distortion_model == 'plumb_bob':
+                self.intrinsics.model = rs2.distortion.brown_conrady
+            elif cameraInfo.distortion_model == 'equidistant':
+                self.intrinsics.model = rs2.distortion.kannala_brandt4
+            self.intrinsics.coeffs = [i for i in cameraInfo.D]
 
-        def computeRealCenter(self, tracker):
-            
-            center = Vector3()
+        except CvBridgeError as e:
+            print(e)
+            return
 
-            pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
-            depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
-            depthresult = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+    def computeRealCenter(self, tracker):
+        
+        center = Vector3()
 
-            #Create a vector with the coordinates, in meters
-            center.x = result[0]*10**(-3)
-            center.y = result[1]*10**(-3)
-            center.z = result[2]*10**(-3)
+        pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
+        depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
+        depthresult = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+
+        #Create a vector with the coordinates, in meters
+        center.x = result[0]*10**(-3)
+        center.y = result[1]*10**(-3)
+        center.z = result[2]*10**(-3)
 
         return center
 
