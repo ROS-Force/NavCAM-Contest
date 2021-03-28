@@ -32,7 +32,7 @@ class following_walls():
         self.cv_image = None
         self.intrinsics = None
         self.check_resolution=True
-
+        self.start=0;
         self.left_squadron_limit=0
         self.rigth_squadron_limit=0
         self.top_limit=0
@@ -44,84 +44,133 @@ class following_walls():
 
         wall_in_the_right=True
         target_distance=1000
+        wall_found=0
 
-        #self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
         self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
 
         self.sub_depth = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
-
+        
         
 
         while not rospy.is_shutdown():
 
-            #left_side_distance
-            i1=self.top_limit
-            j1=00
-            x_left=[]
+            if(self.start==1):
 
-            while (i1<=self.bottom_limit):
-                while (j1<=self.left_squadron_limit):
+                if(wall_found==0):
+                    i1=self.top_limit
+                    j1=0
+                    x_left=[]
 
-                    depth = self.cv_image_depth[pix[i1], pix[j1]] #Depth of the central pixel
-                    result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[i1], pix[j1]], depth) # Real coordenates, in mm, of the central pixel
+                    while (i1<=self.bottom_limit):
+                        while (j1<=self.left_squadron_limit):
 
-                    #Create a vector with the coordinates, in meters
-                    x_left.append(result[0])
-                    j1=j1+1
+                            depth = self.cv_image_depth[i1,j1] #Depth of the central pixel
+                            result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i1, j1], depth) # Real coordenates, in mm, of the central pixel
 
-                i1=i1+1
+                            #Create a vector with the coordinates, in meters
+                            x_left.append(result[0])
+                            j1=j1+1
 
-            distance_left=sum(x_left)/len(x_left)
+                        i1=i1+1
 
-            i2=self.top_limit
-            j2=self.rigth_squadron_limit
-            x_right=[]
-            
-            while (i2<=self.bottom_limit):
-                while (j2<=self.pixel_width):
+                    distance_left=-(sum(x_left)/len(x_left))*10**(-3)
 
-                    depth = self.cv_image_depth[pix[i2], pix[j2]] #Depth of the central pixel
-                    result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[i2], pix[j2]], depth) # Real coordenates, in mm, of the central pixel
+                    i2=self.top_limit
+                    j2=self.rigth_squadron_limit
+                    x_right=[]
+                    
+                    while (i2<=self.bottom_limit):
+                        while (j2<=(self.pixel_width-1)):
 
-                    #Create a vector with the coordinates, in meters
-                    x_right.append(result[0])
-                    j2=j2+1
+                            depth = self.cv_image_depth[i2,j2] #Depth of the central pixel
+                            result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i2, j2], depth) # Real coordenates, in mm, of the central pixel
 
-                i2=i2+1
+                            #Create a vector with the coordinates, in meters
+                            x_right.append(result[0])
+                            j2=j2+1
 
-            distance_right=sum(x_right)/len(x_right)
+                        i2=i2+1
 
-            if(wall_in_the_right):
+                    distance_right=-(sum(x_right)/len(x_right))*10**(-3)
 
-                rospy.loginfo("Distance to the right= %f " %(distance_right))
+                    if(distance_left<target_distance):
+                        wall_in_the_right=False
+                        wall_found=1
+                    elif(distance_right<target_distance):
+                        wall_in_the_right=True
+                        wall_found=1
 
-                if(distance_right<=target_distance):
+                else:
 
-                        rospy.loginfo("To close")
+                    if(wall_in_the_right):
+                        
+                        i2=self.top_limit
+                        j2=self.rigth_squadron_limit
+                        x_right=[]
 
-            
-            else:
-                
-                rospy.loginfo("Distance to the left= %f " %(distance_left))
+                        while (i2<=self.bottom_limit):
 
-                if(distance_left<=target_distance):
+                            while (j2<=(self.pixel_width-1)):
 
-                    rospy.loginfo("To close")
+                                depth = self.cv_image_depth[i2,j2] #Depth of the central pixel
+                                result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i2, j2], depth) # Real coordenates, in mm, of the central pixel
+
+                                #Create a vector with the coordinates, in meters
+                                x_right.append(result[0])
+                                j2=j2+1
+
+                            i2=i2+1
+
+                        distance_right=-(sum(x_right)/len(x_right))*10**(-3)
+                        
+                        rospy.loginfo("Distance to the right= %f " %(distance_right))
+
+                        if(distance_right<=target_distance):
+
+                                rospy.loginfo("To close")
+
+                    
+                    else:
+                        
+                        i1=self.top_limit
+                        j1=0
+                        x_left=[]
+
+                        while (i1<=self.bottom_limit):
+
+                            while (j1<=self.left_squadron_limit):
+
+                                depth = self.cv_image_depth[i1,j1] #Depth of the central pixel
+                                result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i1, j1], depth) # Real coordenates, in mm, of the central pixel
+
+                                #Create a vector with the coordinates, in meters
+                                x_left.append(result[0])
+                                j1=j1+1
+
+                            i1=i1+1
+
+                        distance_left=-(sum(x_left)/len(x_left))*10**(-3)
+
+                        rospy.loginfo("Distance to the left= %f " %(distance_left))
+
+                        if(distance_left<=target_distance):
+
+                            rospy.loginfo("To close")
 
 
 
-            self.rate.sleep()
+                self.rate.sleep()
 
 
     def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
         try:
+            
             self.data_encoding_depth = data.encoding
             self.cv_image_depth = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
 
             self.pixel_height=data.height
             self.pixel_width=data.width
-            rospy.loginfo(self.cv_image_depth[0,0])
-            rospy.loginfo(self.cv_image_depth)
+            #rospy.loginfo(self.cv_image_depth[0,0])
             
             if(self.check_resolution):
 
@@ -159,6 +208,7 @@ class following_walls():
                 #self.angle_height=90-(self.angle_height/2)
                           
                 self.check_resolution=False
+                self.start=1
 
         except CvBridgeError as e:
             print(e)
@@ -187,24 +237,7 @@ class following_walls():
         except CvBridgeError as e:
             print(e)
             return
-
-    def computeRealCenter(self, tracker):
-        
-        center = Vector3()
-
-        pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
-        depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
-        depthresult = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
-
-        #Create a vector with the coordinates, in meters
-        center.x = result[0]*10**(-3)
-        center.y = result[1]*10**(-3)
-        center.z = result[2]*10**(-3)
-
-        return center
-
-
-        
+     
 
 def main():
 
