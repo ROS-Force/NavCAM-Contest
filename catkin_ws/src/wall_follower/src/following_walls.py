@@ -61,16 +61,16 @@ class following_walls():
                 #until we find a wall we will be looking to measure distances in both sides of the camera
                 if(wall_found==0):
                    
-                    distance_right=right_side_measurement()
+                    self.right_side_measurement()
 
-                    left_side_measurement=left_side_measurement()
+                    self.left_side_measurement()
 
-                    rospy.loginfo("Right side distance = %s Left side distance = %s" %(distance_right,distance_left))
+                    rospy.loginfo("Right side distance = %s Left side distance = %s" %(self.distance_right,self.distance_left))
 
-                    if(distance_left<target_distance):
+                    if(self.distance_left<target_distance):
                         wall_in_the_right=False
                         wall_found=1
-                    elif(distance_right<target_distance):
+                    elif(self.distance_right<target_distance):
                         wall_in_the_right=True
                         wall_found=1
 
@@ -78,22 +78,22 @@ class following_walls():
 
                     if(wall_in_the_right):
                         
-                        distance_right=right_side_measurement()
+                        self.right_side_measurement()
                         
-                        rospy.loginfo("Distance to the right= %f m" %(distance_right))
+                        rospy.loginfo("Distance to the right= %f m" %(self.distance_right))
 
-                        if(distance_right<=target_distance):
+                        if(self.distance_right<=target_distance):
 
                                 rospy.loginfo("To close")
 
                     
                     else:
                         
-                        distance_left=left_side_measurement()
+                        self.distance_left=self.left_side_measurement()
 
                         rospy.loginfo("Distance to the left= %f m" %(distance_left))
 
-                        if(distance_left<=target_distance):
+                        if(self.distance_left<=target_distance):
 
                             rospy.loginfo("To close")
 
@@ -185,9 +185,9 @@ class following_walls():
 
             i1=i1+1
 
-        distance_left=-(sum(x_left)/len(x_left))*10**(-3)
+        self.distance_left=-(sum(x_left)/len(x_left))*10**(-3)
         
-        return distance_left
+
     
     def right_side_measurement(self):
         i2=self.top_limit
@@ -206,10 +206,9 @@ class following_walls():
 
             i2=i2+1
 
-        distance_right=-(sum(x_right)/len(x_right))*10**(-3)
+        self.distance_right=-(sum(x_right)/len(x_right))*10**(-3)
 
-        return distance_right
-        
+
      
 
 def main():

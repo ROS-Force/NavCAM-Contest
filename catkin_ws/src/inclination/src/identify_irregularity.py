@@ -81,7 +81,7 @@ class identify_irregularity():
 				#check if theres any sudden variation in the vertical acelaration, that is 2 times over the standart deviation values calculated on calibration
 				if(self.y>(acel_med+2*standart_dev) or self.y<(acel_med-2*standart_dev)):
 
-					rospy.loginfo("A instability or sudden change of inclination was found!")
+					rospy.loginfo("A instability or a sudden change of inclination was found!")
 
 					inclination_identifier=1
 
