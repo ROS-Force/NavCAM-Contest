@@ -1,0 +1,43 @@
+<launch>
+
+    <arg name="camera" default="camera" />
+
+    <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch">
+
+        <arg name="pcap" value="$(find velodyne_pointcloud)/Files/Test4.pcap" />
+
+    </include>
+
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.0 0.0 0.0 0.0 0.0 0.0 velodyne laser 40" />
+
+    <node pkg="rviz" type="rviz" name="rviz" />
+
+    <node pkg="laser_scan_matcher" type="laser_scan_matcher_node" name="laser_scan_matcher_node" output="screen">
+        <param name="fixed_frame" value="odom" />
+        <param name="use_alpha_beta" value="true" />
+        <param name="max_iterations" value="10" />
+        <param name="base_frame" value="velodyne" />
+        <param name="use_cloud_input" value="false" />
+    </node>
+
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
+        <param name="map_update_interval" value="1.0" />
+        <param name="delta" value="0.02" />
+        <param name="base_frame" value="velodyne" />
+    </node>
+
+    <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+        <param name="resolution" value="0.05" />
+
+        <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
+        <param name="frame_id" type="string" value="map" />
+
+        <!-- maximum range to integrate (speedup!) 
+		<param name="sensor_model/max_range" value="5.0" />-->
+
+        <!-- data source to integrate (PointCloud2) -->
+        <remap from="cloud_in" to="velodyne_points" />
+
+    </node>
+
+</launch>
