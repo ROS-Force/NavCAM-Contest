@@ -32,169 +32,184 @@ class following_walls():
         self.cv_image = None
         self.intrinsics = None
         self.check_resolution=True
+        self.start=0;
+        self.left_squadron_limit=0
+        self.rigth_squadron_limit=0
+        self.top_limit=0
+        self.bottom_limit=0
 
 
         self.bridge = CvBridge()
         self.rate = rospy.Rate(10)
 
         wall_in_the_right=True
-        target_distance=1000
+        target_distance=0
+        wall_found=0
 
-        #self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
-
-        #self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
+        #Topic subscribers
+        self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
 
         self.sub_depth = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
-
-        self.sub_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
+        
+        
 
         while not rospy.is_shutdown():
 
-            #left_side_distance
-            i1=self.top_limit
-            j1=0
-            x_left=[]
+            #after the first topic as processed
+            if(self.check_resolution==False):
 
-            while (i1<=self.bottom_limit):
-                while (j1<=self.left_squadron_limit):
+                #until we find a wall we will be looking to measure distances in both sides of the camera
+                if(wall_found==0):
+                   
+                    self.right_side_measurement()
 
-                    depth = self.cv_image_depth[pix[i1], pix[j1]] #Depth of the central pixel
-                    result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[i1], pix[j1]], depth) # Real coordenates, in mm, of the central pixel
+                    self.left_side_measurement()
 
-                    #Create a vector with the coordinates, in meters
-                    x_left.append(result[0])
-                    j1=j1+1
+                    rospy.loginfo("Right side distance = %s Left side distance = %s" %(self.distance_right,self.distance_left))
 
-                i1=i1+1
+                    if(self.distance_left<target_distance):
+                        wall_in_the_right=False
+                        wall_found=1
+                    elif(self.distance_right<target_distance):
+                        wall_in_the_right=True
+                        wall_found=1
 
-            distance_left=sum(x_left)/len(x_left)
+                else:
 
-            i2=self.top_limit
-            j2=self.rigth_squadron_limit
-            x_right=[]
-            
-            while (i2<=self.bottom_limit):
-                while (j2<=self.pixel_width):
+                    if(wall_in_the_right):
+                        
+                        self.right_side_measurement()
+                        
+                        rospy.loginfo("Distance to the right= %f m" %(self.distance_right))
 
-                    depth = self.cv_image_depth[pix[i2], pix[j2]] #Depth of the central pixel
-                    result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[i2], pix[j2]], depth) # Real coordenates, in mm, of the central pixel
+                        if(self.distance_right<=target_distance):
 
-                    #Create a vector with the coordinates, in meters
-                    x_right.append(result[0])
-                    j2=j2+1
+                                rospy.loginfo("To close")
 
-                i2=i2+1
+                    
+                    else:
+                        
+                        self.distance_left=self.left_side_measurement()
 
-            distance_right=sum(x_right)/len(x_right)
+                        rospy.loginfo("Distance to the left= %f m" %(distance_left))
 
-            if(wall_in_the_right):
+                        if(self.distance_left<=target_distance):
 
-                if(distance_right<=target_distance):
-
-                    #take action
-            
-            else:
-                
-                 if(distance_left<=target_distance):
-
-                    #take action
+                            rospy.loginfo("To close")
 
 
 
-            self.rate.sleep()
+                self.rate.sleep()
 
 
     def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
         try:
+            
             self.data_encoding_depth = data.encoding
             self.cv_image_depth = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
 
             self.pixel_height=data.height
             self.pixel_width=data.width
-            rospy.loginfo(self.cv_image_depth[0,0])
-            rospy.loginfo(self.cv_image_depth)
-            
+
+            #check what kind of image resolution we are working with 
             if(self.check_resolution):
 
                 if((self.pixel_width/self.pixel_height)==(4/3)):
 
-                    self.angle_horizontal=75
-                    self.angle_height=62
-                    self.angle_diagonal=89
-
-
                     self.left_squadron=self.pixel_width/8
                     self.rigth_squadron=7*self.pixel_width/8
-                    self.top_limit=self.pixel_height/6
-                    self.bottom_limit=5*self.pixel_height/6
+                    self.top_limit=2*self.pixel_height/6
+                    self.bottom_limit=4*self.pixel_height/6
 
                     rospy.loginfo("Low Resolution")
 
                 else:
-
-                    self.angle_horizontal=87
-                    self.angle_height=58
-                    self.angle_diagonal=95
+                    
+                    self.left_squadron=self.pixel_width/32
+                    self.rigth_squadron=31*self.pixel_width/32
+                    self.top_limit=8*self.pixel_height/18
+                    self.bottom_limit=10*self.pixel_height/18
 
                     rospy.loginfo("High Resolution")
 
-                #self.pixel_angle_horizontal_incrementation=self.angle_horizontal/self.pixel_width
-                #self.pixel_angle_height_incrementation=self.angle_height/self.pixel_height
 
                 self.left_squadron_limit=int(self.left_squadron)
                 self.rigth_squadron_limit=int(self.rigth_squadron)
                 self.top_limit=int(self.top_limit)    
                 self.bottom_limit=int(self.bottom_limit)
-                
-                #self.angle_horizontal=90-(self.angle_horizontal/2)
-                #self.angle_height=90-(self.angle_height/2)
                           
                 self.check_resolution=False
 
-                except CvBridgeError as e:
-                    print(e)
-                    return
-                except ValueError as e:
-                    print(e)
-                    return
+        except CvBridgeError as e:
+            print(e)
+            return
+        except ValueError as e:
+            print(e)
+            return
 
-        def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
-            try:
-                if self.intrinsics:
-                    return
-                self.intrinsics = rs2.intrinsics()
-                self.intrinsics.width = cameraInfo.width
-                self.intrinsics.height = cameraInfo.height
-                self.intrinsics.ppx = cameraInfo.K[2]
-                self.intrinsics.ppy = cameraInfo.K[5]
-                self.intrinsics.fx = cameraInfo.K[0]
-                self.intrinsics.fy = cameraInfo.K[4]
-                if cameraInfo.distortion_model == 'plumb_bob':
-                    self.intrinsics.model = rs2.distortion.brown_conrady
-                elif cameraInfo.distortion_model == 'equidistant':
-                    self.intrinsics.model = rs2.distortion.kannala_brandt4
-                self.intrinsics.coeffs = [i for i in cameraInfo.D]
-            except CvBridgeError as e:
-                print(e)
+    def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
+        try:
+            if self.intrinsics:
                 return
+            self.intrinsics = rs2.intrinsics()
+            self.intrinsics.width = cameraInfo.width
+            self.intrinsics.height = cameraInfo.height
+            self.intrinsics.ppx = cameraInfo.K[2]
+            self.intrinsics.ppy = cameraInfo.K[5]
+            self.intrinsics.fx = cameraInfo.K[0]
+            self.intrinsics.fy = cameraInfo.K[4]
+            if cameraInfo.distortion_model == 'plumb_bob':
+                self.intrinsics.model = rs2.distortion.brown_conrady
+            elif cameraInfo.distortion_model == 'equidistant':
+                self.intrinsics.model = rs2.distortion.kannala_brandt4
+            self.intrinsics.coeffs = [i for i in cameraInfo.D]
 
-        def computeRealCenter(self, tracker):
-            
-            center = Vector3()
+        except CvBridgeError as e:
+            print(e)
+            return
+    
+    def left_side_measurement(self):
+        i1=self.top_limit
+        j1=0
+        x_left=[]
 
-            pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
-            depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
-            depthresult = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+        while (i1<=self.bottom_limit):
+            while (j1<=self.left_squadron_limit):
 
-            #Create a vector with the coordinates, in meters
-            center.x = result[0]*10**(-3)
-            center.y = result[1]*10**(-3)
-            center.z = result[2]*10**(-3)
+                depth = self.cv_image_depth[i1,j1] #Depth of the central pixel
+                result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i1, j1], depth) # Real coordenates, in mm, of the central pixel
 
-        return center
+                #Create a vector with the coordinates, in meters
+                x_left.append(result[0])
+                j1=j1+1
 
+            i1=i1+1
 
+        self.distance_left=-(sum(x_left)/len(x_left))*10**(-3)
         
+
+    
+    def right_side_measurement(self):
+        i2=self.top_limit
+        j2=self.rigth_squadron_limit
+        x_right=[]
+        
+        while (i2<=self.bottom_limit):
+            while (j2<=(self.pixel_width-1)):
+
+                depth = self.cv_image_depth[i2,j2] #Depth of the central pixel
+                result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i2, j2], depth) # Real coordenates, in mm, of the central pixel
+
+                #Create a vector with the coordinates, in meters
+                x_right.append(result[0])
+                j2=j2+1
+
+            i2=i2+1
+
+        self.distance_right=-(sum(x_right)/len(x_right))*10**(-3)
+
+
+     
 
 def main():
 

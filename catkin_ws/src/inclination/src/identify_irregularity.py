@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #from __future__ import print_function
 ##################################### Header ############################################
-""" obstruction.py: Description of the node """
+""" identify_irregularity.py: Description of the node """
 #__author__ = ""
 #__credits__ = [""]
 #__version__ = "0.0.0"
@@ -31,10 +31,9 @@ class identify_irregularity():
 		self.y=0
 		self.z=0
 
-		#aceleracao_grav=-9.86
-
 		acel_subscriber=rospy.Subscriber("/imu/data", Imu, self.acelCallback)
 
+		#frequency of the while cicle 
 		frequency=385
 
 		self.rate = rospy.Rate(frequency)
@@ -44,11 +43,11 @@ class identify_irregularity():
 
 		while not rospy.is_shutdown():
 
-			#Calibration Time
+			#calibration time
 			if(inclination_identifier==1):
 				i1=0
 				i2=0
-				rospy.loginfo("Recalibrating...")
+				rospy.loginfo("recalibrating")
 
 				while(i1<frequency*0.75):
 
@@ -79,10 +78,10 @@ class identify_irregularity():
 				inclination_identifier=0;
 
 			else:
-
+				#check if theres any sudden variation in the vertical acelaration, that is 2 times over the standart deviation values calculated on calibration
 				if(self.y>(acel_med+2*standart_dev) or self.y<(acel_med-2*standart_dev)):
 
-					rospy.loginfo("It was detected a terrain intolerence or a change in slope")
+					rospy.loginfo("A instability or a sudden change of inclination was found!")
 
 					inclination_identifier=1
 
@@ -90,15 +89,9 @@ class identify_irregularity():
 
 	def acelCallback(self,accel_message):
 		
-		#self.header=accel_message.header.seq
 		self.x=accel_message.linear_acceleration.x
 		self.y=accel_message.linear_acceleration.y
 		self.z=accel_message.linear_acceleration.z
-
-
-		##rospy.loginfo("sequência= %s"%(self.header))
-
-
 
 def main():
 	rospy.init_node('identify_irregularity', anonymous=True)
