@@ -189,6 +189,9 @@ dmypy.json
 # ROSBags
 *.bag
 
+# Velodyne Files
+*.pcap
+
 # DNN 
 yolo*.weights
 yolo*.cfg

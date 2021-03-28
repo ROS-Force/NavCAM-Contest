@@ -32,3 +32,6 @@
 [submodule "depends/opencv_contrib"]
 	path = depends/opencv_contrib
 	url = git@github.com:opencv/opencv_contrib.git
+[submodule "catkin_ws/src/packagedeps/velodyne"]
+	path = catkin_ws/src/packagedeps/velodyne
+	url = git@github.com:ros-drivers/velodyne.git

@@ -4,7 +4,7 @@
 
     <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch">
 
-        <arg name="pcap" value="$(find velodyne_pointcloud)/Files/Test4.pcap" />
+        <arg name="pcap" value="$(find mapping)/demo/Test4.pcap" />
 
     </include>
 
