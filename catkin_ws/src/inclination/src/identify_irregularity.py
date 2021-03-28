@@ -47,7 +47,7 @@ class identify_irregularity():
 			if(inclination_identifier==1):
 				i1=0
 				i2=0
-				rospy.loginfo("Recalibrando")
+				rospy.loginfo("recalibrating")
 
 				while(i1<frequency*0.75):
 
