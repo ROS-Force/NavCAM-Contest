@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #from __future__ import print_function
 ##################################### Header ############################################
-""" obstruction.py: Description of the node """
+""" inclination_through_madgwick.py: Description of the node """
 #__author__ = ""
 #__credits__ = [""]
 #__version__ = "0.0.0"
@@ -26,63 +26,39 @@ class orientation():
 
 	def __init__(self):
 
-		#acel_subscriber=rospy.Subscriber("/camera/accel/sample", Imu, self.acelCallback)
+		#roslaunch imu_filter_madgwick imu_filter_madgwick.launch is used to publish the following topic
+		#/imu/data publishes the orientation of the camera in the quaternion format
 		
-		#gyro_subscriber=rospy.Subscriber("/camera/gyro/sample", Imu, self.gyroCallback)
-
-		#para subescrever a este tópico é necessário usar o filtro magwick, o que inclui ter ambos o tópico de giroscopio e aceleração unidos no momento da gravação
 		angles_subscriber=rospy.Subscriber("/imu/data", Imu, self.anglesCallback)
-		
+	
+	#callback function 
 	def anglesCallback(self,angles_message):
+
 
 		self.x = angles_message.orientation.x
 		self.y = angles_message.orientation.y
 		self.z = angles_message.orientation.z
 		self.w = angles_message.orientation.w
 
-
+		#theta is rotation aroun the y axis by theta rad
 		theta=math.asin(-2*(self.x*self.z-self.w*self.y))
 
+		#around the z axis of the camera
 		phi=math.asin(2*(self.w*self.z+self.x*self.y)/math.cos(theta))
 
-		#por alguma razão eles são 180-psi=psi2 sao complementares mas devido ao facto de usar o inverso
-		#do coseno em vez do inverso do seno em um deles
-
+		#psi and psi2 are complementary angles, 180-psi=psi2
 		#psi=math.acos(2*((self.w**2)+(self.z**2)-0.5)/math.cos(theta))
 
+		#around the x axis
 		psi2=math.asin(2*(self.w*self.x+self.y*self.z)/math.cos(theta))
 
-
+		#converting rad to degrees
 		theta=(theta*180)/(math.pi)
 		phi=(phi*180)/(math.pi)
-		#psi=(psi*180)/(math.pi)
 		psi2=(psi2*180)/(math.pi)
-		#psi3=psi-psi2
-
-		rospy.loginfo("Rotação em torno de y=%s de z=%s de x=%s degrees"%(theta,phi,psi2))
-
 		
-	def acelCallback(self,accel_message):
-		
+		rospy.loginfo("Rotation around y=%s and z=%s and x=%s degrees"%(theta,phi,psi2))
 
-		#self.header=accel_message.header.seq
-		self.x_accel=accel_message.linear_acceleration.x
-		self.y_accel=accel_message.linear_acceleration.y
-		self.z_accel=accel_message.linear_acceleration.z
-
-
-		##rospy.loginfo("sequência= %s"%(self.header))
-
-	def gyroCallback(self,velocity_message):
-		
-
-		#self.header_gyro=accel_message.header.seq
-		self.x_gyro=velocity_message.angular_velocity.x
-		self.y_gyro=velocity_message.angular_velocity.y
-		self.z_gyro=velocity_message.angular_velocity.z
-
-
-		##rospy.loginfo("sequência= %s"%(self.header))
 
 
 def main():
