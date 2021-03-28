@@ -15,9 +15,6 @@
 [submodule "catkin_ws/src/packagedeps/pcl_conversions"]
 	path = catkin_ws/src/packagedeps/pcl_conversions
 	url = git@github.com:ROS-Force/pcl_conversions.git
-[submodule "catkin_ws/src/packagedeps/--branch=csm_eigen"]
-	path = catkin_ws/src/packagedeps/--branch=csm_eigen
-	url = git@github.com:AndreaCensi/csm.git
 [submodule "catkin_ws/src/packagedeps/csm"]
 	path = catkin_ws/src/packagedeps/csm
 	url = git@github.com:AndreaCensi/csm.git
