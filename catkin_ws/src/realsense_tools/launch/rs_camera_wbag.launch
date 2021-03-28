@@ -1,7 +1,6 @@
 <launch>
-  <include file="$(find realsense_tools)/launch/rs_camera.launch">
-  <node pkg="rosbag" type="record" name="rosbag_record_cam"
-       args="record -o     
+  <include file="$(find realsense_tools)/launch/rs_camera.launch" />
+  <node pkg="rosbag" type="record" name="rosbag_record_cam" args="record -o     
         /camera/accel/imu_info
         /camera/accel/sample
         /camera/aligned_depth_to_color/camera_info
@@ -34,5 +33,5 @@
         /rosout_agg
         /tf
         /tf_static
-       "/>
+       " />
 </launch>
