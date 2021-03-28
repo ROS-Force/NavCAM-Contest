@@ -18,9 +18,6 @@
 [submodule "catkin_ws/src/packagedeps/--branch=csm_eigen"]
 	path = catkin_ws/src/packagedeps/--branch=csm_eigen
 	url = git@github.com:AndreaCensi/csm.git
-[submodule "catkin_ws/src/packagedeps/--b"]
-	path = catkin_ws/src/packagedeps/--b
-	url = git@github.com:AndreaCensi/csm.git
 [submodule "catkin_ws/src/packagedeps/csm"]
 	path = catkin_ws/src/packagedeps/csm
 	url = git@github.com:AndreaCensi/csm.git
