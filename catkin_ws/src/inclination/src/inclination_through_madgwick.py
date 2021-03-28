@@ -40,10 +40,10 @@ class orientation():
 		self.z = angles_message.orientation.z
 		self.w = angles_message.orientation.w
 
-		#theta is rotation aroun the y axis by theta rad
+		#theta is rotation aroun the z axis by theta rad
 		theta=math.asin(-2*(self.x*self.z-self.w*self.y))
 
-		#around the z axis of the camera
+		#around the y axis of the camera
 		phi=math.asin(2*(self.w*self.z+self.x*self.y)/math.cos(theta))
 
 		#psi and psi2 are complementary angles, 180-psi=psi2
@@ -57,7 +57,7 @@ class orientation():
 		phi=(phi*180)/(math.pi)
 		psi2=(psi2*180)/(math.pi)
 		
-		rospy.loginfo("Rotation around y=%s and z=%s and x=%s degrees"%(theta,phi,psi2))
+		rospy.loginfo("Rotation around z=%s and y=%s and x=%s degrees"%(theta,phi,psi2))
 
 
 
