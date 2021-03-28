@@ -1,0 +1,40 @@
+[submodule "catkin_ws/src/packagedeps/realsense-ros"]
+	path = catkin_ws/src/packagedeps/realsense-ros
+	url = git@github.com:IntelRealSense/realsense-ros.git
+	branch = development
+[submodule "catkin_ws/src/packagedeps/imu_tools"]
+	path = catkin_ws/src/packagedeps/imu_tools
+	url = git@github.com:ccny-ros-pkg/imu_tools.git
+	branch = melodic
+[submodule "depends/eigen"]
+	path = depends/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "depends/pcl"]
+	path = depends/pcl
+	url = https://github.com/PointCloudLibrary/pcl
+[submodule "catkin_ws/src/packagedeps/pcl_conversions"]
+	path = catkin_ws/src/packagedeps/pcl_conversions
+	url = git@github.com:ROS-Force/pcl_conversions.git
+[submodule "catkin_ws/src/packagedeps/--branch=csm_eigen"]
+	path = catkin_ws/src/packagedeps/--branch=csm_eigen
+	url = git@github.com:AndreaCensi/csm.git
+[submodule "catkin_ws/src/packagedeps/--b"]
+	path = catkin_ws/src/packagedeps/--b
+	url = git@github.com:AndreaCensi/csm.git
+[submodule "catkin_ws/src/packagedeps/csm"]
+	path = catkin_ws/src/packagedeps/csm
+	url = git@github.com:AndreaCensi/csm.git
+	branch = csm_eigen
+[submodule "catkin_ws/src/packagedeps/depthimage_to_laserscan"]
+	path = catkin_ws/src/packagedeps/depthimage_to_laserscan
+	url = git@github.com:ros-perception/depthimage_to_laserscan.git
+[submodule "catkin_ws/src/packagedeps/scan_tools"]
+	path = catkin_ws/src/packagedeps/scan_tools
+	url = git@github.com:ccny-ros-pkg/scan_tools.git
+	branch = ros1
+[submodule "depends/opencv"]
+	path = depends/opencv
+	url = git@github.com:opencv/opencv.git
+[submodule "depends/opencv_contrib"]
+	path = depends/opencv_contrib
+	url = git@github.com:opencv/opencv_contrib.git
