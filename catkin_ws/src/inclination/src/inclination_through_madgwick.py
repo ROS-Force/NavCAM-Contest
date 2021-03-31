@@ -26,7 +26,7 @@ class orientation():
 
 	def __init__(self):
 
-		#roslaunch imu_filter_madgwick imu_filter_madgwick.launch is used to publish the following topic
+		#roslaunch inclination imu_filter_madgwick.launch is used to publish the following topic
 		#/imu/data publishes the orientation of the camera in the quaternion format
 		
 		angles_subscriber=rospy.Subscriber("/imu/data", Imu, self.anglesCallback)
