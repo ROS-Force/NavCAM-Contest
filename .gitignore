@@ -195,3 +195,6 @@ dmypy.json
 # DNN 
 yolo*.weights
 yolo*.cfg
+
+# DeepROS
+frozen_inference_graph.pb

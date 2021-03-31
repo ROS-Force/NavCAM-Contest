@@ -1,6 +1,12 @@
 # Object Detection
 
-This sub-package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort),[SORT paper](https://arxiv.org/abs/1602.00763).
+This package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort),[SORT paper](https://arxiv.org/abs/1602.00763).
+
+
+This package delivers a customizable wrapper of the DeepLab deep learning model for ROS. In order to use this package, you must have an pre-trained model of DeepLab and provide have to  [configuration file](cfg/deeplabv3_mnv2_vocpascal.yaml) which defines the model's properties (such as detection classes, the frozen inference graph, etc.)
+
+
+For more information about DeepLab, see the following links: [DeepLab: Deep Labelling for Semantic Image Segmentation](https://github.com/tensorflow/models/tree/master/research/deeplab)
 
 Based on the [COCO](http://cocodataset.org/#home) dataset we can detect 80 classes:
 
