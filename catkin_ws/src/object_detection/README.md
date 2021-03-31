@@ -1,6 +1,10 @@
 # Object Detection
 
-This sub-package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort),[SORT paper](https://arxiv.org/abs/1602.00763).
+This package performs detection and tracking of several objects using two distict models, the state of the art You Only Look Once (YOLO) and DeepLab deep learning model.
+
+## Yolo Model
+
+This package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort),[SORT paper](https://arxiv.org/abs/1602.00763).
 
 Based on the [COCO](http://cocodataset.org/#home) dataset we can detect 80 classes:
 
@@ -12,12 +16,6 @@ Based on the [COCO](http://cocodataset.org/#home) dataset we can detect 80 class
 - bottle, wine glass, cup, fork, knife, spoon, bowl
 - banana, apple, sandwich, orange, broccoli, carrot, hot dog, pizza, donut, cake
 - chair, sofa, pottedplant, bed, diningtable, toilet, tvmonitor, laptop, mouse, remote, keyboard, cell phone, microwave, oven, toaster, sink, refrigerator, book, clock, vase, scissors, teddy bear, hair drier, toothbrush
-
-## Download Weights and config files
-
-To use the pre-trained YOLO model you have to [download](https://drive.google.com/drive/folders/12ss30brf8-qYFN3tojY-bVHK2ES4xKWN?usp=sharing) the weight and config files, and store them inside object_tracking/cnf.
-
-## Nodes
 
 ### Node: yolo_detection.py
 
@@ -105,6 +103,14 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
   Maximum number of frames to keep alive a track without associated detections.
 
+## Deeplab Model
+
+This package delivers a customizable wrapper of the DeepLab deep learning model for ROS. In order to use this package, you must have an pre-trained model of DeepLab and provide have to [configuration file](cfg/deeplabv3_mnv2_vocpascal.yaml) which defines the model's properties (such as detection classes, the frozen inference graph, etc.),
+
+For more information about DeepLab, see the following links: [DeepLab: Deep Labelling for Semantic Image Segmentation](https://github.com/tensorflow/models/tree/master/research/deeplab)
+
+### Node:
+
 ## Demos
 
 The rosbags were recorded with a RealSense D435i.
@@ -117,10 +123,10 @@ The rosbags were recorded with a RealSense D435i.
 
 ## Basic Usage
 
-To run the demos you have to put the rosbag file inside object_detection/demo and edit the tracking_demo.launch replacing the value with the rosbag you want to run. 
+To run the demos you have to put the rosbag file inside object_detection/demo and edit the tracking_demo.launch replacing the value with the rosbag you want to run.
 
 **`<arg name="bag_file_name" value="your_rosbag_name" />`**
 
-You can change the parameters and then just run 
+You can change the parameters and then just run
 
 **`$ roslaunch object_detection tracking_demo.launch`**

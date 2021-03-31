@@ -97,10 +97,15 @@ class Yolo_Detection():
     def imageCallback(self, data): #Function that runs when an image arrives
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+            
+            if(cv_image.shape != self.cv_image_depth.shape):
+                cv_image = cv2.resize(cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
+            
             h = Header()
             #Create a Time stamp
             h.stamp = rospy.Time.now()
             h.frame_id = "Yolo Frame"
+            
 
             classes, scores, boxes = self.model.detect(cv_image, self.CONFIDENCE_THRESHOLD, self.NMS_THRESHOLD) #Runs the YOLO model
             cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image, h) #function that publish/draws the bounding boxes
@@ -198,10 +203,11 @@ class Yolo_Detection():
         
         coor = Vector3()
         
-        if(x == 640):
-            x = 639
-        if(y == 480):
-            y = 479
+        if(x ==  self.cv_image_depth.shape[1]):
+            x = x-1
+        if(y ==  self.cv_image_depth.shape[0]):
+            y = y-1
+
 
         pix = [x, y] #Coordinates of the central point (in pixeis)
         depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
