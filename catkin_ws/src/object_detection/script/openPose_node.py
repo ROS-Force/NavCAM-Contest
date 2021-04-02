@@ -6,10 +6,9 @@ import cv2
 import sys
 import os
 
-
 import ctypes
 
-from std_msgs.msg import Header
+
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
 import pyrealsense2 as rs2
@@ -114,8 +113,8 @@ class openPose():
         params = dict()
         params["logging_level"] = 3
         params["output_resolution"] = "-1x-1"
-        params["net_resolution"] = "-1x368"
-        params["model_pose"] = "BODY_25"
+        params["net_resolution"] = "-1x192"
+        params["model_pose"] = "COCO"
         params["alpha_pose"] = 0.6
         params["scale_gap"] = 0.3
         params["scale_number"] = 1
