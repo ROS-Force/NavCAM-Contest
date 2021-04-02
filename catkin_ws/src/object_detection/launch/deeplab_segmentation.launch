@@ -1,0 +1,19 @@
+<launch>
+    <!-- Launch arguments -->
+    <arg name="start_rviz" default="True" />
+    <arg name="show_output" default="True" />
+
+    <arg name="rgb_image" default="/camera/color/image_raw" />
+    <arg name="depth_image" default="/camera/aligned_depth_to_color/image_raw" />
+    <arg name="camera_info" default="/camera/aligned_depth_to_color/camera_info" />
+
+    <node pkg="rviz" type="rviz" name="rviz" if="$(arg start_rviz)"/>
+    <rosparam command="load" file="$(find object_detection)/cfg/deeplab/deeplabv3_mnv2_vocpascal.yaml" subst_value="True"/>
+
+    <node pkg="object_detection" type="deeplab_detection.py" name="deeplab_detection" output="screen">
+        <param name="show_output" value="$(arg show_output)"/>
+        <remap from="image" to="/camera/color/image_raw" />
+        <remap from="output_image" to="/detection/deeplab/objects_image" />
+    </node>
+
+</launch>

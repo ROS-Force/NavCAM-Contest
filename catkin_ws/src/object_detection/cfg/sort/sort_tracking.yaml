@@ -6,7 +6,7 @@ blur_humans: True
 
 draw_speed: False
 
-sort:
+sort_model:
   #Minimum IOU for match
   threshold: 0.1
 

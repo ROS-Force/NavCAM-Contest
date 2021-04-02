@@ -6,19 +6,22 @@ deeplab_model:
 
   # path to the frozen inference graph
   inference_graph:
-    path: deeplabv3_mnv2_pascal_train_aug/frozen_inference_graph.pb
-    input_tensor: 'ImageTensor:0'
-    output_tensor: 'SemanticPredictions:0'
+    path: $(find object_detection)/cfg/deeplab/deeplabv3_mnv2_pascal_train_aug/frozen_inference_graph.pb
+    input_tensor: ImageTensor:0
+    output_tensor: SemanticPredictions:0
     
   # input size of the network
   input_size: 
     - 513
     - 513
-  
-  # dataset properties (name and classes)
+    
+  # input is BGR (true) or RGB (false)
+  input_bgr: True
+
+  # taset properties (name and classes)
   dataset:
-    - name: pascal
-    - detection_classes:
+    name: pascal
+    detection_classes:
       - background
       - aeroplane
       - bicycle

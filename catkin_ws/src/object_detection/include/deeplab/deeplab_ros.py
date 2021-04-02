@@ -1,4 +1,4 @@
-#/usr/bin/env python3
+#/usr/bin/env python
 
 # Copyright 2021 ROS-Force
 #
@@ -19,8 +19,8 @@
 
 import numpy as np
 import cv2
-import tensorflow as tf
-import include.get_dataset_colormap as dlutils
+import tensorflow as tf # needs TF 2.x version 
+import deeplab.get_dataset_colormap as dlutils
 
 class DeepLabModel(object):
   """Class to load DeepLab model and run inference on supplied images."""
@@ -35,14 +35,14 @@ class DeepLabModel(object):
       # load frozen inference graph from file and wrap it into a tf.WrapperFunction
       self.modelFunction = DeepLabModel.__wrap_frozen_graph(tf.compat.v1.GraphDef.FromString(file_handle.read()), self.modelConfig.inputTensorName, self.modelConfig.outputTensorName)
 
-  def run(self, image, isImageRGB=True):
+  def segmentImage(self, image, isImageRGB=True):
     """Runs inference on a single image.
 
     Args:
       image: A OpenCV RGB image.
 
     Returns:
-      result: Segmentation map of the input image.
+      result: Segmentation map of the input image (for OpenCV).
           
     TODO: Adjust model input & output according to the supplied param (modelConfig.outputTensorName & modelConfig.inputTensorName)
     """ 
@@ -51,10 +51,10 @@ class DeepLabModel(object):
     input_image = cv2.resize(image, self.modelConfig.inputSize, interpolation=cv2.INTER_CUBIC)
     
     # change to BGR if model was trained with BGR images and the image is in RGB
-    if (self.inputBGR and isImageRGB):
+    if (self.modelConfig.inputBGR and isImageRGB):
       input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
 
-    elif (~self.inputBGR and ~isImageRGB):
+    elif (~self.modelConfig.inputBGR and ~isImageRGB):
       input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
       
     # add extra dimension and convert array to tf.Tensor (or more accurately, to an ImageTensor)
@@ -62,6 +62,35 @@ class DeepLabModel(object):
 
     # convert map to np array and return reshaped segmentation map to fit original image
     return cv2.resize(segmentation_map.numpy().astype('uint8'), image.shape[1::-1], interpolation=cv2.INTER_NEAREST)
+
+    
+  def segmentImage_tf(self, image, isImageRGB=True):
+    """Runs inference on a single image.
+
+    Args:
+      image: A OpenCV RGB image.
+
+    Returns:
+      result: Segmentation map of the input image (for TF).
+          
+    TODO: Adjust model input & output according to the supplied param (modelConfig.outputTensorName & modelConfig.inputTensorName)
+    """ 
+    
+    # resize image to fit model's input
+    input_image = cv2.resize(image, self.modelConfig.inputSize, interpolation=cv2.INTER_CUBIC)
+    
+    # change to BGR if model was trained with BGR images and the image is in RGB
+    if (self.modelConfig.inputBGR and isImageRGB):
+      input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
+
+    elif (~self.modelConfig.inputBGR and ~isImageRGB):
+      input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+      
+    # add extra dimension and convert array to tf.Tensor (or more accurately, to an ImageTensor)
+    segmentation_map = tf.squeeze(self.modelFunction(tf.expand_dims(tf.convert_to_tensor(input_image), axis=0)))
+
+    # return reshaped segmentation map to fit original image
+    return tf.image.resize(segmentation_map, image.shape[1::-1], method=tf.ResizeMethod.NEAREST)
   
   def getColormapFromSegmentationMap(self, segmentation_map):
     """Adds color defined by the dataset colormap to the label.
@@ -77,7 +106,8 @@ class DeepLabModel(object):
     """
 
     return dlutils.label_to_color_image(segmentation_map, self.modelConfig.datasetName)
-    
+  
+  @staticmethod
   def __wrap_frozen_graph(graph_def, inputs, outputs):
     """ 
     Wrapper for frozen inference graph (works as a compatibility layer between TF 1.x and TF 2.x). 
@@ -103,11 +133,19 @@ class DeepLabModelConfig(object):
   Helper class to hold the DeepLab model's parameters. 
   '''
 
-  def __init(self, graphPath, datasetName, inputTensorName, inputBGR, outputTensorName, inputSize):
+  def __init__(self, graphPath, datasetName, inputTensorName, inputBGR, outputTensorName, inputSize):
     self.graphPath = graphPath
     self.datasetName = datasetName
     self.inputBGR = inputBGR
     self.inputTensorName = inputTensorName
     self.outputTensorName = outputTensorName
     self.inputSize = np.array(inputSize)
-    
+  
+  def __init__(self, paramDict):
+    self.graphPath = paramDict.get('inference_graph', {}).get('path')
+    self.inputTensorName = paramDict.get('inference_graph', {}).get('input_tensor')
+    self.outputTensorName = paramDict.get('inference_graph', {}).get('output_tensor')
+    self.inputBGR = paramDict.get('input_bgr')
+    self.inputSize = tuple(paramDict.get('input_size', []))
+    self.datasetName = paramDict.get('dataset', {}).get('name')
+    self.detectionClasses = paramDict.get('dataset', {}).get('detection_classes')

@@ -4,10 +4,9 @@ from numpy.core.fromnumeric import mean
 import rospy
 import numpy as np
 import cv2
-import imp
 from colorutils import Color
-import rospkg
 import pyrealsense2 as rs2
+import sys
 
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
@@ -15,10 +14,10 @@ from sensor_msgs.msg import Image, CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID, Object_info
 from geometry_msgs.msg import Vector3
 
+from sort.sort import Sort
 class Sort_tracking():
 
     def __init__(self):
-
 
         #Initialize variables
         self.IoU_THRESHOLD = rospy.get_param("~sort/threshold", 0.1) #Minimum IOU for match
@@ -39,31 +38,43 @@ class Sort_tracking():
 
         self.bridge = CvBridge()
         
-        abs_path = rospkg.RosPack().get_path("object_detection") #get path to package
-        si = imp.load_source('sort', abs_path + "/include/sort/" + 'sort.py') #load the sort.py file
-        self.mo_tracker = si.Sort(max_age=self.MAX_AGE, min_hits=self.MIN_HITS, iou_threshold=self.IoU_THRESHOLD) #Create the multi-object tracker
+        self.mo_tracker = Sort(max_age=self.MAX_AGE, min_hits=self.MIN_HITS, iou_threshold=self.IoU_THRESHOLD) #Create the multi-object tracker
 
-        self.classes = []
-        with open(abs_path + "/cfg/" + "coco.names", "r") as f:
-            self.classes = [line.strip() for line in f.readlines()]
+        # check which yolo model is loaded
+        
+        yoloModelPrefix = [param for param in rospy.get_param_names() if "model_prefix" in param][0]
+        if (yoloModelPrefix):
+            self.classes = rospy.get_param(rospy.get_param(yoloModelPrefix) + "/dataset/detection_classes")
+        else:
+            rospy.logerr("Could not load detection classes from YOLO model, exiting.")
+            sys.exit(1)
+
         self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
         #Publishers
-        self.pub = rospy.Publisher("output_image", Image, queue_size=10)
-        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=10)
+        self.pub = rospy.Publisher("output_image", Image, queue_size=1)
+        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
         #Subscribers
-        self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=10)
-        self.sub_info = rospy.Subscriber("camera_info", CameraInfo, self.imageDepthInfoCallback)
+        self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=1)
         self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
         self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
-
+        
+        # grab camera info
+        self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo))
 
 #Callbacks
     def imageCallback(self, data): #Function that runs when a RGB image arrives
         try:
             self.data_encoding = data.encoding #Stores the encoding of original image
             self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)  # Transforms the format of image into OpenCV 2
+            
+            # exit callback if no depth image stored
+            if (self.cv_image_depth is None):
+                return 
+
+            if(self.cv_image.shape != self.cv_image_depth.shape):
+                self.cv_image = cv2.resize(self.cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
 
         except CvBridgeError as e:
             print(e)
@@ -231,7 +242,7 @@ class Sort_tracking():
             c = Color(hsv=(hue, sat, ilumination))
             color = c.web
 
-        shape = self.computeShape(depth_thresh);
+        shape = self.computeShape(depth_thresh)
 
         return img, color, sat*100, ilumination*100, shape 
 
@@ -317,6 +328,7 @@ class Sort_tracking():
 def main():
 
     rospy.init_node('sort_tracking')
+
     st = Sort_tracking()
     rospy.spin()
 

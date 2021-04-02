@@ -91,7 +91,9 @@ add_definitions(${PCL_DEFINITIONS})
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(DEPENDENCIES geometry_msgs std_msgs)
+catkin_python_setup()
+
+generate_messages(DEPENDENCIES geometry_msgs std_msgs)
 
 catkin_package(CATKIN_DEPENDS 
     message_runtime 
@@ -203,7 +205,6 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
    script/yolo_detection.py
    script/sort_tracking.py
    script/openPose_node.py
-   include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
