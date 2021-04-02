@@ -64,8 +64,6 @@ class Sort_tracking():
         try:
             self.data_encoding = data.encoding #Stores the encoding of original image
             self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)  # Transforms the format of image into OpenCV 2
-            if(self.cv_image.shape != self.cv_image_depth.shape):
-                self.cv_image = cv2.resize(self.cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
 
         except CvBridgeError as e:
             print(e)

@@ -98,9 +98,6 @@ class Yolo_Detection():
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
             
-            if(cv_image.shape != self.cv_image_depth.shape):
-                cv_image = cv2.resize(cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
-            
             h = Header()
             #Create a Time stamp
             h.stamp = rospy.Time.now()
@@ -177,12 +174,14 @@ class Yolo_Detection():
             bbox.xmax = box[2]
             bbox.ymax = box[3]
             
-            bbox.topleft = self.computeRealCoor(box[0], box[1])
+            if self.cv_image_depth != None:
 
-            bbox.topleft.z = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2], self.cv_image_depth[(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2])[2]*(10**-3)
-            
-            bbox.bottomright = self.computeRealCoor(box[2], box[3])
-            bbox.bottomright.z = bbox.topleft.z 
+                bbox.topleft = self.computeRealCoor(box[0], box[1])
+    
+                bbox.topleft.z = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2], self.cv_image_depth[(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2])[2]*(10**-3)
+                
+                bbox.bottomright = self.computeRealCoor(box[2], box[3])
+                bbox.bottomright.z = bbox.topleft.z 
 
             bbox.score = float(score)
             bbox.id = int(classid)

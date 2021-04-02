@@ -202,6 +202,7 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
  catkin_install_python(PROGRAMS
    script/yolo_detection.py
    script/sort_tracking.py
+   script/openPose_node.py
    include/sort/sort.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
