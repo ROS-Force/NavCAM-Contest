@@ -14,7 +14,10 @@ deeplab_model:
   input_size: 
     - 513
     - 513
-  
+    
+  # input is BGR (true) or RGB (false)
+  input_bgr: True
+
   # dataset properties (name and classes)
   dataset:
     - name: pascal

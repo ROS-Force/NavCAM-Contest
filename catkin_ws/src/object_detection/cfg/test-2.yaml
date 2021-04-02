@@ -1,0 +1,16 @@
+
+
+name: yolov3-tiny
+weights_path: yolov3-tiny/yolov3-tiny.weights
+config_path: yolov3-tiny/yolov3-tiny.cfg
+
+# input size of the network
+input_size:
+  - 320
+  - 320
+
+#Scalar with mean values which are subtracted from channels.
+model_mean:
+  - 0
+  - 0
+  - 0

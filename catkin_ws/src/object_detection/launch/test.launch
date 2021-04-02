@@ -1,0 +1,19 @@
+<launch>   
+
+    <arg name="yolo_default_model" default="$(find object_detection)/cfg/yolo/yolov4.yaml" />
+    <arg name="yolo_light_model" default="$(find object_detection)/cfg/yolo/yolov3-tiny.yaml" />
+
+    <!-- Default yolo model -->
+    <group ns="yolo_model">
+        <!-- Use subst_value to allow substitution patterns like ($find package)... -->
+        <rosparam command="load" file="$(arg yolo_default_model)" subst_value="True"/>   
+    </group>
+
+    <!-- Light model -->
+    <group ns="yolo_light_model">
+        <!-- Use subst_value to allow substitution patterns like ($find package)... -->
+        <rosparam command="load" file="$(arg yolo_light_model)" subst_value="True"/>
+    </group>
+
+    <node pkg="object_detection" type="test_node.py" name="test_node" output="screen"/>
+</launch>
