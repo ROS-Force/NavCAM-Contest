@@ -52,11 +52,11 @@ class Sort_tracking():
         self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
         #Publishers
-        self.pub = rospy.Publisher("output_image", Image, queue_size=10)
-        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=10)
+        self.pub = rospy.Publisher("output_image", Image, queue_size=1)
+        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
         #Subscribers
-        self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=10)
+        self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=1)
         self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
         self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
         
@@ -68,6 +68,11 @@ class Sort_tracking():
         try:
             self.data_encoding = data.encoding #Stores the encoding of original image
             self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)  # Transforms the format of image into OpenCV 2
+            
+            # exit callback if no depth image stored
+            if (self.cv_image_depth is None):
+                return 
+
             if(self.cv_image.shape != self.cv_image_depth.shape):
                 self.cv_image = cv2.resize(self.cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
 
@@ -323,8 +328,7 @@ class Sort_tracking():
 def main():
 
     rospy.init_node('sort_tracking')
-    # sleep for 5 seconds
-    rospy.sleep(5)
+
     st = Sort_tracking()
     rospy.spin()
 

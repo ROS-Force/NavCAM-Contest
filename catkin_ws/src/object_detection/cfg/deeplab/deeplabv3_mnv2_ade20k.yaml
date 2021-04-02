@@ -6,7 +6,7 @@ deeplab_model:
 
   # path to the frozen inference graph
   inference_graph:
-    path: 'deeplabv3_mnv2_ade20k/frozen_inference_graph.pb'
+    path: '$(find object_detection)/cfg/deeplab/deeplabv3_mnv2_ade20k/frozen_inference_graph.pb'
     input_tensor: 'ImageTensor:0'
     output_tensor: 'SemanticPredictions:0'
   

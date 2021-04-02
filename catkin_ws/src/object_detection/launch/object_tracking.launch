@@ -15,7 +15,6 @@
     <node pkg="rviz" type="rviz" name="rviz" if="$(arg start_rviz)"/>
     <include file="$(find realsense_tools)/launch/rs_camera.launch" if="$(arg start_camera)"/>
 
-<<<<<<< HEAD
     <!-- Default yolo model -->
     <group ns="yolo_model">
         <!-- Use subst_value to allow substitution patterns like ($find package)... -->

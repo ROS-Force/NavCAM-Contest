@@ -51,10 +51,10 @@ class DeepLabModel(object):
     input_image = cv2.resize(image, self.modelConfig.inputSize, interpolation=cv2.INTER_CUBIC)
     
     # change to BGR if model was trained with BGR images and the image is in RGB
-    if (self.inputBGR and isImageRGB):
+    if (self.modelConfig.inputBGR and isImageRGB):
       input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
 
-    elif (~self.inputBGR and ~isImageRGB):
+    elif (~self.modelConfig.inputBGR and ~isImageRGB):
       input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
       
     # add extra dimension and convert array to tf.Tensor (or more accurately, to an ImageTensor)
@@ -80,10 +80,10 @@ class DeepLabModel(object):
     input_image = cv2.resize(image, self.modelConfig.inputSize, interpolation=cv2.INTER_CUBIC)
     
     # change to BGR if model was trained with BGR images and the image is in RGB
-    if (self.inputBGR and isImageRGB):
+    if (self.modelConfig.inputBGR and isImageRGB):
       input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
 
-    elif (~self.inputBGR and ~isImageRGB):
+    elif (~self.modelConfig.inputBGR and ~isImageRGB):
       input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
       
     # add extra dimension and convert array to tf.Tensor (or more accurately, to an ImageTensor)
@@ -106,7 +106,8 @@ class DeepLabModel(object):
     """
 
     return dlutils.label_to_color_image(segmentation_map, self.modelConfig.datasetName)
-    
+  
+  @staticmethod
   def __wrap_frozen_graph(graph_def, inputs, outputs):
     """ 
     Wrapper for frozen inference graph (works as a compatibility layer between TF 1.x and TF 2.x). 
@@ -145,6 +146,6 @@ class DeepLabModelConfig(object):
     self.inputTensorName = paramDict.get('inference_graph', {}).get('input_tensor')
     self.outputTensorName = paramDict.get('inference_graph', {}).get('output_tensor')
     self.inputBGR = paramDict.get('input_bgr')
-    self.inputSize = np.array(paramDict.get('input_size', []))
+    self.inputSize = tuple(paramDict.get('input_size', []))
     self.datasetName = paramDict.get('dataset', {}).get('name')
     self.detectionClasses = paramDict.get('dataset', {}).get('detection_classes')
