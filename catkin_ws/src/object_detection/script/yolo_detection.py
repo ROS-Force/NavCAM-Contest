@@ -56,7 +56,7 @@ class YoloNode():
         # Load models depending if cuda was found or not
         defaultModelPrefix, lightModelPrefix = "/yolo_model", "/yolo_light_model"
 
-        if not cuda:
+        if cuda:
             rospy.loginfo("CUDA was found, loading best model..")
             
             if (rospy.has_param(defaultModelPrefix)):
@@ -126,11 +126,12 @@ class YoloNode():
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
             
             # exit callback if no depth image stored
+
             if (self.cv_image_depth is None):
                 return 
 
             if(cv_image.shape != self.cv_image_depth.shape):
-                cv_image = cv2.resize(cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
+                cv_image = cv2.resize(cv_image, self.cv_image_depth.shape[1::-1])
             
             h = Header()
             #Create a Time stamp
@@ -214,7 +215,7 @@ class YoloNode():
             bbox.xmax = box[2]
             bbox.ymax = box[3]
             
-            if self.cv_image_depth != None:
+            if self.cv_image_depth is not None:
 
                 bbox.topleft = self.computeRealCoor(box[0], box[1])
     
