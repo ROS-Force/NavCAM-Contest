@@ -2,6 +2,10 @@
 
     <arg name="camera" default="camera" />
 
+    <arg name="rgb_image" default="/camera/color/image_raw" />
+    <arg name="depth_image" default="/camera/aligned_depth_to_color/image_raw" />
+    <arg name="camera_info" default="/camera/aligned_depth_to_color/camera_info" />
+
     <!--><include file="$(find realsense_tools)/launch/rs_camera.launch" />-->
 
     <param name="/use_sim_time" value="true" />
@@ -17,7 +21,7 @@
 
     <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
 
-        <remap from="image" to="/camera/depth/image_rect_raw" />
+        <remap from="image" to="$(arg depth_image)" />
         <remap from="scan" to="/camera/scan" />
 
         <rosparam>

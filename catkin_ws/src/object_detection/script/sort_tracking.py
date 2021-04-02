@@ -68,6 +68,8 @@ class Sort_tracking():
         try:
             self.data_encoding = data.encoding #Stores the encoding of original image
             self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)  # Transforms the format of image into OpenCV 2
+            if(self.cv_image.shape != self.cv_image_depth.shape):
+                self.cv_image = cv2.resize(self.cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
 
         except CvBridgeError as e:
             print(e)
@@ -118,43 +120,37 @@ class Sort_tracking():
 
         if self.cv_image is not None and self.cv_image_depth is not None: # if RGB and Depth images are available runs the code
 
-                img = np.copy(self.cv_image)
-                img_depth = np.copy(self.cv_image_depth)
-                trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
-
-
-                for t in trackers.tracker_boxes: #Go through every detected object
-                    
-                    obj = Object_info()
-                    center_pose = self.computeRealCenter(t) #compute the Real pixels values
-                    
-                    speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
-
-                    img, color, sat, ilu, shape = self.computeFeatures(t, img, img_depth) #compute diferent features, like color and shape
-
-                    center_list[t.id] = center_pose #add this center to the dictionary of centers
-                    if speed is not None:
-                        #Construct the object with its atributes
-                        obj.id = t.id
-                        obj.Class = t.Class
-                        obj.real_pose = center_pose
-                        obj.velocity = speed
-                        obj.bbox = [int(t.xmin), int(t.ymin), int(t.xmax), int(t.ymax)]
-                        obj.color = color
-                        obj.saturation = sat
-                        obj.ilumination = ilu 
-                        obj.shape = shape
-                        img = self.draw_labels(obj, img) #draws the labels in the original image
-
-                    self.pub_obj.publish(obj) # publish the object
-
+            img = np.copy(self.cv_image)
+            img_depth = np.copy(self.cv_image_depth)
+            trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
+            for t in trackers.tracker_boxes: #Go through every detected object
+                
+                obj = Object_info()
+                center_pose = self.computeRealCenter(t) #compute the Real pixels values
+                
+                speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
+                img, color, sat, ilu, shape = self.computeFeatures(t, img, img_depth) #compute diferent features, like color and shape
+                center_list[t.id] = center_pose #add this center to the dictionary of centers
+                if speed is not None:
+                    #Construct the object with its atributes
+                    obj.id = t.id
+                    obj.Class = t.Class
+                    obj.real_pose = center_pose
+                    obj.velocity = speed
+                    obj.bbox = [int(t.xmin), int(t.ymin), int(t.xmax), int(t.ymax)]
+                    obj.color = color
+                    obj.saturation = sat
+                    obj.ilumination = ilu 
+                    obj.shape = shape
+                    img = self.draw_labels(obj, img) #draws the labels in the original image
+                
+                self.pub_obj.publish(obj) # publish the object
 
                 self.previous_centers = center_list #set the current center dictionary as previous dictionary
                 self.previous_time = trackers.header.stamp
-                
-                
-                image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
-                self.pub.publish(image_message) #publish the labelled image
+
+            image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
+            self.pub.publish(image_message) #publish the labelled image
 
 
     def computeRealCenter(self, tracker):
