@@ -35,3 +35,6 @@
 [submodule "catkin_ws/src/packagedeps/velodyne"]
 	path = catkin_ws/src/packagedeps/velodyne
 	url = git@github.com:ros-drivers/velodyne.git
+[submodule "depends/openpose"]
+	path = depends/openpose
+	url = git@github.com:CMU-Perceptual-Computing-Lab/openpose.git
