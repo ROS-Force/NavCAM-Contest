@@ -196,5 +196,8 @@ dmypy.json
 yolo*.weights
 yolo*.cfg
 
+#Caffe Models
+*.caffemodel
+
 # DeepROS
 frozen_inference_graph.pb
