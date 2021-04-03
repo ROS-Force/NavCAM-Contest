@@ -44,25 +44,29 @@ class DeepLabModel(object):
     Returns:
       result: Segmentation map of the input image (for OpenCV).
           
-    TODO: Adjust model input & output according to the supplied param (modelConfig.outputTensorName & modelConfig.inputTensorName)
+    TODO: 
+    - Adjust model input & output according to the supplied param (modelConfig.outputTensorName & modelConfig.inputTensorName)
+    - Check how the image preprocessing affects other rosbags
     """ 
-    
-    # resize image to fit model's input
-    input_image = cv2.resize(image, self.modelConfig.inputSize, interpolation=cv2.INTER_CUBIC)
-    
-    # change to BGR if model was trained with BGR images and the image is in RGB
-    if (self.modelConfig.inputBGR and isImageRGB):
-      input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
 
-    elif (~self.modelConfig.inputBGR and ~isImageRGB):
-      input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
-      
+    # get target size 
+    image_shape = np.array(image.shape[:-1])
+    target_size = (min(self.modelConfig.inputSize.astype(np.float64) / image_shape) * image_shape).astype(np.uint32)
+
+    # resize and apply antialias filter
+    input_image = tf.image.resize(tf.convert_to_tensor(image, dtype=tf.dtypes.uint8), target_size, method=tf.image.ResizeMethod.AREA)
+
+    # check if image needs to be swaped to RGB / BGR
+    if (isImageRGB ^ (not self.modelConfig.inputBGR)):
+      input_image = tf.reverse(input_image, axis=[-1])
+
     # add extra dimension and convert array to tf.Tensor (or more accurately, to an ImageTensor)
-    segmentation_map = tf.squeeze(self.modelFunction(tf.expand_dims(tf.convert_to_tensor(input_image), axis=0)))
+    segmentation_map = tf.squeeze(self.modelFunction(tf.expand_dims(tf.cast(input_image, dtype=tf.uint8), axis=0)))
 
-    # convert map to np array and return reshaped segmentation map to fit original image
-    return cv2.resize(segmentation_map.numpy().astype('uint8'), image.shape[1::-1], interpolation=cv2.INTER_NEAREST)
+    # resize to original size and convert to opencv image (NOTE: shape is used in REVERSED on opencv)
+    return cv2.resize(segmentation_map.numpy().astype(np.float32), image.shape[1::-1], interpolation=cv2.INTER_NEAREST).astype(np.uint8)
 
+    
     
   def segmentImage_tf(self, image, isImageRGB=True):
     """Runs inference on a single image.
@@ -76,21 +80,23 @@ class DeepLabModel(object):
     TODO: Adjust model input & output according to the supplied param (modelConfig.outputTensorName & modelConfig.inputTensorName)
     """ 
     
-    # resize image to fit model's input
-    input_image = cv2.resize(image, self.modelConfig.inputSize, interpolation=cv2.INTER_CUBIC)
-    
-    # change to BGR if model was trained with BGR images and the image is in RGB
-    if (self.modelConfig.inputBGR and isImageRGB):
-      input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
 
-    elif (~self.modelConfig.inputBGR and ~isImageRGB):
-      input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
-      
+    # get target size
+    image_shape = np.array(image.shape[:-1])
+    target_size = (min(self.modelConfig.inputSize.astype(np.float64) / image_shape) * image_shape).astype(np.uint32)
+
+    # resize and apply antialias filter
+    input_image = tf.image.resize(tf.convert_to_tensor(image, dtype=tf.dtypes.uint8), target_size, method=tf.image.ResizeMethod.AREA)
+
+    # check if image needs to be swaped to RGB / BGR
+    if (isImageRGB ^ (not self.modelConfig.inputBGR)):
+      input_image = tf.reverse(input_image, axis=[-1])
+
     # add extra dimension and convert array to tf.Tensor (or more accurately, to an ImageTensor)
-    segmentation_map = tf.squeeze(self.modelFunction(tf.expand_dims(tf.convert_to_tensor(input_image), axis=0)))
+    segmentation_map = tf.squeeze(self.modelFunction(tf.expand_dims(tf.cast(input_image, dtype=tf.uint8), axis=0)))
 
     # return reshaped segmentation map to fit original image
-    return tf.image.resize(segmentation_map, image.shape[1::-1], method=tf.ResizeMethod.NEAREST)
+    return tf.cast(tf.image.resize(segmentation_map, image.shape[1::-1], method=tf.ResizeMethod.NEAREST), dtype=tf.uint8)
   
   def getColormapFromSegmentationMap(self, segmentation_map):
     """Adds color defined by the dataset colormap to the label.
@@ -146,6 +152,6 @@ class DeepLabModelConfig(object):
     self.inputTensorName = paramDict.get('inference_graph', {}).get('input_tensor')
     self.outputTensorName = paramDict.get('inference_graph', {}).get('output_tensor')
     self.inputBGR = paramDict.get('input_bgr')
-    self.inputSize = tuple(paramDict.get('input_size', []))
+    self.inputSize = np.array(paramDict.get('input_size', []))
     self.datasetName = paramDict.get('dataset', {}).get('name')
     self.detectionClasses = paramDict.get('dataset', {}).get('detection_classes')

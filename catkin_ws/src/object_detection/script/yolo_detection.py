@@ -4,7 +4,6 @@ import rospy
 import numpy as np
 import cv2
 import sys
-
 import ctypes
 
 from std_msgs.msg import Header
@@ -13,7 +12,6 @@ from sensor_msgs.msg import Image, CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes
 from geometry_msgs.msg import Vector3
 import pyrealsense2 as rs2
-
 
 class YoloModelConfig(object):
     '''

@@ -3,8 +3,6 @@
 import rospy
 import numpy as np
 import cv2
-import sys
-import ctypes
 
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image
@@ -26,16 +24,17 @@ class DeeplabNode():
 
         #Publisher
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
+        self.pub_seg = rospy.Publisher("output_segmap", Image, queue_size=1)
 
     def imageCallback(self, data): #Function that runs when an image arrives
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+            cv_image = self.bridge.imgmsg_to_cv2(data) # Transforms the format of image into OpenCV 2
             h = Header()
 
-            segmentation_map = self.deeplabModel.segmentImage(cv_image, False)
+            segmentation_map = self.deeplabModel.segmentImage(cv_image, True)
             color_map = self.deeplabModel.getColormapFromSegmentationMap(segmentation_map).astype('uint8')
-            a = cv2.addWeighted(cv_image, 0.33, color_map, 0.66, 0, dtype=cv2.CV_64F)
-            self.pub.publish(self.bridge.cv2_to_imgmsg(a.astype('uint8'), encoding=data.encoding))
+            self.pub_seg.publish(self.bridge.cv2_to_imgmsg(color_map, encoding=data.encoding))
+            self.pub.publish(self.bridge.cv2_to_imgmsg(cv2.addWeighted(cv_image, 0.33, color_map, 0.66, 0).astype('uint8'), encoding=data.encoding))
         except CvBridgeError as e:
             print(e)
             return

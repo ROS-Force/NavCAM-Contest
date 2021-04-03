@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_conversions
   message_generation
+  message_filters
 )
 
 #find_package(OpenMP REQUIRED)
@@ -36,7 +37,7 @@ add_definitions(${PCL_DEFINITIONS})
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -91,8 +92,6 @@ add_definitions(${PCL_DEFINITIONS})
 # )
 
 ## Generate added messages and services with any dependencies listed here
-catkin_python_setup()
-
 generate_messages(DEPENDENCIES geometry_msgs std_msgs)
 
 catkin_package(CATKIN_DEPENDS 
@@ -132,7 +131,7 @@ catkin_package(CATKIN_DEPENDS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES object_detection
+  LIBRARIES object_detection
   CATKIN_DEPENDS cv_bridge geometry_msgs roscpp rospy sensor_msgs std_msgs pcl_conversions
   DEPENDS EIGEN3 PCL
 )
@@ -201,12 +200,12 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-#catkin_install_python(PROGRAMS
-#   script/yolo_detection.py
-#   script/sort_tracking.py
-#   include/sort/sort.py
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
+catkin_install_python(PROGRAMS
+   script/yolo_detection.py
+   script/sort_tracking.py
+   script/deeplab_detection.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html

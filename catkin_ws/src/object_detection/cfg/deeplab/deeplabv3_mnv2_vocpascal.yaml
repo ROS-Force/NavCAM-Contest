@@ -16,7 +16,7 @@ deeplab_model:
     - 513
     
   # input is BGR (true) or RGB (false)
-  input_bgr: True
+  input_bgr: False
 
   # taset properties (name and classes)
   dataset:
