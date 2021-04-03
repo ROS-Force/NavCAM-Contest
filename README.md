@@ -45,12 +45,14 @@ As of this moment (04/2021) Caffe framework only suport cuDNN <= v7.6.5. So it i
 ## Install this package
 
 The first step is to clone the repository. Go to your $HOME folder and clone it.
-cd ~
-git clone git@github.com:ROS-Force/NavCAM-Contest.git
+
+    cd ~
+    git clone git@github.com:ROS-Force/NavCAM-Contest.git
 
 Then update all the submodules
-cd ~/NavCAM-Contest
-git submodules update --innit --recursive
+
+    cd ~/NavCAM-Contest
+    git submodules update --innit --recursive
 
 Now we advised to follow the guide on how to build the dependencies.
 
@@ -73,7 +75,7 @@ First step is to create a build folder:
     mkdir build
     cd build
 
-Then copy the following command and **change** the **CUDA_ARCH_BIN=6.1** to the compute capability of yout machine. If you don't know your compute capability look for your Graphic Card [here](https://developer.nvidia.com/cuda-gpus).
+Then copy the following command and **change** the **CUDA_ARCH_BIN=6.1** to the compute capability of your machine. If you don't know your compute capability look for your Graphic Card [here](https://developer.nvidia.com/cuda-gpus).
 
     cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
