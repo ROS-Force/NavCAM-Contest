@@ -71,7 +71,7 @@ Now compile
 
 and you should be done!
 
-### Compile OpenPose from source
+## Compile OpenPose from source
 
 To help vizualize you can install the following package
 
