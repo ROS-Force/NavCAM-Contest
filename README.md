@@ -46,12 +46,14 @@ As of this moment (04/2021) Caffe framework only suport cuDNN <= v7.6.5. So it i
 ## Install this package
 
 The first step is to clone the repository. Go to your $HOME folder and clone it.
-cd ~
-git clone git@github.com:ROS-Force/NavCAM-Contest.git
+
+    cd ~
+    git clone git@github.com:ROS-Force/NavCAM-Contest.git
 
 Then update all the submodules
-cd ~/NavCAM-Contest
-git submodules update --innit --recursive
+
+    cd ~/NavCAM-Contest
+    git submodules update --innit --recursive
 
 Now we advised to follow [our guide](https://github.com/ROS-Force/NavCAM-Contest/tree/main/installation) on how to build the dependencies.
 
