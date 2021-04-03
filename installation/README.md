@@ -24,7 +24,7 @@ The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cu
 
 As of this moment (04/2021) Caffe framework only suport cuDNN <= v7.6.5. So it is **NOT** advised to install the latest cuDNN version.
 
-In order to download cuDNN, ensure you are registered for the [NVIDIA Devveloper Program](https://developer.nvidia.com/developer-program). Then go to [NVIDIA cuDNN home page](https://developer.nvidia.com/cudnn) and click to download.
+In order to download cuDNN, ensure you are registered for the [NVIDIA Developer Program](https://developer.nvidia.com/developer-program). Then go to [NVIDIA cuDNN home page](https://developer.nvidia.com/cudnn) and click to download.
 
 We advise to install the Debian packages, therefore download the 3 \*.deb files for your Ubuntu version (ensure the cuDNN version is <= 7.6.5).
 
@@ -41,7 +41,7 @@ First step is to create a build folder:
     mkdir build
     cd build
 
-Then copy the following command and **change** the **CUDA_ARCH_BIN** to the compute capability of your machine. If you don't know your compute capability look for your Graphic Card [here](https://developer.nvidia.com/cuda-gpus).
+Then copy the following command and **change** the **CUDA_ARCH_BIN** value to the compute capability of your machine. If you don't know your compute capability look for your Graphic Card [here](https://developer.nvidia.com/cuda-gpus).
 
     cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
