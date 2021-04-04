@@ -14,6 +14,7 @@ from sensor_msgs.msg import Image, CameraInfo
 import pyrealsense2 as rs2
 from openpose import pyopenpose as op
 import rospkg
+import message_filters
 
 class openPose():
 
@@ -46,18 +47,25 @@ class openPose():
         self.opWrapper.configure(self.setOpenPoseParam(abs_path))
         self.opWrapper.start()
 
-        #Subscriber
-        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.imageCallback, queue_size=1, buff_size=2**24)
-        self.sub_info = rospy.Subscriber("camera_info", CameraInfo, self.imageDepthInfoCallback)
-        self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
+        #Subscriber (buff_size is set to 2**24 to avoid delays in the callbacks)
+        self.sub = message_filters.Subscriber("camera/color/image_raw", Image)
+        self.sub_depth = message_filters.Subscriber("/camera/aligned_depth_to_color/image_raw", Image)
+
+        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 10)
+        ts.registerCallback(self.imageCallback)
+
+        # grab camera info
+        self.imageDepthInfoCallback(rospy.wait_for_message("/camera/aligned_depth_to_color/camera_info", CameraInfo)) 
 
         #Publisher
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
     
-    def imageCallback(self, data): #Function that runs when an image arrives
+    def imageCallback(self, img_data, depth_data): #Function that runs when an image arrives
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+            cv_image = self.bridge.imgmsg_to_cv2(img_data, img_data.encoding) # Transforms the format of image into OpenCV 2
             
+            self.data_encoding_depth = depth_data.encoding
+            self.cv_image_depth = self.bridge.imgmsg_to_cv2(depth_data, depth_data.encoding) # Transforms the format of image into OpenCV 2
 
         except CvBridgeError as e:
             print(e)
@@ -72,19 +80,6 @@ class openPose():
         self.opWrapper.emplaceAndPop(op.VectorDatum([datum]))
 
         print("Body keypoints: \n" + str(datum.poseKeypoints))
-
-
-    def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
-        try:
-            self.data_encoding_depth = data.encoding
-            self.cv_image_depth = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
-
-        except CvBridgeError as e:
-            print(e)
-            return
-        except ValueError as e:
-            print(e)
-            return
 
 
     def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels

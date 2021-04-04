@@ -13,6 +13,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes, TrackerBox, TrackerBoxes, CenterID, Object_info
 from geometry_msgs.msg import Vector3
+import message_filters
 
 from sort.sort import Sort
 class Sort_tracking():
@@ -55,20 +56,28 @@ class Sort_tracking():
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
+        #Subscriber
+        self.sub = message_filters.Subscriber("image", Image)
+        self.sub_depth = message_filters.Subscriber("depth_image", Image)
+
+        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 10)
+        ts.registerCallback(self.imageCallback)
+
         #Subscribers
         self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=1)
-        self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
-        self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
         
         # grab camera info
         self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo))
 
 #Callbacks
-    def imageCallback(self, data): #Function that runs when a RGB image arrives
+    def imageCallback(self, img_data, depth_data): #Function that runs when a RGB image arrives
         try:
-            self.data_encoding = data.encoding #Stores the encoding of original image
-            self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)  # Transforms the format of image into OpenCV 2
+            self.data_encoding = img_data.encoding #Stores the encoding of original image
+            self.cv_image = self.bridge.imgmsg_to_cv2(img_data, img_data.encoding)  # Transforms the format of image into OpenCV 2
             
+            self.data_encoding_depth = depth_data.encoding
+            self.cv_image_depth = self.bridge.imgmsg_to_cv2(depth_data, depth_data.encoding) # Transforms the format of image into OpenCV 2
+
             # exit callback if no depth image stored
             if (self.cv_image_depth is None):
                 return 
@@ -82,20 +91,6 @@ class Sort_tracking():
         except ValueError as e:
             print(e)
             return
-
-
-    def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
-        try:
-            self.data_encoding_depth = data.encoding
-            self.cv_image_depth = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
-
-        except CvBridgeError as e:
-            print(e)
-            return
-        except ValueError as e:
-            print(e)
-            return
-
 
     def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
         try:
