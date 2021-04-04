@@ -48,14 +48,14 @@ class openPose():
         self.opWrapper.start()
 
         #Subscriber (buff_size is set to 2**24 to avoid delays in the callbacks)
-        self.sub = message_filters.Subscriber("image", Image)
-        self.sub_depth = message_filters.Subscriber("depth_image", Image)
+        self.sub = message_filters.Subscriber("camera/color/image_raw", Image)
+        self.sub_depth = message_filters.Subscriber("/camera/aligned_depth_to_color/image_raw", Image)
 
         ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 10)
         ts.registerCallback(self.imageCallback)
 
         # grab camera info
-        self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo)) 
+        self.imageDepthInfoCallback(rospy.wait_for_message("/camera/aligned_depth_to_color/camera_info", CameraInfo)) 
 
         #Publisher
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
