@@ -6,11 +6,13 @@ import cv2
 import sys
 import ctypes
 
+
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
 from object_detection.msg import BoundingBox, BoundingBoxes
 from geometry_msgs.msg import Vector3
+import message_filters
 import pyrealsense2 as rs2
 
 class YoloModelConfig(object):
@@ -109,20 +111,26 @@ class YoloNode():
         self.colors = np.random.uniform(0, 255, size=(len(self.modelConfig.classes), 3))
 
         #Subscriber (buff_size is set to 2**24 to avoid delays in the callbacks)
-        self.sub = rospy.Subscriber("image", Image, self.imageCallback, queue_size=1, buff_size=2**24)
-        self.sub_depth = rospy.Subscriber("depth_image", Image, self.imageDepthCallback, queue_size=1, buff_size=2**24)
+        self.sub = message_filters.Subscriber("image", Image)
+        self.sub_depth = message_filters.Subscriber("depth_image", Image)
 
         # grab camera info
         self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo))  
+
+        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 10)
+        ts.registerCallback(self.imageCallback)
 
         #Publisher
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         self.pub_bbox = rospy.Publisher("bounding_boxes", BoundingBoxes, queue_size=10)
     
-    def imageCallback(self, data): #Function that runs when an image arrives
+    def imageCallback(self, img_data, depth_data): #Function that runs when an image arrives
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
+            cv_image = self.bridge.imgmsg_to_cv2(img_data, img_data.encoding) # Transforms the format of image into OpenCV 2
             
+            self.data_encoding_depth = depth_data.encoding
+            self.cv_image_depth = self.bridge.imgmsg_to_cv2(depth_data, depth_data.encoding) # Transforms the format of image into OpenCV 2
+
             # exit callback if no depth image stored
 
             if (self.cv_image_depth is None):
