@@ -17,8 +17,8 @@
 	url = git@github.com:ROS-Force/pcl_conversions.git
 [submodule "catkin_ws/src/packagedeps/csm"]
 	path = catkin_ws/src/packagedeps/csm
-	url = git@github.com:AndreaCensi/csm.git
-	branch = csm_eigen
+	url = git@github.com:jncfa/csm.git
+	branch = catkinize_csm_eigen
 [submodule "catkin_ws/src/packagedeps/depthimage_to_laserscan"]
 	path = catkin_ws/src/packagedeps/depthimage_to_laserscan
 	url = git@github.com:ros-perception/depthimage_to_laserscan.git
