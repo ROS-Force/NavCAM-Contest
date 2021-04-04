@@ -34,10 +34,9 @@ The following table was made to evaluate the accuracy of the camera in good ligh
 This project is dependent on the following packages:
 
 - **OpenCV**
-- **GSL**
 - **ROS** (Only melodic is assured)
 - **OpenPose**
-- **TensorFlow < 2.4.0**
+- **TensorFlow >= 2.0**
 - **CUDA - v10.0**
 - **cuDNN - v7.6.5**
 
