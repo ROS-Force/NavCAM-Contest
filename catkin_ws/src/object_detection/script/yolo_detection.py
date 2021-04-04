@@ -149,7 +149,7 @@ class YoloNode():
             cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image, h) #function that publish/draws the bounding boxes
 
             if self.output_rgb:
-                image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=data.encoding) #Convert back the image to ROS format
+                image_message = self.bridge.cv2_to_imgmsg(cv_image_with_labels, encoding=img_data.encoding) #Convert back the image to ROS format
                 self.pub.publish(image_message) #publish the image (with drawn bounding boxes)
         
         except CvBridgeError as e:
@@ -158,19 +158,6 @@ class YoloNode():
         except ValueError as e:
             print(e)
             return
-
-    def imageDepthCallback(self, data): #Function that runs when a Depth image arrives
-        try:
-            self.data_encoding_depth = data.encoding
-            self.cv_image_depth = self.bridge.imgmsg_to_cv2(data, data.encoding) # Transforms the format of image into OpenCV 2
-
-        except CvBridgeError as e:
-            print(e)
-            return
-        except ValueError as e:
-            print(e)
-            return
-
 
     def imageDepthInfoCallback(self, cameraInfo): 
         '''
