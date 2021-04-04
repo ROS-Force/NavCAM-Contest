@@ -1,5 +1,0 @@
-<launch>
-
-  <node name="signals" pkg="roslaunch" type="signal_logger.py" />
-
-</launch>

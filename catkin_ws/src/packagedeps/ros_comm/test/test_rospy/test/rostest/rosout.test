@@ -1,3 +1,0 @@
-<launch>
-  <test test-name="rosout" pkg="test_rospy" type="test_rosout.py" />
-</launch>
