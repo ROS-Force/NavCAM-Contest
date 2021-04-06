@@ -1,6 +1,6 @@
 # Object Detection
 
-This package performs detection and tracking of several objects using two distict models, the state of the art You Only Look Once (YOLO) and DeepLab deep learning model.
+This package performs detection and tracking of several objects using two distict models, the state of the art You Only Look Once (YOLO) and DeepLab deep learning model. We also use [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) algorithm to estimate humans position.
 
 ## Yolo Model
 
@@ -39,20 +39,20 @@ This node implements the YOLO model to perform the detection of objects.
 
 #### Parameters:
 
-- **`yolo_model`**
-
-  The yolo model to load.
+- **`input_size`**
+  New input size
 
 - **`model_scale`**
 
   Multiplier for frame values..
 
+- **`model_scale`**
+  Multiplier for frame values.
+  
 - **`conf_threshold`**
-
   A threshold used to filter boxes by confidences.
 
-- **`nms_threshold`** ([object_tracking/BoundingBoxes])
-
+- **`nms_threshold`**
   A threshold used in non maximum suppression.
 
 ### Node: sort_tracking.py
@@ -87,9 +87,6 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
 #### Parameters:
 
-- **`blur_humans`**
-
-  The option to blur the detected humans.
 
 - **`sort_threshold`**
 
@@ -102,6 +99,14 @@ This node implements the SORT algorithm to track the objects provided by the yol
 - **`max_age`** ([object_tracking/BoundingBoxes])
 
   Maximum number of frames to keep alive a track without associated detections.
+
+- **`blur_humans`**
+
+  The option to blur the detected humans.
+  
+- **`draw_speed`**
+
+  The option to draw the x,y,z speed of the detected objects.
 
 ## Deeplab Model
 
