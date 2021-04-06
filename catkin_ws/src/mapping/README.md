@@ -12,4 +12,4 @@ we are performing 2D localization and mapping with gmapping and we are using oct
 ## Demos
 
 ![](img/gmapping_cave.gif)
-![](octomap_cave.gif)
+![](img/octomap_cave.gif)
