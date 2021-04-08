@@ -37,8 +37,7 @@ class identify_irregularity():
 		frequency=385
 
 		self.rate = rospy.Rate(frequency)
-		acel_array=[]
-		standart_dev_array=[]
+
 		inclination_identifier=1
 
 		while not rospy.is_shutdown():
@@ -47,9 +46,11 @@ class identify_irregularity():
 			if(inclination_identifier==1):
 				i1=0
 				i2=0
+				acel_array=[]
+				standart_dev_array=[]
 				rospy.loginfo("recalibrating")
 
-				while(i1<frequency*0.75):
+				while(i1<frequency*1.5):
 
 					acel_array.append(self.y)
 
@@ -61,9 +62,9 @@ class identify_irregularity():
 
 				#rospy.loginfo("Acel med=%s"%(acel_med))
 
-				while(i2<frequency*0.75):
+				while(i2<len(acel_array)):
 
-					standart_dev_array=[(self.y-acel_med)**2]
+					standart_dev_array=[(acel_array[i2]-acel_med)**2]
 
 					i2=i2+1
 
@@ -71,7 +72,7 @@ class identify_irregularity():
 
 				sum_med=sum(standart_dev_array)
 
-				standart_dev=math.sqrt(sum_med/frequency*0.75)
+				standart_dev=math.sqrt(sum_med/len(acel_array))
 
 				#rospy.loginfo("standart dev=%s"%(standart_dev))
 

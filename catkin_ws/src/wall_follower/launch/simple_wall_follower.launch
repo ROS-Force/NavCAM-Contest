@@ -1,0 +1,7 @@
+<launch>
+
+
+<node pkg="wall_follower" type="following_walls.py" name="following_walls"
+output="screen"/>
+
+</launch>
