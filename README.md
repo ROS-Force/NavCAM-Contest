@@ -52,7 +52,7 @@ The first step is to clone the repository. Go to your $HOME folder and clone it.
 Then update all the submodules
 
     cd ~/NavCAM-Contest
-    git submodules update --innit --recursive
+    git submodules update --init --recursive
 
 Now we advised to follow [our guide](https://github.com/ROS-Force/NavCAM-Contest/tree/main/installation) on how to build the dependencies.
 
