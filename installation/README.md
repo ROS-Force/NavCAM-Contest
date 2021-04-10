@@ -6,7 +6,7 @@ The best way to install ROS is to follow [this](http://wiki.ros.org/melodic/Inst
 
 We need a few more ROS related packages, install them with the following command:
 
-    sudo apt install ros-melodic-octomap ros-melodic-ddynamic-reconfigure ros-melodic-realsense2-camera
+    sudo apt install ros-melodic-octomap ros-melodic-ddynamic-reconfigure
 
 ## Intel Camera Python Wrapper
 
