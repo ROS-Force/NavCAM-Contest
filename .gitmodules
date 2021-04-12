@@ -38,3 +38,9 @@
 [submodule "depends/openpose"]
 	path = depends/openpose
 	url = git@github.com:CMU-Perceptual-Computing-Lab/openpose.git
+[submodule "catkin_ws/src/packagedeps/slam_gmapping"]
+	path = catkin_ws/src/packagedeps/slam_gmapping
+	url = git@github.com:ros-perception/slam_gmapping.git
+[submodule "catkin_ws/src/packagedeps/openslam_gmapping"]
+	path = catkin_ws/src/packagedeps/openslam_gmapping
+	url = git@github.com:ros-perception/openslam_gmapping.git
