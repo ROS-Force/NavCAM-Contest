@@ -10,6 +10,7 @@ We need a few more ROS related packages, install them with the following command
 
 ## Intel Camera Python Wrapper
 
+[librealsense](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
 Information is available at the [Python Wrapper](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python)
 
 To install the package, run:
