@@ -14,4 +14,4 @@ sort_model:
   min_hits: 3
 
   #Maximum number of frames to keep alive a track without associated detections.
-  max_age: 20
+  max_age: 10

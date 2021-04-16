@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import numpy as np
@@ -29,10 +29,15 @@ class DeeplabNode():
     def imageCallback(self, data): #Function that runs when an image arrives
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data) # Transforms the format of image into OpenCV 2
-            h = Header()
-
             segmentation_map = self.deeplabModel.segmentImage(cv_image, True)
             color_map = self.deeplabModel.getColormapFromSegmentationMap(segmentation_map).astype('uint8')
+
+            labels, unique_idxs = np.unique(segmentation_map, return_index = True)
+
+            print('\033[2J')
+            for (label, unique_idx) in zip(labels, unique_idxs):
+                print("(class: {}".format(self.deeplabModel.modelConfig.detectionClasses[label]), self.deeplabModel.getColormapFromSegmentationMap(np.array([[label]])))
+
             self.pub_seg.publish(self.bridge.cv2_to_imgmsg(color_map, encoding=data.encoding))
             self.pub.publish(self.bridge.cv2_to_imgmsg(cv2.addWeighted(cv_image, 0.33, color_map, 0.66, 0).astype('uint8'), encoding=data.encoding))
         except CvBridgeError as e:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from numpy.core.fromnumeric import mean
 import rospy
@@ -28,13 +28,8 @@ class Sort_tracking():
         self.DRAW_SPEED = rospy.get_param("~draw_speed", False)
 
 
-        self.list_bbox = BoundingBoxes()
         self.previous_time = rospy.Time.now()
         self.previous_centers = {}
-        self.color_labels = []
-
-        self.cv_image_depth = None
-        self.cv_image = None
         self.intrinsics = None
 
         self.bridge = CvBridge()
@@ -57,76 +52,37 @@ class Sort_tracking():
         self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
         #Subscriber
-        self.sub = message_filters.Subscriber("image", Image)
-        self.sub_depth = message_filters.Subscriber("depth_image", Image)
-
-        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 10)
+        self.sub = message_filters.Subscriber("image", Image, queue_size=10, buff_size=2**27)
+        self.sub_depth = message_filters.Subscriber("depth_image", Image, queue_size=10, buff_size=2**27)
+        self.sub_bbox_yolo  = message_filters.Subscriber("bounding_boxes", BoundingBoxes, queue_size=10, buff_size=2**27)
+        
+        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth, self.sub_bbox_yolo], 30)#, self.sub_bbox_yolo], 10)
         ts.registerCallback(self.imageCallback)
-
-        #Subscribers
-        self.sub_bbox_yolo = rospy.Subscriber("bounding_boxes", BoundingBoxes,self.bboxCallback, queue_size=1)
         
         # grab camera info
         self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo))
 
 #Callbacks
-    def imageCallback(self, img_data, depth_data): #Function that runs when a RGB image arrives
-        try:
-            self.data_encoding = img_data.encoding #Stores the encoding of original image
-            self.cv_image = self.bridge.imgmsg_to_cv2(img_data, img_data.encoding)  # Transforms the format of image into OpenCV 2
-            
-            self.data_encoding_depth = depth_data.encoding
-            self.cv_image_depth = self.bridge.imgmsg_to_cv2(depth_data, depth_data.encoding) # Transforms the format of image into OpenCV 2
+    def imageCallback(self, img_data, depth_data, list_bbox): #Function that runs when a RGB image arrives
+        self.data_encoding = img_data.encoding #Stores the encoding of original image
+        cv_image = self.bridge.imgmsg_to_cv2(img_data, img_data.encoding)  # Transforms the format of image into OpenCV 2
+        
+        data_encoding_depth = depth_data.encoding
+        cv_image_depth = self.bridge.imgmsg_to_cv2(depth_data, depth_data.encoding) # Transforms the format of image into OpenCV 2
 
-            # exit callback if no depth image stored
-            if (self.cv_image_depth is None):
-                return 
-
-            if(self.cv_image.shape != self.cv_image_depth.shape):
-                self.cv_image = cv2.resize(self.cv_image, (self.cv_image_depth.shape[1],self.cv_image_depth.shape[0]))
-
-        except CvBridgeError as e:
-            print(e)
-            return
-        except ValueError as e:
-            print(e)
-            return
-
-    def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
-        try:
-            if self.intrinsics:
-                return
-            self.intrinsics = rs2.intrinsics()
-            self.intrinsics.width = cameraInfo.width
-            self.intrinsics.height = cameraInfo.height
-            self.intrinsics.ppx = cameraInfo.K[2]
-            self.intrinsics.ppy = cameraInfo.K[5]
-            self.intrinsics.fx = cameraInfo.K[0]
-            self.intrinsics.fy = cameraInfo.K[4]
-            if cameraInfo.distortion_model == 'plumb_bob':
-                self.intrinsics.model = rs2.distortion.brown_conrady
-            elif cameraInfo.distortion_model == 'equidistant':
-                self.intrinsics.model = rs2.distortion.kannala_brandt4
-            self.intrinsics.coeffs = [i for i in cameraInfo.D]
-        except CvBridgeError as e:
-            print(e)
-            return
-
-
-    def bboxCallback(self,data): #Function that runs when a Bounding Box list arrives (main code is here)
-
-        self.list_bbox = data
+        if(cv_image.shape != cv_image_depth.shape):
+            cv_image = cv2.resize(cv_image, (cv_image_depth.shape[1],cv_image_depth.shape[0]))
         center_list = {}
 
-        if self.cv_image is not None and self.cv_image_depth is not None: # if RGB and Depth images are available runs the code
+        if cv_image is not None and cv_image_depth is not None: # if RGB and Depth images are available runs the code
 
-            img = np.copy(self.cv_image)
-            img_depth = np.copy(self.cv_image_depth)
-            trackers = self.mo_tracker.update(self.list_bbox) #Update the Tracker Boxes positions
+            img = np.copy(cv_image)
+            img_depth = np.copy(cv_image_depth)
+            trackers = self.mo_tracker.update(list_bbox) #Update the Tracker Boxes positions
             for t in trackers.tracker_boxes: #Go through every detected object
                 
                 obj = Object_info()
-                center_pose = self.computeRealCenter(t) #compute the Real pixels values
+                center_pose = self.computeRealCenter(t, img_depth) #compute the Real pixels values
                 
                 speed = self.computeSpeed(center_pose, t.id, trackers.header.stamp) #compute the velocity vector of the diferent objects
                 img, color, sat, ilu, shape = self.computeFeatures(t, img, img_depth) #compute diferent features, like color and shape
@@ -152,13 +108,33 @@ class Sort_tracking():
             image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
             self.pub.publish(image_message) #publish the labelled image
 
+    def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
+        try:
+            if self.intrinsics:
+                return
+            self.intrinsics = rs2.intrinsics()
+            self.intrinsics.width = cameraInfo.width
+            self.intrinsics.height = cameraInfo.height
+            self.intrinsics.ppx = cameraInfo.K[2]
+            self.intrinsics.ppy = cameraInfo.K[5]
+            self.intrinsics.fx = cameraInfo.K[0]
+            self.intrinsics.fy = cameraInfo.K[4]
+            if cameraInfo.distortion_model == 'plumb_bob':
+                self.intrinsics.model = rs2.distortion.brown_conrady
+            elif cameraInfo.distortion_model == 'equidistant':
+                self.intrinsics.model = rs2.distortion.kannala_brandt4
+            self.intrinsics.coeffs = [i for i in cameraInfo.D]
+        except CvBridgeError as e:
+            print(e)
+            return
 
-    def computeRealCenter(self, tracker):
+
+    def computeRealCenter(self, tracker, cv_image_depth):
         
         center = Vector3()
 
         pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
-        depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
+        depth = cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
         result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
 
         #Create a vector with the coordinates, in meters
@@ -178,7 +154,7 @@ class Sort_tracking():
             return None
         
         else:
-
+            
             deltat = (new_time - self.previous_time) #Compute the diference in times between the previous time and this frame, 
                                                     # The time of the current tracker was created when the image arrived (in 
             deltat = deltat.to_sec()                 # the code "yolo_detection.py" inside the imageCallback() function).
@@ -224,7 +200,7 @@ class Sort_tracking():
             m = max(counts)
             dic = dict(zip(counts, values))
             
-            color = "Red" #tenho de mudar isto
+            color = "Red" #tenho de mudar isto <-- jura
 
         else:
             [counts, values] = np.histogram(thr_img[:,:,0], bins=36, range=(1,180)) #create an histogram to see the most present color
@@ -283,10 +259,10 @@ class Sort_tracking():
 
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
-        if not(0 <= lower_bound < 2**16) and lower_bound is not None:
+        if lower_bound is not None and not(0 <= lower_bound < 2**16):
             raise ValueError(
                 '"lower_bound" must be in the range [0, 65535]')
-        if not(0 <= upper_bound < 2**16) and upper_bound is not None:
+        if upper_bound is not None and not(0 <= upper_bound < 2**16):
             raise ValueError(
                 '"upper_bound" must be in the range [0, 65535]')
         if lower_bound is None:

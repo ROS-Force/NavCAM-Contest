@@ -3,7 +3,7 @@
     <arg name="start_rviz" default="True" />
     <arg name="show_output" default="True" />
 
-    <arg name="yolo_default_model" default="$(find object_detection)/cfg/yolo/yolov3.yaml" />
+    <arg name="yolo_default_model" default="$(find object_detection)/cfg/yolo/yolov4.yaml" />
     <arg name="yolo_light_model" default="$(find object_detection)/cfg/yolo/yolov3-tiny.yaml" />
 
 

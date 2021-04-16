@@ -171,7 +171,7 @@ class KalmanBoxTracker(object):
     return convert_x_to_bbox(self.kf.x)
 
 
-def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
+def associate_detections_to_trackers(sort_obj, classes, detections,trackers,iou_threshold = 0.3):
   """
   Assigns detections to tracked object (both represented as bounding boxes)
 
@@ -197,8 +197,11 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
       unmatched_detections.append(d)
   unmatched_trackers = []
   for t, trk in enumerate(trackers):
-    if(t not in matched_indices[:,1]):
+    idx = matched_indices[matched_indices[:,1] == t]
+    #print(idx, idx[0, 0], sort_obj.trackers[t].className, classes[idx[0, 0]])
+    if not all((idx.shape)) or sort_obj.trackers[t].className != classes[idx[0, 0]]:
       unmatched_trackers.append(t)
+      matched_indices = matched_indices[matched_indices[:,1] != t]
 
   #filter out matched with low IOU
   matches = []
@@ -239,9 +242,9 @@ class Sort(object):
     self.frame_count += 1
 
     dets = np.zeros((len(bblist.bounding_boxes), 5))
+    classes = np.array([bbox.Class for bbox in bblist.bounding_boxes])
     for (t, det) in enumerate(dets):       
       det[:] = [int(bblist.bounding_boxes[t].xmin), int(bblist.bounding_boxes[t].ymin), int(bblist.bounding_boxes[t].xmax), int(bblist.bounding_boxes[t].ymax), float(bblist.bounding_boxes[t].score)]
-
     # get predicted locations from existing trackers.
     trks = np.zeros((len(self.trackers), 5))
     to_del = []
@@ -259,7 +262,7 @@ class Sort(object):
     for t in reversed(to_del):
       self.trackers.pop(t)
 
-    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
+    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(self, classes, dets, trks, self.iou_threshold)
 
     # update matched trackers with assigned detections
     for m in matched:

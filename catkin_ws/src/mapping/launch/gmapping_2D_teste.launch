@@ -1,23 +1,22 @@
 <launch>
 
-    <arg name="camera" default="camera" />
+    <arg name="with_camera" default="true"/>
 
     <arg name="rgb_image" default="/camera/color/image_raw" />
     <arg name="depth_image" default="/camera/aligned_depth_to_color/image_raw" />
     <arg name="camera_info" default="/camera/aligned_depth_to_color/camera_info" />
 
-    <!--><include file="$(find realsense_tools)/launch/rs_camera.launch" />-->
+    <include file="$(find realsense_tools)/launch/rs_camera.launch" if="$(arg with_camera)" />
 
-    <param name="/use_sim_time" value="true" />
-
+    <!-- Set sim time if not using camera -->
+    <param name="/use_sim_time" value="true" unless="$(arg with_camera)" />
+    <param name="/use_sim_time" value="false" if="$(arg with_camera)" />
 
     <include file="$(find mapping)/launch/octomap_mapping.launch" />
-
 
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.0 0.0 0.0 0.0 0.0 0.0 camera_link laser 40" />
 
     <node pkg="rviz" type="rviz" name="rviz" />
-
 
     <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
 

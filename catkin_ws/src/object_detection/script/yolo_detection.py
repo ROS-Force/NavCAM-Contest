@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import numpy as np
@@ -111,13 +111,13 @@ class YoloNode():
         self.colors = np.random.uniform(0, 255, size=(len(self.modelConfig.classes), 3))
 
         #Subscriber (buff_size is set to 2**24 to avoid delays in the callbacks)
-        self.sub = message_filters.Subscriber("image", Image)
-        self.sub_depth = message_filters.Subscriber("depth_image", Image)
+        self.sub = message_filters.Subscriber("image", Image, buff_size=2**24)
+        self.sub_depth = message_filters.Subscriber("depth_image", Image, buff_size=2**24)
 
         # grab camera info
         self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo))  
 
-        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 10)
+        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 1)
         ts.registerCallback(self.imageCallback)
 
         #Publisher
@@ -141,9 +141,9 @@ class YoloNode():
             
             h = Header()
             #Create a Time stamp
-            h.stamp = rospy.Time.now()
+            h.stamp = img_data.header.stamp
             h.frame_id = "Yolo Frame"
-            
+           
 
             classes, scores, boxes = self.model.detect(cv_image, self.modelConfig.confidenceThreshold, self.modelConfig.NMSThreshold) #Runs the YOLO model
             cv_image_with_labels = self.draw_labels(boxes, classes, scores, cv_image, h) #function that publish/draws the bounding boxes
