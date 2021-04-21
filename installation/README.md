@@ -1,6 +1,6 @@
 # Install dependencies
 
-## ROS Melodic
+## ROS Noetic
 
 The best way to install ROS is to follow [this](http://wiki.ros.org/melodic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help vizualize the results.
 
