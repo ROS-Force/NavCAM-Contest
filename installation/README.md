@@ -6,7 +6,7 @@ The best way to install ROS is to follow [this](http://wiki.ros.org/melodic/Inst
 
 We need a few more ROS related packages, install them with the following command:
 
-    sudo apt install ros-melodic-octomap ros-melodic-ddynamic-reconfigure
+    sudo apt install ros-noetic-octomap ros-noetic-ddynamic-reconfigure
 
 ## Intel Camera Python Wrapper
 
@@ -14,19 +14,19 @@ Information is available at the [Python Wrapper](https://github.com/IntelRealSen
 
 To install the package, run:
 
-    pip install pyrealsense2
+    pip3 install pyrealsense2
 
 ## CUDA
 
-The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) tutorial. Remember to install a compatible version, as of now this project **DOES NOT WORK** with CUDA version above 10.2.
+The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) tutorial. This package was teste with version 11.2 of CUDA.
 
 ## cuDNN
 
-As of this moment (04/2021) Caffe framework only suport cuDNN <= v7.6.5. So it is **NOT** advised to install the latest cuDNN version.
+
 
 In order to download cuDNN, ensure you are registered for the [NVIDIA Developer Program](https://developer.nvidia.com/developer-program). Then go to [NVIDIA cuDNN home page](https://developer.nvidia.com/cudnn) and click to download.
 
-We advise to install the Debian packages, therefore download the 3 \*.deb files for your Ubuntu version (ensure the cuDNN version is <= 7.6.5).
+We advise to install the Debian packages, therefore download the 3 \*.deb files for your Ubuntu version.
 
     cd ~/Downloads
     sudo dpkg -i libcudnn*.deb
@@ -69,25 +69,7 @@ Now compile
     make
     sudo make install
 
-and you should be done!
-
-## Compile OpenPose from source
-
-To help vizualize you can install the following package
-
-    sudo apt-get install cmake-qt-gui
-
-Next step is to create a build folder:
-
-    cd NavCAM-Contest/depends/openpose
-    mkdir build
-    cd build
-
-TODO
-
-    cmake -D PYTHON_EXECUTABLE=/usr/bin/python \
-    -D PYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so \
-    -D BUILD_PYTHON=ON ..
+and you should be done
 
 ## TensorFlow
 
