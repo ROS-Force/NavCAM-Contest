@@ -14,7 +14,7 @@ Information is available at the [Python Wrapper](https://github.com/IntelRealSen
 
 To install the package, run:
 
-    pip3 install pyrealsense2
+    pip3 install pyrealsense2 colorutils
 
 ## CUDA
 
