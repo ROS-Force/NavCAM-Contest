@@ -27,11 +27,16 @@ class Path_finding():
         self.intrinsics = None
         self.bridge = CvBridge()
 
+        #Publishers
+        #self.pub = rospy.Publisher("output_image", Image, queue_size=1)
+        #self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
+
         #Subscriber
         self.sub = rospy.Subscriber("map", OccupancyGrid, self.mapCallback, queue_size=10, buff_size=2**24)
 
         #Publisher
         self.pub = rospy.Publisher("path_image", Image, queue_size=1)
+
 
 
 #Callbacks
@@ -47,18 +52,15 @@ class Path_finding():
 
         map_array = self.cropMap(map_array)
 
-        tmp_matrix = [[0,0,0], [0,1,0], [0,0,0]]
-
         map_array[map_array == 0] = 1
         map_array[map_array == 100] = -1
 
 
         grid = Grid(matrix=map_array)
-        tmp_x, tmp_y = np.where(map_array==1)
 
 
         start = (map_array.shape[0]//2, map_array.shape[1]//2)
-        end = (map_array.shape[0]//2+20, map_array.shape[1]//2+20)
+        end = (map_array.shape[0]//2+10, map_array.shape[1]//2-60)
 
         start_node = grid.node(start[0],start[1])
         end_node = grid.node(end[0], end[1])
@@ -69,7 +71,6 @@ class Path_finding():
         print('operations:', runs, 'path length:', len(path))
 
         image = self.map2Image(map_array, start, end, path)
-        #print(grid.grid_str(path=path, start=start, end=end)
 
         image_message = self.bridge.cv2_to_imgmsg(image) 
         self.pub.publish(image_message) #publish the image
@@ -97,7 +98,7 @@ class Path_finding():
             img[point[0],point[1],0] = 0
             img[point[0],point[1],1] = 255
             img[point[0],point[1],2] = 0
-
+        
         #Paint start
         img[start[0],start[1],0] = 255
         img[start[0],start[1],1] = 0
