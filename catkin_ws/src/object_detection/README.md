@@ -130,6 +130,11 @@ The rosbags were recorded with a RealSense D435i.
 
 ## Basic Usage
 
+### Download the weights, cfg and bags
+
+You can download the weights, cgf and bags in [here](https://mega.nz/folder/apZlFAZY#hAD2Dw5YeRCp3xd96Y41QA).
+
+## Run the demos
 To run the demos you have to put the rosbag file inside object_detection/demo and edit the tracking_demo.launch replacing the value with the rosbag you want to run.
 
 **`<arg name="bag_file_name" value="your_rosbag_name" />`**
