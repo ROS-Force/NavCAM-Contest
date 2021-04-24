@@ -8,17 +8,34 @@ We need a few more ROS related packages, install them with the following command
 
     sudo apt install ros-noetic-octomap ros-noetic-ddynamic-reconfigure
 
-## Intel Camera Python Wrapper
+### Optional
 
-Information is available at the [Python Wrapper](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python)
+After the installation you can edit your ~/.bashrc file to avoid having to source all the time. Add the following lines to the end of your ~/.bashrc file:
 
-To install the package, run:
+    source /opt/ros/noetic/setup.bash
+    source ~/NavCAM-Contest/catkin_ws/devel/setup.bash
+    
+## Python packages
 
-    pip3 install pyrealsense2 colorutils
+### Intel Camera Python Wrapper
+
+Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md) tutorial to install [**Intel® RealSense™ SDK 2.0**](https://github.com/IntelRealSense/librealsense).
+
+Install the python wrapper. Information is available at the [Python Wrapper](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python)
+
+    pip3 install pyrealsense2
+
+
+## Other Python packages
+
+To install the packages, run:
+
+    pip3 install colorutils pathfinding
 
 ## CUDA
 
-The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) tutorial. This package was teste with version 11.2 of CUDA.
+The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) tutorial. This package was tested with version 11.2 of CUDA.
+
 
 ## cuDNN
 
@@ -69,8 +86,5 @@ Now compile
     make
     sudo make install
 
-and you should be done
+and you should be done!
 
-## TensorFlow
-
-# Other packages
