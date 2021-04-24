@@ -8,11 +8,11 @@ Work developed by ROS-Force for ActiveSpace's NavCAM contest.
 
 This package was developed and tested in Ubuntu 18.04 and ROS melodic. It may not work in other enviroments.
 
-- **Ubuntu 18.04**
-- **ROS Melodic**
-- **python 2.7**
-- **CUDA v10.2**
-- **cuDNN v7.6.5**
+- **Ubuntu 20.04**
+- **ROS Noetic**
+- **python 3**
+- **CUDA v11.2**
+- **cuDNN v8.1.1**
 
 ### Camera
 
@@ -37,10 +37,8 @@ This project is dependent on the following packages:
 - **ROS** (Only melodic is assured)
 - **OpenPose**
 - **TensorFlow >= 2.0**
-- **CUDA - v10.0**
-- **cuDNN - v7.6.5**
+- **CUDA - v11.2**
 
-As of this moment (04/2021) Caffe framework only suport cuDNN <= v7.6.5. So it is **NOT** advised to install the latest CUDA and cuDNN version.
 
 ## Install this package
 
