@@ -2,7 +2,7 @@
 
 ## ROS Noetic
 
-The best way to install ROS is to follow [this](http://wiki.ros.org/melodic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help vizualize the results.
+The best way to install ROS is to follow [this](http://wiki.ros.org/noetic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help vizualize the results.
 
 We need a few more ROS related packages, install them with the following command:
 
