@@ -115,6 +115,23 @@ class Path_finding():
         sparseM = sps.csr_matrix(map)
         return sparseM[sparseM.getnnz(axis=1) != -1][:, sparseM.getnnz(axis=0) != -1].A
 
+    def cropMap2(self, data):
+        
+        print(datetime.now(), " Antes de ter o indice")
+        inx = self.find_first(data)
+        print(datetime.now(), " Depois de ter o indice")
+        cut = inx//map_width * map_width
+
+        cutted_map = data[cut:]
+
+        map_array = np.reshape(cutted_map, [len(cutted_map)//map_width, map_width])
+
+        print(datetime.now(), " Antes do crop: ", map_array.shape)
+        xs, ys = np.where(map>=0)
+        result = map[min(xs):max(xs)+1,min(ys):max(ys)+1] 
+        print(datetime.now(), " Depois do crop: ", map_array.shape)
+        return result
+
     def map2Image(self, map, start, end, path):
         img = np.zeros((map.shape[1], map.shape[0], 3), np.int8)
         path = np.asarray(path)
