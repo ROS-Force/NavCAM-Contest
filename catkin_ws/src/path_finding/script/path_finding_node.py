@@ -72,10 +72,32 @@ class Path_finding():
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
 
+
+        uncroppedMap = np.array(latestGrid.data)
+
+        print(datetime.now().timestamp(), "after conv")
+        
         map_array = np.reshape(latestGrid.data, [map_height, map_width])
-        #map_array = self.cropMap(map_array)
+
+
+        print(datetime.now().timestamp(), "before merdas do mario")
+        
+
+        row, col = self.test(map_array)
+
+        print(row, col)
+
+        print(datetime.now().timestamp(), "after merdas do mario")
+        
+
+
+        map_array = self.cropMap_shit(map_array)
         map_array[map_array == 0] = 1
         map_array[map_array == 100] = -1
+
+
+        print(datetime.now().timestamp(), "after np ")
+        
 
         grid = Grid(matrix=map_array)
         
@@ -108,12 +130,32 @@ class Path_finding():
         image_message = self.bridge.cv2_to_imgmsg(image) 
         self.pub.publish(image_message) #publish the image
 
+    
+    
+    def test(self,map):
+        tmp = np.ones((1,map.shape(1)))
+        emptyLine = val = np.dot(map[0,:], tmp)
 
+        for row in map:
+            val = np.dot(row, tmp)
+
+            if not val == emptyLine:
+                break
+
+        for col in map.T:
+            val = np.dot(col, tmp)
+
+            if not val == emptyLine:
+                break
+        return row, col
         
-    def cropMap(self, map):
-        import scipy.sparse as sps
-        sparseM = sps.csr_matrix(map)
-        return sparseM[sparseM.getnnz(axis=1) != -1][:, sparseM.getnnz(axis=0) != -1].A
+    def cropMap_shit(self, map):
+
+        xs, ys = np.where(map>=0)
+        result = map[min(xs):max(xs)+1,min(ys):max(ys)+1] 
+
+        return result
+
 
     def map2Image(self, map, start, end, path):
         img = np.zeros((map.shape[1], map.shape[0], 3), np.int8)
