@@ -45,7 +45,7 @@
     </node>
 
     <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
-        <param name="map_update_interval" value="0.2" />
+        <param name="map_update_interval" value="5" />
         <param name="delta" value="0.02" />
         <remap from="scan" to="/camera/scan" />
         <param name="base_frame" value="camera_link" />
