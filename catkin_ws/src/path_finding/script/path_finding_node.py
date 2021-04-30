@@ -52,10 +52,10 @@ def cropMap2(data, map_width, map_height):
     print(datetime.now(), " Depois do crop: ", map_array.shape)
     return result
 
-#@tf.function
+@tf.function
 def cropMapTF(data, map_width, map_height):
     print(datetime.now(), "Before tensor conv")
-    map_tf = tf.convert_to_tensor(data)
+    map_tf = tf.convert_to_tensor(np.asarray(data))
     print(datetime.now(), "After tensor conv")
     map_tf = tf.reshape(map_tf, [map_width, map_height])
     print(datetime.now(), "Before searching and reducing columns")
