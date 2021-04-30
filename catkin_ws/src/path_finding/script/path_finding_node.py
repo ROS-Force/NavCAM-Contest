@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 import pyrealsense2 as rs2
 import sys
-import tf
+import tf as TF
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
@@ -17,6 +17,63 @@ from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 from datetime import datetime
+
+import tensorflow as tf
+
+#import numba
+#from numba import jit
+
+#@jit(nopython=True, parallel=True)
+def find_first(data):
+    for i in range(len(data)):
+        if data[i] != -1:
+            return i
+    return -1
+
+#@jit(debug=True, nopython=True)
+def cropMap2(data, map_width, map_height):
+    
+    print(datetime.now(), " Antes de ter o indice")
+    inx = find_first(data)
+    print(datetime.now(), " Depois de ter o indice")
+    cut = inx//map_width * map_width
+
+    inx = find_first(data)
+    print(datetime.now(), " Depois de ter o indice")
+    cut = inx//map_width * map_width
+
+    cutted_map = data[cut:]
+
+    map_array = np.reshape(cutted_map, [len(cutted_map)//map_width, map_width])
+
+    print(datetime.now(), " Antes do crop: ", map_array.shape)
+    xs, ys = np.where(map_array>=0)
+    result = map_array[min(xs):max(xs)+1,min(ys):max(ys)+1] 
+    print(datetime.now(), " Depois do crop: ", map_array.shape)
+    return result
+
+#@tf.function
+def cropMapTF(data, map_width, map_height):
+    print(datetime.now(), "Before tensor conv")
+    map_tf = tf.convert_to_tensor(data)
+    print(datetime.now(), "After tensor conv")
+    map_tf = tf.reshape(map_tf, [map_width, map_height])
+    print(datetime.now(), "Before searching and reducing columns")
+    
+    # sum columns
+    indexes = tf.where(map_tf >= 0)
+    min_idx = tf.reduce_min(indexes, axis=0)
+    max_idx = tf.reduce_max(indexes, axis=0)
+
+    print(min_idx, max_idx)
+    print(datetime.now(), "After summing columns")
+    result = map_tf[min_idx[0]:max_idx[0],min_idx[1]:max_idx[1]] 
+    print(datetime.now(), "After slicing columns")
+
+    result = tf.where(result == 0, x=1, y=result)
+    result =tf.where(result == 100, x=-1, y=result)
+   
+    return result.numpy()
 
 class Path_finding():
 
@@ -33,7 +90,7 @@ class Path_finding():
         #self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         #self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
-        self.tflistener = tf.TransformListener() 
+        self.tflistener = TF.TransformListener() 
 
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 
@@ -56,47 +113,27 @@ class Path_finding():
             return dynamicMapResult.map
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
-
+            return None
 #Callbacks
     def pathUpdateCallback(self): 
         print(datetime.now().timestamp(), "before map")
-
+        
+        # skip updates without map
         latestGrid = self.getCurrentMap()
-
+        if (latestGrid is None):
+            return
         print(datetime.now().timestamp(), "after map")
         
         header = latestGrid.header
-
         origin = latestGrid.info.origin
         resolution = latestGrid.info.resolution
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
 
-
-        uncroppedMap = np.array(latestGrid.data)
-
-        print(datetime.now().timestamp(), "after conv")
+        print(datetime.now().timestamp(), "before crop")
         
-        map_array = np.reshape(latestGrid.data, [map_height, map_width])
-
-
-        print(datetime.now().timestamp(), "before merdas do mario")
-        
-
-        row, col = self.test(map_array)
-
-        print(row, col)
-
-        print(datetime.now().timestamp(), "after merdas do mario")
-        
-
-
-        map_array = self.cropMap_shit(map_array)
-        map_array[map_array == 0] = 1
-        map_array[map_array == 100] = -1
-
-
-        print(datetime.now().timestamp(), "after np ")
+        map_array = cropMapTF(latestGrid.data, map_width, map_height)
+        print(datetime.now().timestamp(), "after crop")
         
 
         grid = Grid(matrix=map_array)
@@ -114,12 +151,12 @@ class Path_finding():
         start_node = grid.node(start[0],start[1])
         end_node = grid.node(end[0], end[1])
 
-        print(datetime.now().timestamp(), "before A star")
+        print(datetime.now(), "before A star")
         
         path, runs = self.finder.find_path(start_node, end_node, grid)
 
         
-        print(datetime.now().timestamp(), "before map conv")
+        print(datetime.now(), "before map conv")
         #print('operations:', runs, 'path length:', len(path))
 
         image = self.map2Image(map_array, start, end, path)
@@ -129,25 +166,6 @@ class Path_finding():
         
         image_message = self.bridge.cv2_to_imgmsg(image) 
         self.pub.publish(image_message) #publish the image
-
-    
-    
-    def test(self,map):
-        tmp = np.ones((1,map.shape(1)))
-        emptyLine = val = np.dot(map[0,:], tmp)
-
-        for row in map:
-            val = np.dot(row, tmp)
-
-            if not val == emptyLine:
-                break
-
-        for col in map.T:
-            val = np.dot(col, tmp)
-
-            if not val == emptyLine:
-                break
-        return row, col
         
     def cropMap_shit(self, map):
 
@@ -156,23 +174,6 @@ class Path_finding():
 
         return result
 
-
-    def cropMap2(self, data):
-        
-        print(datetime.now(), " Antes de ter o indice")
-        inx = self.find_first(data)
-        print(datetime.now(), " Depois de ter o indice")
-        cut = inx//map_width * map_width
-
-        cutted_map = data[cut:]
-
-        map_array = np.reshape(cutted_map, [len(cutted_map)//map_width, map_width])
-
-        print(datetime.now(), " Antes do crop: ", map_array.shape)
-        xs, ys = np.where(map>=0)
-        result = map[min(xs):max(xs)+1,min(ys):max(ys)+1] 
-        print(datetime.now(), " Depois do crop: ", map_array.shape)
-        return result
 
     def map2Image(self, map, start, end, path):
         img = np.zeros((map.shape[1], map.shape[0], 3), np.int8)
