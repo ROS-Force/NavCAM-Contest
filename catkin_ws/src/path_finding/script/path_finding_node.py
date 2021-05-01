@@ -5,11 +5,12 @@ import numpy as np
 import cv2
 import pyrealsense2 as rs2
 import sys
-import tf as TF
+import tf2_ros, tf.transformations as tf2_trans
+
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from nav_msgs.srv import GetMap
 
@@ -21,59 +22,7 @@ from datetime import datetime
 import tensorflow as tf
 
 
-
-def find_first(data):
-    for i in range(len(data)):
-        if data[i] != -1:
-            return i
-    return -1
-
-
-def cropMap2(data, map_width, map_height):
-    
-    print(datetime.now(), " Antes de ter o indice")
-    inx = find_first(data)
-    print(datetime.now(), " Depois de ter o indice")
-    cut = inx//map_width * map_width
-
-    inx = find_first(data)
-    print(datetime.now(), " Depois de ter o indice")
-    cut = inx//map_width * map_width
-
-    cutted_map = data[cut:]
-
-    map_array = np.reshape(cutted_map, [len(cutted_map)//map_width, map_width])
-
-    print(datetime.now(), " Antes do crop: ", map_array.shape)
-    xs, ys = np.where(map_array>=0)
-    result = map_array[min(xs):max(xs)+1,min(ys):max(ys)+1] 
-    print(datetime.now(), " Depois do crop: ", map_array.shape)
-    return result
-
-#@tf.function
-def cropMapTF(data, map_width, map_height):
-    print(datetime.now(), "Before tensor conv")
-    map_tf = tf.convert_to_tensor(np.asarray(data))
-    print(datetime.now(), "After tensor conv")
-    map_tf = tf.reshape(map_tf, [map_width, map_height])
-    print(datetime.now(), "Before searching and reducing columns")
-    
-    # sum columns
-    indexes = tf.where(map_tf >= 0)
-    min_idx = tf.reduce_min(indexes, axis=0)
-    max_idx = tf.reduce_max(indexes, axis=0)
-
-    print(min_idx, max_idx)
-    print(datetime.now(), "After summing columns")
-    result = map_tf[min_idx[0]:max_idx[0],min_idx[1]:max_idx[1]] 
-    print(datetime.now(), "After slicing columns")
-
-    result = tf.where(result == 0, x=1, y=result)
-    result =tf.where(result == 100, x=-1, y=result)
-
-    return result.numpy()
-
-class Path_finding():
+class PathFindingROS():
 
     def __init__(self):
 
@@ -89,8 +38,8 @@ class Path_finding():
         #self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         #self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
-        self.tflistener = TF.TransformListener() 
-
+        self.tfbuffer = tf2_ros.Buffer()
+        self.tflistener = tf2_ros.TransformListener(self.tfbuffer) 
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 
         #Subscriber
@@ -127,28 +76,16 @@ class Path_finding():
         latestGrid = self.getCurrentMap()
         if (latestGrid is None):
             return
-        #print(datetime.now(), "after map")
         
         header = latestGrid.header
         origin = latestGrid.info.origin
         resolution = latestGrid.info.resolution
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
-        #print(datetime.now(), "before crop")
-        map_array = cropMapTF(latestGrid.data, map_width, map_height)
-        #print(datetime.now(), "after crop")
-        
+        map_array = PathFindingROS.__cropMapTF(latestGrid.data, map_width, map_height)
+
 
         grid = Grid(matrix=map_array)
-        
-        try:
-            (trans,rot) = self.tflistener.lookupTransform('/camera_link', '/map', rospy.Time(0))
-            
-        except (TF.LookupException, TF.ConnectivityException, TF.ExtrapolationException):
-            print("Error on transform")
-            pass
-        
-        
 
         # set
         start = np.array([map_array.shape[0]//2, map_array.shape[1]//2])
@@ -165,7 +102,7 @@ class Path_finding():
         #print(datetime.now(), "before map conv")
         print('operations:', runs, 'path length:', len(path))
 
-        image = self.map2Image(map_array, start, end, path)
+        image = PathFindingROS.__map2Image(map_array, start, end, path)
         self.path = path
 
         print("Fim: ", datetime.now())
@@ -173,15 +110,48 @@ class Path_finding():
         image_message = self.bridge.cv2_to_imgmsg(image) 
         self.pub.publish(image_message) #publish the image
         
-    def cropMap_shit(self, map):
 
-        xs, ys = np.where(map>=0)
-        result = map[min(xs):max(xs)+1,min(ys):max(ys)+1] 
+    def run(self):  
+        
+        # main thread will now be used to update periodically A-star path
 
-        return result
+        sleepRate = rospy.Rate(500)
+
+        while(not rospy.is_shutdown()):
+            self.__transformPose(None, fromFrame="camera_link", toFrame="map")
+            #self.pathUpdateCallback()
+            sleepRate.sleep()
+
+    def __transformPose(self, poseMatrix, fromFrame, toFrame):
+        # check if we can transform to target frame
+        if not (self.tfbuffer.can_transform(target_frame=toFrame, source_frame=fromFrame, time=rospy.Duration())):
+            print("Error, can't obtain transform")
+        else:
+            # get transform 
+            try:
+                transform = self.tfbuffer.lookup_transform(toFrame, fromFrame, rospy.Time(0))
+                
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                print("Error on transform")
+                pass
+            
+            
+            
+            
+            tf2_trans.quaternion_multiply()
+            quaternion_multiply(q_rot, q_orig)
+
+            print(transform)
+            
+            #msg = Twist()
+   
+            #msg.angular.z = 4 * math.atan2(trans.transform.translation.y, trans.transform.translation.x)
+            #msg.linear.x = 0.5 * math.sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
 
 
-    def map2Image(self, map, start, end, path):
+
+    @staticmethod
+    def __map2Image(map, start, end, path):
         img = np.zeros((map.shape[1], map.shape[0], 3), np.int8)
         path = np.asarray(path)
 
@@ -209,21 +179,37 @@ class Path_finding():
         
         return img
 
-    def run(self):  
+    @staticmethod
+    def __cropMap(data, map_width, map_height):
+        print(datetime.now(), "Before tensor conv")
+        map_tf = tf.convert_to_tensor(np.asarray(data))
+        print(datetime.now(), "After tensor conv")
+        map_tf = tf.reshape(map_tf, [map_width, map_height])
+        print(datetime.now(), "Before searching and reducing columns")
         
-        # main thread will now be used to update periodically Astar path
+        # sum columns
+        indexes = tf.where(map_tf >= 0)
+        min_idx = tf.reduce_min(indexes, axis=0)
+        max_idx = tf.reduce_max(indexes, axis=0)
 
-        sleepRate = rospy.Rate(500)
+        print(min_idx, max_idx)
+        print(datetime.now(), "After summing columns")
+        result = map_tf[min_idx[0]:max_idx[0],min_idx[1]:max_idx[1]] 
+        print(datetime.now(), "After slicing columns")
 
-        while(not rospy.is_shutdown()):
-            self.pathUpdateCallback()
-            sleepRate.sleep()
+        result = tf.where(result == 0, x=1, y=result)
+        result =tf.where(result == 100, x=-1, y=result)
+
+        return result.numpy()
 
 def main():
 
     rospy.init_node('path_finding')
 
-    pf = Path_finding()
+    # initialize node 
+    pf = PathFindingROS()
+
+    # run node
     pf.run()
 
 if __name__ == "__main__":
