@@ -52,7 +52,7 @@ def cropMap2(data, map_width, map_height):
     print(datetime.now(), " Depois do crop: ", map_array.shape)
     return result
 
-@tf.function
+#@tf.function
 def cropMapTF(data, map_width, map_height):
     print(datetime.now(), "Before tensor conv")
     map_tf = tf.convert_to_tensor(np.asarray(data))
@@ -116,13 +116,13 @@ class Path_finding():
             return None
 #Callbacks
     def pathUpdateCallback(self): 
-        print(datetime.now().timestamp(), "before map")
+        print(datetime.now(), "before map")
         
         # skip updates without map
         latestGrid = self.getCurrentMap()
         if (latestGrid is None):
             return
-        print(datetime.now().timestamp(), "after map")
+        print(datetime.now(), "after map")
         
         header = latestGrid.header
         origin = latestGrid.info.origin
@@ -130,10 +130,10 @@ class Path_finding():
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
 
-        print(datetime.now().timestamp(), "before crop")
+        print(datetime.now(), "before crop")
         
         map_array = cropMapTF(latestGrid.data, map_width, map_height)
-        print(datetime.now().timestamp(), "after crop")
+        print(datetime.now(), "after crop")
         
 
         grid = Grid(matrix=map_array)
