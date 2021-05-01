@@ -11,7 +11,7 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
-from nav_msgs.msg import OccupancyGrid, MapMetaData
+from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from nav_msgs.srv import GetMap
 
 from pathfinding.core.diagonal_movement import DiagonalMovement
@@ -48,7 +48,8 @@ class PathFindingROS():
         self.sub = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.goalCallback, queue_size=10, buff_size=2**24)
 
         #Publisher (update this )
-        self.pub = rospy.Publisher("path_image", Image, queue_size=1)
+        self.pub_path = rospy.Publisher("path", Path, queue_size=1)
+        self.pub = rospy.Publisher("path_image", Image, queue_size=1) #remove after debug is done
 
     def goalCallback(self, pose_stamped):
 
@@ -66,7 +67,6 @@ class PathFindingROS():
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
             return None
-
 
 #Callbacks
     def pathUpdateCallback(self): 
@@ -98,15 +98,17 @@ class PathFindingROS():
         
         path, runs = self.finder.find_path(start_node, end_node, grid)
 
-        
         #print(datetime.now(), "before map conv")
         print('operations:', runs, 'path length:', len(path))
 
-        image = PathFindingROS.__map2Image(map_array, start, end, path)
+        
         self.path = path
+        self.publishPath(path)
 
         print("Fim: ", datetime.now())
         
+        #Remove after debug is done
+        image = self.map2Image(map_array, start, end, path)
         image_message = self.bridge.cv2_to_imgmsg(image) 
         self.pub.publish(image_message) #publish the image
         
@@ -147,6 +149,32 @@ class PathFindingROS():
    
             #msg.angular.z = 4 * math.atan2(trans.transform.translation.y, trans.transform.translation.x)
             #msg.linear.x = 0.5 * math.sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
+
+    def publishPath(self, array):
+        
+        list_poses = []
+        pose_stamped = PoseStamped()
+        path = Path()
+
+        for p in array:
+
+            pose_stamped.header = Header()
+            pose_stamped.header.stamp = rospy.Time.now()
+
+            pose_stamped.pose.position.x = p[0]
+            pose_stamped.pose.position.y = p[1]
+            pose_stamped.pose.position.z = 0
+
+            list_poses.append(pose_stamped)
+        
+        #Create the Header
+        h = Header()
+        h.stamp = rospy.Time.now()
+
+        path.header = h
+        path.poses = list_poses
+
+        self.pub_path.publish(path)
 
 
 
@@ -201,6 +229,8 @@ class PathFindingROS():
         result =tf.where(result == 100, x=-1, y=result)
 
         return result.numpy()
+
+
 
 def main():
 
