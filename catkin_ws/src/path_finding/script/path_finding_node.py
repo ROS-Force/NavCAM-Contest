@@ -9,7 +9,7 @@ import tf as TF
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from nav_msgs.srv import GetMap
 
@@ -20,17 +20,15 @@ from datetime import datetime
 
 import tensorflow as tf
 
-#import numba
-#from numba import jit
 
-#@jit(nopython=True, parallel=True)
+
 def find_first(data):
     for i in range(len(data)):
         if data[i] != -1:
             return i
     return -1
 
-#@jit(debug=True, nopython=True)
+
 def cropMap2(data, map_width, map_height):
     
     print(datetime.now(), " Antes de ter o indice")
@@ -72,7 +70,7 @@ def cropMapTF(data, map_width, map_height):
 
     result = tf.where(result == 0, x=1, y=result)
     result =tf.where(result == 100, x=-1, y=result)
-   
+
     return result.numpy()
 
 class Path_finding():
@@ -84,6 +82,7 @@ class Path_finding():
         self.intrinsics = None
         self.bridge = CvBridge()
         self.path = None
+        self.goal = None
         self.stopPathFinding = False        
 
         #Publishers
@@ -97,11 +96,15 @@ class Path_finding():
         #Subscriber
         #self.sub = rospy.Subscriber("map", OccupancyGrid, self.mapCallback, queue_size=10, buff_size=2**24)
 
-        #self.sub = rospy.Subscriber("goal", OccupancyGrid, self.mapCallback, queue_size=10, buff_size=2**24)
+        self.sub = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.goalCallback, queue_size=10, buff_size=2**24)
 
         #Publisher (update this )
         self.pub = rospy.Publisher("path_image", Image, queue_size=1)
 
+    def goalCallback(self, pose_stamped):
+
+        self.goal = [pose_stamped.pose.position.x, pose_stamped.pose.position.y]
+        print(self.goal)
 
 
     def getCurrentMap(self):
@@ -114,55 +117,58 @@ class Path_finding():
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
             return None
+
+
 #Callbacks
     def pathUpdateCallback(self): 
-        print(datetime.now(), "before map")
-        
+
+        print("Inicio: ", datetime.now())
         # skip updates without map
         latestGrid = self.getCurrentMap()
         if (latestGrid is None):
             return
-        print(datetime.now(), "after map")
+        #print(datetime.now(), "after map")
         
         header = latestGrid.header
         origin = latestGrid.info.origin
         resolution = latestGrid.info.resolution
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
-
-        print(datetime.now(), "before crop")
-        
+        #print(datetime.now(), "before crop")
         map_array = cropMapTF(latestGrid.data, map_width, map_height)
-        print(datetime.now(), "after crop")
+        #print(datetime.now(), "after crop")
         
 
         grid = Grid(matrix=map_array)
         
-        #try:
-        #    (trans,rot) = self.tflistener.lookupTransform('/camera_link', '/map', rospy.Time(0))
-        #except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-        #    print("Error on transform")
-        #    pass
+        try:
+            (trans,rot) = self.tflistener.lookupTransform('/camera_link', '/map', rospy.Time(0))
+            
+        except (TF.LookupException, TF.ConnectivityException, TF.ExtrapolationException):
+            print("Error on transform")
+            pass
+        
+        
 
         # set
         start = np.array([map_array.shape[0]//2, map_array.shape[1]//2])
-        end = start + 5
+        end = start + 50
 
         start_node = grid.node(start[0],start[1])
         end_node = grid.node(end[0], end[1])
 
-        print(datetime.now(), "before A star")
+        #print(datetime.now(), "before A star")
         
         path, runs = self.finder.find_path(start_node, end_node, grid)
 
         
-        print(datetime.now(), "before map conv")
-        #print('operations:', runs, 'path length:', len(path))
+        #print(datetime.now(), "before map conv")
+        print('operations:', runs, 'path length:', len(path))
 
         image = self.map2Image(map_array, start, end, path)
         self.path = path
 
-        print(datetime.now().timestamp(), "after map conv")
+        print("Fim: ", datetime.now())
         
         image_message = self.bridge.cv2_to_imgmsg(image) 
         self.pub.publish(image_message) #publish the image
