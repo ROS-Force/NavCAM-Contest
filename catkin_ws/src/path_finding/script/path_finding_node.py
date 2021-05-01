@@ -9,8 +9,8 @@ import tf as TF
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import Pose, PoseStamped
-from nav_msgs.msg import OccupancyGrid, MapMetaData
+from geometry_msgs.msg import Pose, PoseStamped, Point
+from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from nav_msgs.srv import GetMap
 
 from pathfinding.core.diagonal_movement import DiagonalMovement
@@ -50,7 +50,7 @@ def cropMap2(data, map_width, map_height):
     print(datetime.now(), " Depois do crop: ", map_array.shape)
     return result
 
-#@tf.function
+
 def cropMapTF(data, map_width, map_height):
     print(datetime.now(), "Before tensor conv")
     map_tf = tf.convert_to_tensor(np.asarray(data))
@@ -99,7 +99,8 @@ class Path_finding():
         self.sub = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.goalCallback, queue_size=10, buff_size=2**24)
 
         #Publisher (update this )
-        self.pub = rospy.Publisher("path_image", Image, queue_size=1)
+        self.pub_path = rospy.Publisher("path", Path, queue_size=1)
+        self.pub = rospy.Publisher("path_image", Image, queue_size=1) #remove after debug is done
 
     def goalCallback(self, pose_stamped):
 
@@ -117,7 +118,6 @@ class Path_finding():
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
             return None
-
 
 #Callbacks
     def pathUpdateCallback(self): 
@@ -143,7 +143,7 @@ class Path_finding():
         
         try:
             (trans,rot) = self.tflistener.lookupTransform('/camera_link', '/map', rospy.Time(0))
-            
+
         except (TF.LookupException, TF.ConnectivityException, TF.ExtrapolationException):
             print("Error on transform")
             pass
@@ -161,24 +161,52 @@ class Path_finding():
         
         path, runs = self.finder.find_path(start_node, end_node, grid)
 
-        
         #print(datetime.now(), "before map conv")
         print('operations:', runs, 'path length:', len(path))
 
-        image = self.map2Image(map_array, start, end, path)
+        
         self.path = path
+        self.publishPath(path)
 
         print("Fim: ", datetime.now())
         
+        #Remove after debug is done
+        image = self.map2Image(map_array, start, end, path)
         image_message = self.bridge.cv2_to_imgmsg(image) 
-        self.pub.publish(image_message) #publish the image
-        
+        self.pub.publish(image_message)
+        ##
     def cropMap_shit(self, map):
 
         xs, ys = np.where(map>=0)
         result = map[min(xs):max(xs)+1,min(ys):max(ys)+1] 
 
         return result
+
+    def publishPath(self, array):
+        
+        list_poses = []
+        pose_stamped = PoseStamped()
+        path = Path()
+
+        for p in array:
+
+            pose_stamped.header = Header()
+            pose_stamped.header.stamp = rospy.Time.now()
+
+            pose_stamped.pose.position.x = p[0]
+            pose_stamped.pose.position.y = p[1]
+            pose_stamped.pose.position.z = 0
+
+            list_poses.append(pose_stamped)
+        
+        #Create the Header
+        h = Header()
+        h.stamp = rospy.Time.now()
+
+        path.header = h
+        path.poses = list_poses
+
+        self.pub_path.publish(path)
 
 
     def map2Image(self, map, start, end, path):
@@ -218,6 +246,8 @@ class Path_finding():
         while(not rospy.is_shutdown()):
             self.pathUpdateCallback()
             sleepRate.sleep()
+
+
 
 def main():
 
