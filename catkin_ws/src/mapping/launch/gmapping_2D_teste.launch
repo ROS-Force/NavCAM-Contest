@@ -1,6 +1,6 @@
 <launch>
 
-    <arg name="with_camera" default="true"/>
+    <arg name="with_camera" default="true" />
 
     <arg name="rgb_image" default="/camera/color/image_raw" />
     <arg name="depth_image" default="/camera/aligned_depth_to_color/image_raw" />
@@ -11,6 +11,9 @@
     <!-- Set sim time if not using camera -->
     <param name="/use_sim_time" value="true" unless="$(arg with_camera)" />
     <param name="/use_sim_time" value="false" if="$(arg with_camera)" />
+
+    <!-- Run a rosbag if camera is off -->
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--delay=5 --clock $(find mapping)/demo/slam_cave.bag" unless="$(arg with_camera)" />
 
     <include file="$(find mapping)/launch/octomap_mapping.launch" />
 
