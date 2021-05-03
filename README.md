@@ -53,7 +53,7 @@ Then update all the submodules
 
 Now we advised to follow [our guide](https://github.com/ROS-Force/NavCAM-Contest/tree/main/installation) on how to build the dependencies.
 
-After all installing all the required dependencies compile the catkin workspace:
+After installing all the required dependencies compile the catkin workspace:
     
     cd ~/NavCAM-Contest/catkin_ws
     catkin_make
