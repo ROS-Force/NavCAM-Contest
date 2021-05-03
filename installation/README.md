@@ -13,7 +13,7 @@ We need a few more ROS related packages, install them with the following command
 After the installation you can edit your ~/.bashrc file to avoid having to source all the time. Add the following lines to the end of your ~/.bashrc file:
 
     source /opt/ros/noetic/setup.bash
-    source ~/NavCAM-Contest/catkin_ws/devel/setup.bash
+    source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend
     
 ## Python packages
 
@@ -23,7 +23,7 @@ Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/dis
 
 Install the python wrapper. Information is available at the [Python Wrapper](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python)
 
-    pip3 install pyrealsense2
+    pip3 install pyrealsense2 tensorflow
 
 
 ## Other Python packages
