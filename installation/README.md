@@ -23,7 +23,7 @@ Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/dis
 
 Install the python wrapper. Information is available at the [Python Wrapper](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python)
 
-    pip3 install pyrealsense2 tensorflow
+    pip3 install pyrealsense2 tensorflow catkin_tools
 
 
 ## Other Python packages
