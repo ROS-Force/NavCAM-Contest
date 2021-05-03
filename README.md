@@ -56,10 +56,7 @@ Now we advised to follow [our guide](https://github.com/ROS-Force/NavCAM-Contest
 After installing all the required dependencies compile the catkin workspace:
     
     cd ~/NavCAM-Contest/catkin_ws
-    catkin_make
-or
-
-    cd ~/NavCAM-Contest/catkin_ws
+    catkin config --install --merge-devel
     catkin build
 
 ## [Object Detection](https://github.com/ROS-Force/NavCAM-Contest/tree/main/catkin_ws/src/object_detection)
