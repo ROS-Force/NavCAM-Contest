@@ -30,7 +30,6 @@ class PathFindingROS():
 
         self.intrinsics = None
         self.bridge = CvBridge()
-        self.path = None
         self.goal = None
         self.stopPathFinding = False        
 
@@ -82,7 +81,7 @@ class PathFindingROS():
         resolution = latestGrid.info.resolution
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
-        map_array = PathFindingROS.__cropMapTF(latestGrid.data, map_width, map_height)
+        map_array = PathFindingROS.__cropMap(latestGrid.data, map_width, map_height)
 
 
         grid = Grid(matrix=map_array)
@@ -97,13 +96,14 @@ class PathFindingROS():
         #print(datetime.now(), "before A star")
         
         path, runs = self.finder.find_path(start_node, end_node, grid)
-
+        
         #print(datetime.now(), "before map conv")
         print('operations:', runs, 'path length:', len(path))
 
+
+        path_transformed = self.__transformPose(path, origin, resolution, toFrame="odom", fromFrame="map")
         
-        self.path = path
-        self.publishPath(path)
+        self.publishPath(path_transformed)
 
         print("Fim: ", datetime.now())
         
@@ -120,35 +120,49 @@ class PathFindingROS():
         sleepRate = rospy.Rate(500)
 
         while(not rospy.is_shutdown()):
-            self.__transformPose(None, fromFrame="camera_link", toFrame="map")
-            #self.pathUpdateCallback()
+            self.pathUpdateCallback()
             sleepRate.sleep()
 
-    def __transformPose(self, poseMatrix, fromFrame, toFrame):
+    def __transformPose(self, poseMatrix, origin, resolution, fromFrame, toFrame):
         # check if we can transform to target frame
         if not (self.tfbuffer.can_transform(target_frame=toFrame, source_frame=fromFrame, time=rospy.Duration())):
-            print("Error, can't obtain transform")
+            print("Error, can't obtain transform from '{}' to '{}'".format(fromFrame, toFrame))
+            return None
         else:
             # get transform 
+            translation_vector = None
+            rotation_quarternion = None
+
             try:
                 transform = self.tfbuffer.lookup_transform(toFrame, fromFrame, rospy.Time(0))
-                
+                #print(transform)
+                # get transform vectors
+                translation_vector=np.array([transform.transform.translation.x, 
+                    transform.transform.translation.y, 
+                    transform.transform.translation.z], dtype=np.float)
+
+                rotation_quarternion=np.array([transform.transform.rotation.x,
+                    transform.transform.rotation.y, 
+                    transform.transform.rotation.z, 
+                    transform.transform.rotation.w])
+
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 print("Error on transform")
-                pass
-            
-            
-            
-            
-            tf2_trans.quaternion_multiply()
-            quaternion_multiply(q_rot, q_orig)
+                return None
 
-            print(transform)
-            
-            #msg = Twist()
-   
-            #msg.angular.z = 4 * math.atan2(trans.transform.translation.y, trans.transform.translation.x)
-            #msg.linear.x = 0.5 * math.sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
+        #convert to numpy matrix
+        poseMatrix=np.array(poseMatrix, dtype=np.float)
+
+        for pose in poseMatrix:
+            # pixel to meter
+            if (fromFrame == "map" and toFrame=="odom"): 
+                pose = ((pose * resolution) + origin) - translation_vector
+            # meter to pixel
+            elif (fromFrame == "odom" and toFrame=="map"):
+                pose = ((pose + translation_vector) - origin) * resolution
+            else:
+                pose = pose + translation_vector
+        return poseMatrix
 
     def publishPath(self, array):
         
