@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from _typeshed import NoneType
 from numpy.core.fromnumeric import mean
 import rospy
 import numpy as np
@@ -172,8 +173,6 @@ class Sort_tracking():
 
     def computeFeatures(self, t, img, img_depth):
 
-        #img = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV) # change image from bgr to hsv
-
         thr_img, depth_thresh, roi = self.computeRoi(img, img_depth, t) #select the roi of the object
 
         sat = mean(roi[:,:,1])/255.0 # sat mean of image (E PARA MUDAR ISTO)
@@ -186,30 +185,33 @@ class Sort_tracking():
 
         if(t.Class == "traffic light"):
             
-            m = mean(thr_img[:,:,2])
+            hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV) # change image from rgb to hsv
 
-            ret, mask = cv2.threshold(thr_img[:,:,2], m, np.amax(thr_img[:,:,2]),cv2.THRESH_BINARY) #threshold to try to minimize the backgound influence
-            ilu_img = cv2.bitwise_and(roi, roi,mask = mask)
-            rgb_img = cv2.cvtColor(ilu_img, cv2.COLOR_HSV2RGB) # change image from bgr to hsv
-
-            ret, red_mask = cv2.threshold(rgb_img[:,:,0], 20, 255,cv2.THRESH_BINARY_INV) #threshold to try to minimize the background influence
-            #red_img = cv2.bitwise_and(rgb_img, rgb_img,mask = red_mask)
-
+            mask1 = cv2.inRange(hsv, np.array([0,100,100]), np.array([10,255,255]))
             
-            [counts, values] = np.histogram(ilu_img[:,:,0], bins=4, range=(1,180)) #create an histogram to see the most present color
-            m = max(counts)
-            dic = dict(zip(counts, values))
-            
-            color = "Red" #tenho de mudar isto <-- jura
+            mask2 = cv2.inRange(hsv, np.array([160,100,100]), np.array([180,255,255]))
+            maskg = cv2.inRange(hsv, np.array([40,50,50]), np.array([90,255,255]))
+            masky = cv2.inRange(hsv, np.array([15,150,150]), np.array([35,255,255]))
+            maskr = cv2.add(mask1, mask2)
+            count_red = np.count_nonzero(maskr)
+            count_green = np.count_nonzero(maskg)
+            count_yellow = np.count_nonzero(masky)
 
+            if(count_red >= count_yellow and count_red>= count_green):
+                color = "Red"
+            elif(count_green >= count_yellow and count_green > count_red):
+                color = "Green"
+            else:
+                color="Yellow"
+            
         else:
             [counts, values] = np.histogram(thr_img[:,:,0], bins=36, range=(1,180)) #create an histogram to see the most present color
             m = max(counts)
             dic = dict(zip(counts, values))
             hue = int(dic[m] * 2) # hue valor of the most present color
+            image_message = self.bridge.cv2_to_imgmsg(img, encoding = self.data_encoding)
+            self.pub.publish(image_message) #publish the labelled image
 
-            #mask = ((thr_img[:,:,0] >= hue/2) & (thr_img[0] <= hue/2+10))
-            #index = np.where(mask == True)
             c = Color(hsv=(hue, sat, ilumination))
             color = c.web
 
@@ -254,7 +256,8 @@ class Sort_tracking():
         ret, thresh = cv2.threshold(roi_depth, m, np.amax(roi_depth),cv2.THRESH_BINARY_INV) #threshold to try to minimize the backgound influence
         mask = self.map_uint16_to_uint8(thresh, lower_bound=0, upper_bound=255)
         thr_img = cv2.bitwise_and(roi, roi,mask = mask) #apply the mask created to the rgb image
-        
+        thr_img = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
+
         return thr_img, thresh, roi
 
 
@@ -269,7 +272,7 @@ class Sort_tracking():
             lower_bound = np.min(img)
         if upper_bound is None:
             upper_bound = np.max(img)
-        if lower_bound >= upper_bound:
+        if lower_bound > upper_bound:
             raise ValueError(
                 '"lower_bound" must be smaller than "upper_bound"')
         lut = np.concatenate([
