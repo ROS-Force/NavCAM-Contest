@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from _typeshed import NoneType
 from numpy.core.fromnumeric import mean
 import rospy
 import numpy as np
