@@ -58,6 +58,7 @@
 		<!-- The filter accepts an arbitrary number of inputs from each input message type (Odometry, PoseStamped, TwistStamped, Imu). To add a new one, simply 
 			append the next number in the sequence to its base name, e.g., odom0, odom1, twist0, twist1, imu0, imu1, imu2, etc. The value should be the topic name. 
 			These parameters obviously have no default values, and must be specified. -->
+		<param name="odom0" value="$(arg odometry_topic)"/>
 		<param name="pose0" value="$(arg pose_topic)" />
 		<param name="imu0" value="$(arg imu_topic)"/>
 
@@ -66,6 +67,11 @@
 			except for the third entry. The order of the values is x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Note that not some message 
 			types lack certain variables. For example, a TwistWithCovarianceStamped message has no pose information, so the first six values would be meaningless in 
 			that case. Each vector defaults to all false if unspecified, effectively making this parameter required for each sensor. -->
+		<rosparam param="odom0_config">[false, false, false,
+                                      false, false, false,
+                                      true, false, false,
+                                      false, false, true,
+                                      false, false, false]</rosparam>
 		<rosparam param="imu0_config">[false, false, false,
                                      true,  true,  true,
                                      false, false, false,
@@ -88,12 +94,14 @@
 			orientation variables: if you have only one source of absolute orientation data, you should not set the differential parameter to true. This is due to 
 			the fact that integration of velocities leads to slowly increasing error in the absolute (pose) variable. For position variables, this is acceptable. For 
 			orientation variables, it can lead to trouble. Users should make sure that all orientation variables have at least one source of absolute measurement. -->
-		<param name="imu0_differential" value="false"/>
+		<param name="odom0_differential" value="true"/>
+		<param name="odom1_differential" value="false"/>
 		<param name="pose0_differential" value="false" />
 
 		<!-- When the node starts, if this parameter is true, then the first measurement is treated as a "zero point" for all future measurements. While you 
 			can achieve the same effect with the differential paremeter, the key difference is that the relative parameter doesn't cause the measurement to be converted 
 			to a velocity before integrating it. If you simply want your measurements to start at 0 for a given sensor, set this to true. -->
+		<param name="odom0_relative" value="false"/>
 		<param name="imu0_relative" value="false"/>
 		<param name="pose0_relative" value="false" />
 

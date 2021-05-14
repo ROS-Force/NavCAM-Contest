@@ -30,7 +30,7 @@ class PathFindingROS():
 
         self.intrinsics = None
         self.bridge = CvBridge()
-        self.goal = None
+        self.latestGoal = None
         self.stopPathFinding = False        
 
         #Publishers
@@ -52,8 +52,8 @@ class PathFindingROS():
 
     def goalCallback(self, pose_stamped):
 
-        self.goal = [pose_stamped.pose.position.x, pose_stamped.pose.position.y]
-        print(self.goal)
+        self.latestGoal = np.array([pose_stamped.pose.position.x, pose_stamped.pose.position.y, pose_stamped.pose.position.z], dtype=np.float)
+        print(pose_stamped)
 
 
     def getCurrentMap(self):
@@ -73,44 +73,77 @@ class PathFindingROS():
         print("Inicio: ", datetime.now())
         # skip updates without map
         latestGrid = self.getCurrentMap()
-        if (latestGrid is None):
+        if (latestGrid is None or self.latestGoal is None):
             return
-        
+
         header = latestGrid.header
         origin = latestGrid.info.origin
         resolution = latestGrid.info.resolution
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
-        map_array = PathFindingROS.__cropMap(latestGrid.data, map_width, map_height)
-
-
+        map_array, origin_dist = PathFindingROS.__cropMap(latestGrid.data, map_width, map_height)                
         grid = Grid(matrix=map_array)
 
-        # set
-        start = np.array([map_array.shape[0]//2, map_array.shape[1]//2])
-        end = start + 50
 
-        start_node = grid.node(start[0],start[1])
-        end_node = grid.node(end[0], end[1])
+        mapShape = np.array(map_array.shape).astype(np.uint)
+        print("shape", mapShape)
+        print(header)
+        #goalPositon = np.array([self.goal.position.x,self.goal.position.y,self.goal.position.z], dtype=np.float)
+        mapOriginPosition = np.array([origin.position.x,origin.position.y,origin.position.z], dtype=np.float)
 
-        #print(datetime.now(), "before A star")
-        
+        print("real in m", self.latestGoal, self.__getCurrentPosition())
+        goalPosition = (((self.latestGoal - mapOriginPosition)/resolution)[:2] - origin_dist).astype(np.uint)
+
+        print("debug goal", (((self.latestGoal - mapOriginPosition)/resolution)[:2] - origin_dist))
+        goalPosition = np.where(goalPosition <= 0, 0, goalPosition)
+        goalPosition = np.where(goalPosition >= mapShape, (mapShape-1), goalPosition)
+
+        # get current 2d position
+        currentPosition = (((self.__getCurrentPosition()- mapOriginPosition)/resolution)[:2] - origin_dist).astype(np.uint)
+        print("debug pos", (((self.__getCurrentPosition()- mapOriginPosition)/resolution)[:2] - origin_dist))
+        currentPosition = np.where(currentPosition <= 0, 0, currentPosition)
+        currentPosition = np.where(currentPosition >= mapShape, mapShape-1, currentPosition)
+
+        print(currentPosition, goalPosition)
+        start_node = grid.node(currentPosition[0], currentPosition[1])
+        end_node = grid.node(goalPosition[0], goalPosition[1])
+
+
         path, runs = self.finder.find_path(start_node, end_node, grid)
         
+        # convert to np
+        path = np.array(path)
+
         #print(datetime.now(), "before map conv")
         print('operations:', runs, 'path length:', len(path))
 
+        #Remove after debug is done
+        image = self.__map2Image(map_array, currentPosition, goalPosition, path)
+        image_message = self.bridge.cv2_to_imgmsg(image) 
+        self.pub.publish(image_message) #publish the image
 
-        path_transformed = self.__transformPose(path, origin, resolution, toFrame="odom", fromFrame="map")
+        for point in path:
+            point += origin_dist
+
+        path_transformed=np.empty((path.shape[0], 3), dtype=np.float)
+
+        print(path)
+        for (newPose, oldPose) in zip(path_transformed, path):
+            oldPose = np.append(oldPose, 0).astype(np.float)
+            
+            print(oldPose, oldPose*resolution, mapOriginPosition)
+            newPose = ((oldPose * resolution) + mapOriginPosition)
+            print(newPose)
+            
+        print(path_transformed)
+
+
+        #path_transformed = self.__transformPose(path, origin, resolution, toFrame="odom", fromFrame="map")
         
         self.publishPath(path_transformed)
 
         print("Fim: ", datetime.now())
-        
-        #Remove after debug is done
-        image = self.map2Image(map_array, start, end, path)
-        image_message = self.bridge.cv2_to_imgmsg(image) 
-        self.pub.publish(image_message) #publish the image
+
         
 
     def run(self):  
@@ -122,6 +155,22 @@ class PathFindingROS():
         while(not rospy.is_shutdown()):
             self.pathUpdateCallback()
             sleepRate.sleep()
+
+    def __getCurrentPosition(self):
+        if not (self.tfbuffer.can_transform(target_frame="map", source_frame="odom", time=rospy.Duration())):
+            print("Error, can't obtain transform from 'odom' to 'map'")
+            return None
+        else:
+            try:
+                transform = self.tfbuffer.lookup_transform("map", "odom", rospy.Time(0))
+                # get transform vectors
+                return np.array([transform.transform.translation.x, 
+                    transform.transform.translation.y, 
+                    transform.transform.translation.z], dtype=np.float)
+
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                print("Error on transform")
+                return None
 
     def __transformPose(self, poseMatrix, origin, resolution, fromFrame, toFrame):
         # check if we can transform to target frame
@@ -135,7 +184,6 @@ class PathFindingROS():
 
             try:
                 transform = self.tfbuffer.lookup_transform(toFrame, fromFrame, rospy.Time(0))
-                #print(transform)
                 # get transform vectors
                 translation_vector=np.array([transform.transform.translation.x, 
                     transform.transform.translation.y, 
@@ -150,19 +198,43 @@ class PathFindingROS():
                 print("Error on transform")
                 return None
 
-        #convert to numpy matrix
-        poseMatrix=np.array(poseMatrix, dtype=np.float)
+        newPoses = None
+        print(poseMatrix.shape)
+        shape = poseMatrix.shape
 
-        for pose in poseMatrix:
+        if (fromFrame == "map" and toFrame=="odom"):
+            shape = (shape[0], 3) # change to 3 dimensions
+        elif (fromFrame == "odom" and toFrame=="map"):
+            shape = (shape[0], 2) # change to 2 dimensions
+
+        newPoses=np.empty(shape, dtype=np.float)
+
+        print(poseMatrix)
+        
+        for (newPose, oldPose) in zip(newPoses, poseMatrix):
+            print(origin)
+            originPosition = np.array([origin.position.x,origin.position.y,origin.position.z])
+            #print(pose)
+
             # pixel to meter
-            if (fromFrame == "map" and toFrame=="odom"): 
-                pose = ((pose * resolution) + origin) - translation_vector
+            if (fromFrame == "map" and toFrame=="odom"):
+                # add dummy dimension 
+                oldPose = np.append(oldPose, 0).astype(np.float)
+                print(resolution, oldPose, originPosition, translation_vector)
+                newPose = ((oldPose * resolution) + originPosition) + translation_vector
+                print(newPose)
             # meter to pixel
             elif (fromFrame == "odom" and toFrame=="map"):
-                pose = ((pose + translation_vector) - origin) * resolution
+                newPose_stub = ((oldPose + translation_vector) - originPosition) / resolution
+                newPose = newPose_stub[:2].astype(np.int)
             else:
-                pose = pose + translation_vector
-        return poseMatrix
+                newPose = oldPose + translation_vector
+
+            #print(pose)
+            
+        print(newPoses)
+        
+        return newPoses
 
     def publishPath(self, array):
         
@@ -174,17 +246,17 @@ class PathFindingROS():
 
             pose_stamped.header = Header()
             pose_stamped.header.stamp = rospy.Time.now()
-
+            pose_stamped.header.frame_id = "map"
             pose_stamped.pose.position.x = p[0]
             pose_stamped.pose.position.y = p[1]
-            pose_stamped.pose.position.z = 0
+            pose_stamped.pose.position.z = p[2]
 
             list_poses.append(pose_stamped)
         
         #Create the Header
         h = Header()
         h.stamp = rospy.Time.now()
-
+        h.frame_id = "map"
         path.header = h
         path.poses = list_poses
 
@@ -240,9 +312,9 @@ class PathFindingROS():
         print(datetime.now(), "After slicing columns")
 
         result = tf.where(result == 0, x=1, y=result)
-        result =tf.where(result == 100, x=-1, y=result)
+        result = tf.where(result == 100, x=-1, y=result)
 
-        return result.numpy()
+        return result.numpy(), min_idx.numpy()
 
 
 

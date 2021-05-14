@@ -3,11 +3,14 @@
 
 	<arg name="with_camera" default="true"/>
 
-
 	<include file="$(find realsense_tools)/launch/rs_camera.launch" if="$(arg with_camera)" />
 
-	<node pkg="tf" type="static_transform_publisher" name="base_link_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 odom camera_link 40" />
+	  <!-- Set sim time if not using camera -->
+    <param name="use_sim_time" value="true"/>
+	
 
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 camera_link odom 40" />
+	
     <node pkg="rviz" type="rviz" name="rviz" />
 
 
@@ -38,44 +41,45 @@
 	<arg name="robot_initial_yaw" default="0.0" />
 
 
-	<include file="$(find dynamic_robot_localization)/launch/dynamic_robot_localization_system.launch" >
-		<arg name="pcl_verbosity_level" default="$(arg pcl_verbosity_level)" />
-		<arg name="ros_verbosity_level" default="$(arg ros_verbosity_level)" />
+	<include file="$(find mapping)/launch/drl/dynamic_robot_localization_system.launch" >
+		<arg name="pcl_verbosity_level" value="$(arg pcl_verbosity_level)" />
+		<arg name="ros_verbosity_level" value="$(arg ros_verbosity_level)" />
 
-		<arg name="map_frame_id" default="$(arg map_frame_id)" />
-		<arg name="odom_frame_id" default="$(arg odom_frame_id)" />
-		<arg name="base_link_frame_id" default="$(arg base_link_frame_id)" />
-		<arg name="sensor_frame_id" default="$(arg sensor_frame_id)" />
+		<arg name="map_frame_id" value="$(arg map_frame_id)" />
+		<arg name="odom_frame_id" value="$(arg odom_frame_id)" />
+		<arg name="base_link_frame_id" value="$(arg base_link_frame_id)" />
+		<arg name="sensor_frame_id" value="$(arg sensor_frame_id)" />
 
-		<arg name="yaml_configuration_filters_filename" default="$(find mapping)/yaml/configs/filters/filters_3d_tof_slam.yaml" />
-		<arg name="yaml_configuration_pose_estimation_filename" default="$(find mapping)/yaml/configs/empty.yaml" />
-		<arg name="yaml_configuration_tracking_filename" default="$(find mapping)/yaml/configs/pose_tracking/cluttered_environments_dynamic_large_map_slam_3d.yaml" />
-		<arg name="yaml_configuration_recovery_filename" default="$(find mapping)/yaml/configs/pose_recovery/recovery_3d.yaml" />
+		<arg name="yaml_configuration_filters_filename" value="$(find dynamic_robot_localization)/yaml/configs/filters/filters_3d_tof_slam.yaml" />
+		<arg name="yaml_configuration_pose_estimation_filename" value="$(find dynamic_robot_localization)/yaml/configs/empty.yaml" />
+		<arg name="yaml_configuration_tracking_filename" value="$(find dynamic_robot_localization)/yaml/configs/pose_tracking/cluttered_environments_dynamic_large_map_slam_3d.yaml" />
+		<arg name="yaml_configuration_recovery_filename" value="$(find dynamic_robot_localization)/yaml/configs/pose_recovery/recovery_3d.yaml" />
 		
-		<arg name="reference_pointcloud_filename" default="$(arg reference_pointcloud_filename)" if="$(arg reference_pointcloud_available)" />
-		<arg name="reference_pointcloud_filename" default="" unless="$(arg reference_pointcloud_available)" />
-		<arg name="reference_pointcloud_available" default="$(arg reference_pointcloud_available)" />
-		<arg name="reference_pointcloud_type_3d" default="true" />
+		<arg name="reference_pointcloud_filename" value="$(arg reference_pointcloud_filename)" if="$(arg reference_pointcloud_available)" />
+		<arg name="reference_pointcloud_filename" value="" unless="$(arg reference_pointcloud_available)" />
+		<arg name="reference_pointcloud_available" value="$(arg reference_pointcloud_available)" />
+		<arg name="reference_pointcloud_type_3d" value="true" />
 
-		<arg name="ambient_pointcloud_topic" default="$(arg ambient_pointcloud_topic)" />
+		<arg name="ambient_pointcloud_topic" value="$(arg ambient_pointcloud_topic)" />
 
-		<arg name="robot_initial_pose_in_base_to_map" default="$(arg robot_initial_pose_in_base_to_map)" />
-		<arg name="robot_initial_pose_available" default="$(arg robot_initial_pose_available)" />
-		<arg name="robot_initial_x" default="$(arg robot_initial_x)" />
-		<arg name="robot_initial_y" default="$(arg robot_initial_y)" />
-		<arg name="robot_initial_z" default="$(arg robot_initial_z)" />
-		<arg name="robot_initial_roll" default="$(arg robot_initial_roll)" />
-		<arg name="robot_initial_pitch" default="$(arg robot_initial_pitch)" />
-		<arg name="robot_initial_yaw" default="$(arg robot_initial_yaw)" />
+		<arg name="robot_initial_pose_in_base_to_map" value="$(arg robot_initial_pose_in_base_to_map)" />
+		<arg name="robot_initial_pose_available" value="$(arg robot_initial_pose_available)" />
+		<arg name="robot_initial_x" value="$(arg robot_initial_x)" />
+		<arg name="robot_initial_y" value="$(arg robot_initial_y)" />
+		<arg name="robot_initial_z" value="$(arg robot_initial_z)" />
+		<arg name="robot_initial_roll" value="$(arg robot_initial_roll)" />
+		<arg name="robot_initial_pitch" value="$(arg robot_initial_pitch)" />
+		<arg name="robot_initial_yaw" value="$(arg robot_initial_yaw)" />
 
-		<arg name="use_laser_assembler" default="false" />
+		<arg name="use_laser_assembler" value="false" />
 
-		<arg name="invert_tf_transform" default="true" />
-		<arg name="invert_tf_hierarchy" default="true" />
+		<arg name="invert_tf_transform" value="true" />
+		<arg name="invert_tf_hierarchy" value="true" />
 
-		<arg name="use_octomap_for_dynamic_map_update" default="true" />
-		<arg name="reference_costmap_topic" default="/map" />
-		<arg name="use_ukf_filtering" default="false"/>
-		<arg name="reference_pointcloud_update_mode" default="FullIntegration"/>
+		<arg name="use_octomap_for_dynamic_map_update" value="true" />
+		<arg name="reference_costmap_topic" value="/map" />
+		<arg name="reference_pointcloud_update_mode" value="FullIntegration"/>
+		<arg name="use_ukf_filtering" value="true"/>
+		
 	</include>
 </launch>

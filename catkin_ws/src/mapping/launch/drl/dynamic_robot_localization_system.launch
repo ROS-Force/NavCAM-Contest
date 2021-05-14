@@ -177,7 +177,7 @@
 		<arg name="publish_last_pose_tf_timeout_seconds" default="$(arg publish_last_pose_tf_timeout_seconds)" />
 		<arg name="pose_with_covariance_stamped_topic" default="$(arg pose_with_covariance_stamped_topic)" /> <!-- rviz topic -->
 		<arg name="pose_stamped_topic" default="$(arg pose_stamped_publish_topic)" />
-		<arg name="odometry_topic" default="a" />
+		<arg name="odometry_topic" default="" />
 		<arg name="map_frame_id" default="$(arg map_frame_id)_drl" if="$(arg use_ukf_filtering)" />
 		<arg name="map_frame_id" default="$(arg map_frame_id)" unless="$(arg use_ukf_filtering)" />
 		<arg name="odom_frame_id" default="$(arg odom_frame_id)" />
