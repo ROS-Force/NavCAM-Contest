@@ -38,3 +38,9 @@
 [submodule "depends/openpose"]
 	path = depends/openpose
 	url = git@github.com:CMU-Perceptual-Computing-Lab/openpose.git
+[submodule "catkin_ws/src/packagedeps/rtabmap_ros"]
+	path = catkin_ws/src/packagedeps/rtabmap_ros
+	url = git@github.com:introlab/rtabmap_ros.git
+[submodule "catkin_ws/src/packagedeps/navigation_msgs"]
+	path = catkin_ws/src/packagedeps/navigation_msgs
+	url = git@github.com:ros-planning/navigation_msgs.git
