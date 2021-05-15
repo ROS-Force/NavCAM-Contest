@@ -48,15 +48,15 @@ class Sort_tracking():
         self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
         #Publishers
-        self.pub = rospy.Publisher("output_image", Image, queue_size=1)
-        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
+        self.pub = rospy.Publisher("output_image", Image, queue_size=10)
+        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=10)
 
         #Subscriber
-        self.sub = message_filters.Subscriber("image", Image, queue_size=10, buff_size=2**27)
-        self.sub_depth = message_filters.Subscriber("depth_image", Image, queue_size=10, buff_size=2**27)
-        self.sub_bbox_yolo  = message_filters.Subscriber("bounding_boxes", BoundingBoxes, queue_size=10, buff_size=2**27)
+        self.sub = message_filters.Subscriber("image", Image, queue_size=100, buff_size=2**27)
+        self.sub_depth = message_filters.Subscriber("depth_image", Image, queue_size=100, buff_size=2**27)
+        self.sub_bbox_yolo  = message_filters.Subscriber("bounding_boxes", BoundingBoxes, queue_size=100, buff_size=2**27)
         
-        ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth, self.sub_bbox_yolo], 30)#, self.sub_bbox_yolo], 10)
+        ts = message_filters.ApproximateTimeSynchronizer([self.sub, self.sub_depth, self.sub_bbox_yolo], 60, 0.1)
         ts.registerCallback(self.imageCallback)
         
         # grab camera info
@@ -216,7 +216,7 @@ class Sort_tracking():
 
         shape = self.computeShape(depth_thresh)
 
-        return img, color, sat*100, ilumination*100, shape 
+        return img, color, int(sat*100), int(ilumination*100), shape 
 
 
     def computeShape(self, thresh):
