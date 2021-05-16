@@ -44,3 +44,15 @@
 [submodule "catkin_ws/src/packagedeps/navigation_msgs"]
 	path = catkin_ws/src/packagedeps/navigation_msgs
 	url = git@github.com:ros-planning/navigation_msgs.git
+[submodule "depends/rtabmap"]
+	path = depends/rtabmap
+	url = git@github.com:introlab/rtabmap.git
+[submodule "depends/libpointmatcher"]
+	path = depends/libpointmatcher
+	url = git@github.com:ethz-asl/libpointmatcher.git
+[submodule "depends/libnabo"]
+	path = depends/libnabo
+	url = git@github.com:ethz-asl/libnabo.git
+[submodule "depends/gtsam"]
+	path = depends/gtsam
+	url = git@github.com:borglab/gtsam.git
