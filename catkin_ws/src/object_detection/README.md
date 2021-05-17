@@ -128,8 +128,6 @@ The rosbags were recorded with a RealSense D435i.
 
 ![](img/recording.gif)
 
-![](img/yolo_people_proof.mp4)
-
 ## Basic Usage
 
 To run the demos you have to put the rosbag file inside object_detection/demo and edit the tracking_demo.launch replacing the value with the rosbag you want to run.
