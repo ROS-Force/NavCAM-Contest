@@ -10,7 +10,7 @@ import tf2_ros, tf.transformations as tf2_trans
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Pose, Point, PoseStamped, Quaternion
 from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from nav_msgs.srv import GetMap
 
@@ -45,6 +45,10 @@ class PathFindingROS():
         #self.sub = rospy.Subscriber("map", OccupancyGrid, self.mapCallback, queue_size=10, buff_size=2**24)
 
         self.sub = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.goalCallback, queue_size=10, buff_size=2**24)
+
+        
+        self.pub_pose = rospy.Publisher("pose_test", PoseStamped, queue_size=1)
+        self.pub_pose_orig = rospy.Publisher("pose_test_orig", PoseStamped, queue_size=1)
 
         #Publisher (update this )
         self.pub_path = rospy.Publisher("path", Path, queue_size=1)
@@ -83,10 +87,29 @@ class PathFindingROS():
         map_height = latestGrid.info.height
         map_array, origin_dist = PathFindingROS.__cropMap(latestGrid.data, map_width, map_height)                
         grid = Grid(matrix=map_array)
-
-
+        
         mapShape = np.array(map_array.shape).astype(np.uint)
         print("shape", mapShape)
+        
+        mapPosition = mapShape.astype(np.int)
+        #mapPosition[0] = 0
+
+        mapOriginPosition = np.array([origin.position.x,origin.position.y,origin.position.z], dtype=np.float)
+
+        realOriginPosition = np.append(((origin_dist + mapPosition).astype(np.float)* resolution), 0)
+        realOriginPosition += mapOriginPosition
+        
+        originPosition = Pose(position=Point(realOriginPosition[0],realOriginPosition[1],realOriginPosition[2]))
+        self.pub_pose.publish(PoseStamped(header = header, pose = originPosition))
+        
+
+        realOriginPosition = np.append(((origin_dist).astype(np.float)* resolution), 0)
+        realOriginPosition += mapOriginPosition
+        
+        originPosition = Pose(position=Point(realOriginPosition[0],realOriginPosition[1],realOriginPosition[2]))
+        self.pub_pose_orig.publish(PoseStamped(header = header, pose = originPosition))
+        return 
+
         print(header)
         #goalPositon = np.array([self.goal.position.x,self.goal.position.y,self.goal.position.z], dtype=np.float)
         mapOriginPosition = np.array([origin.position.x,origin.position.y,origin.position.z], dtype=np.float)

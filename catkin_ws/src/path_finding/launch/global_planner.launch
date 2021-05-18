@@ -1,18 +1,7 @@
 <launch>
-    <node pkg="tf" type="static_transform_publisher" name="camera_link_to_base_link" args="0.0 0.0 0.0 0.0 0.0 0.0 camera_link base_link 40" />
-
     <node pkg="global_planner" type="planner" name="global_planner2d" output="screen">
         <remap from="goal" to="/move_base_simple/goal" />
+        <remap from="costmap" to= "map" />
+        <remap from="base_link" to="camera_link" />
     </node>
 </launch>
-
-
-
-<!--
-    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
-        <param name="map_update_interval" value="0.5" />
-        <param name="delta" value="0.02" />
-        <remap from="scan" to="/camera/scan" />
-        <param name="base_frame" value="camera_link" />
-    </node>
--->

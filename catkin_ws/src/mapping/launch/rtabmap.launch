@@ -127,10 +127,6 @@
   <arg name="tag_linear_variance"      default="0.0001" />
   <arg name="tag_angular_variance"     default="9999" />             <!-- >=9999 means ignore rotation in optimization, when rotation estimation of the tag is not reliable -->
   
-  <!-- CUSTOM SHIT -->
-  
-  <arg name="map_always_update"       default="true"/>  
-
   <!-- These arguments should not be modified directly, see referred topics without "_relay" suffix above -->
   <arg if="$(arg compressed)"     name="rgb_topic_relay"           default="$(arg rgb_topic)_relay"/>
   <arg unless="$(arg compressed)" name="rgb_topic_relay"           default="$(arg rgb_topic)"/>
@@ -256,7 +252,7 @@
           <param name="guess_min_rotation"          type="double" value="$(arg odom_guess_min_rotation)"/>
           <param name="expected_update_rate"        type="double" value="$(arg odom_expected_rate)"/>
           <param name="max_update_rate"             type="double" value="$(arg odom_max_rate)"/>
-          <param name="keep_color"                  type="bool"   value="$(arg use_odom_features)"/>
+          <param name="keep_color"                  type="bool"   value="true"/>
         </node>
       </group>
     </group>
@@ -311,7 +307,6 @@
       <param name="subscribe_user_data"  type="bool"   value="$(arg subscribe_user_data)"/>
       <param if="$(arg visual_odometry)" name="subscribe_odom_info" type="bool" value="true"/>
       <param if="$(arg icp_odometry)"    name="subscribe_odom_info" type="bool" value="true"/>
-    
       <param name="frame_id"             type="string" value="$(arg frame_id)"/>
       <param name="map_frame_id"         type="string" value="$(arg map_frame_id)"/>
       <param name="odom_frame_id"        type="string" value="$(arg odom_frame_id)"/>
@@ -330,7 +325,7 @@
       <param name="scan_cloud_max_points"     type="int" value="$(arg scan_cloud_max_points)"/>
       <param name="landmark_linear_variance"   type="double" value="$(arg tag_linear_variance)"/>
       <param name="landmark_angular_variance"  type="double" value="$(arg tag_angular_variance)"/>      
-      
+      <param name="map_always_update" value="true"/>
       <remap from="rgb/image"       to="$(arg rgb_topic_relay)"/>
       <remap from="depth/image"     to="$(arg depth_topic_relay)"/>
       <remap from="rgb/camera_info" to="$(arg camera_info_topic)"/>
@@ -359,12 +354,6 @@
       <param     if="$(arg localization)" name="Mem/IncrementalMemory" type="string" value="false"/>
       <param unless="$(arg localization)" name="Mem/IncrementalMemory" type="string" value="true"/>
       <param name="Mem/InitWMWithAllNodes" type="string" value="$(arg localization)"/>
-
-      <!-- CUSTOM-->
-      
-      <param name="map_always_update"    value="$(arg map_always_update)"/>
-      <remap from="goal" to="/move_base_simple/goal"/>
-      
     </node>
   
     <!-- Visualisation RTAB-Map -->
