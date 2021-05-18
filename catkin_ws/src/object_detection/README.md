@@ -1,6 +1,6 @@
 # Object Detection
 
-This package performs detection and tracking of several objects using two distict models, the state of the art You Only Look Once (YOLO) and DeepLab deep learning model. We also use [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) algorithm to estimate humans position.
+This package performs detection and tracking of several objects using two distict models, the state of the art You Only Look Once (YOLO) and DeepLab deep learning model.
 
 ## Yolo Model
 
