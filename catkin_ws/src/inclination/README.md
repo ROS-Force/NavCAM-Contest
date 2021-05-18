@@ -17,5 +17,5 @@ This application can be launched using:
 
 We use the IMU data from the realsense camera to get the inclination around each axis in degrees. As the image shows:
 
-![Intel_orientation](/imgs/Intel_orientation.PNG )
+![](imgs/Intel_orientation.PNG )
 
