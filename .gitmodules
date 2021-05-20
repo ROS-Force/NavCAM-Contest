@@ -45,3 +45,6 @@
 [submodule "depends/octomap"]
 	path = depends/octomap
 	url = git@github.com:OctoMap/octomap.git
+[submodule "depends/g2o"]
+	path = depends/g2o
+	url = git@github.com:RainerKuemmerle/g2o.git
