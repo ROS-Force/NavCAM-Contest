@@ -91,7 +91,7 @@ class PathFindingROS():
             latestGrid.data, map_width, map_height)
 
         # invert
-        origin_dist = origin_dist[::-1]
+        #origin_dist = origin_dist[::-1]
 
         grid = Grid(matrix=map_array)
         mapShape = np.array(map_array.shape).astype(np.uint)
@@ -115,8 +115,8 @@ class PathFindingROS():
 
         print(currentPosition, goalPosition)
         start_node = grid.node(
-            int(currentPosition[1]), int(currentPosition[0]))
-        end_node = grid.node(int(goalPosition[1]), int(goalPosition[0]))
+            int(currentPosition[0]), int(currentPosition[1]))
+        end_node = grid.node(int(goalPosition[0]), int(goalPosition[1]))
 
         path, runs = self.finder.find_path(start_node, end_node, grid)
 
@@ -159,13 +159,13 @@ class PathFindingROS():
             sleepRate.sleep()
 
     def __getCurrentPosition(self):
-        if not (self.tfbuffer.can_transform(target_frame="map", source_frame="odom", time=rospy.Duration())):
-            print("Error, can't obtain transform from 'odom' to 'map'")
+        if not (self.tfbuffer.can_transform(target_frame="map", source_frame="camera_link", time=rospy.Duration())):
+            print("Error, can't obtain transform from 'camera_link' to 'map'")
             return None
         else:
             try:
                 transform = self.tfbuffer.lookup_transform(
-                    "map", "odom", rospy.Time(0))
+                    "map", "camera_link", rospy.Time(0))
                 # get transform vectors
                 return np.array([transform.transform.translation.x,
                                  transform.transform.translation.y,
@@ -220,14 +220,14 @@ class PathFindingROS():
             img[point[0], point[1], 2] = 0
 
         # Paint start
-        img[start[0], start[1], 0] = 255
-        img[start[0], start[1], 1] = 0
-        img[start[0], start[1], 2] = 0
+        img[start[1], start[0], 0] = 255
+        img[start[1], start[0], 1] = 0
+        img[start[1], start[0], 2] = 0
 
         # Paint end
-        img[end[0], end[1], 0] = 0
-        img[end[0], end[1], 1] = 0
-        img[end[0], end[1], 2] = 255
+        img[end[1], end[0], 0] = 0
+        img[end[1], end[0], 1] = 0
+        img[end[1], end[0], 2] = 255
 
         return img
 
@@ -240,19 +240,19 @@ class PathFindingROS():
         print(datetime.now(), "Before searching and reducing columns")
 
         # sum columns
-        indexes = tf.where(map_tf >= 0)
-        min_idx = tf.reduce_min(indexes, axis=0)
-        max_idx = tf.reduce_max(indexes, axis=0)
+        #indexes = tf.where(map_tf >= 0)
+        #min_idx = tf.reduce_min(indexes, axis=0)
+        #max_idx = tf.reduce_max(indexes, axis=0)
 
-        print(min_idx, max_idx)
         print(datetime.now(), "After summing columns")
-        result = map_tf[min_idx[0]:max_idx[0], min_idx[1]:max_idx[1]]
+        #result = map_tf[min_idx[0]:max_idx[0], min_idx[1]:max_idx[1]]
+        result = map_tf[:]
         print(datetime.now(), "After slicing columns")
 
         result = tf.where(result == 0, x=1, y=result)
         result = tf.where(result == 100, x=-1, y=result)
-
-        return result.numpy(), min_idx.numpy()
+        # min_inx.numpy()
+        return result.numpy(), np.array([0, 0])
 
 
 def main():
