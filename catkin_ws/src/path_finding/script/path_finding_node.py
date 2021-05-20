@@ -6,7 +6,6 @@ import cv2
 import pyrealsense2 as rs2
 import sys
 import tf2_ros
-import tf.transformations as tf2_trans
 
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
@@ -38,19 +37,18 @@ class PathFindingROS():
         #self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         #self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
 
-        self.tfbuffer = tf2_ros.Buffer()
+        self.tfbuffer = tf2_ros.Buffer(debug=False)
         self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
-
+        self.currentMap = None
         # Subscriber
         #self.sub = rospy.Subscriber("map", OccupancyGrid, self.mapCallback, queue_size=10, buff_size=2**24)
 
         self.sub = rospy.Subscriber("/move_base_simple/goal", PoseStamped,
                                     self.goalCallback, queue_size=10, buff_size=2**24)
 
-        self.pub_pose = rospy.Publisher("pose_test", PoseStamped, queue_size=1)
-        self.pub_pose_orig = rospy.Publisher(
-            "pose_test_orig", PoseStamped, queue_size=1)
+        # self.sub_map = rospy.Subscriber(
+        #    "/rtabmap/grid_map", OccupancyGrid, self.currentMapCallback, queue_size=1, buff_size=2**24)
 
         # Publisher (update this )
         self.pub_path = rospy.Publisher("path", Path, queue_size=1)
@@ -64,9 +62,10 @@ class PathFindingROS():
         print(pose_stamped)
 
     def getCurrentMap(self):
-        rospy.wait_for_service('dynamic_map')
+
+        rospy.wait_for_service('rtabmap/get_map')
         try:
-            dynamicMap = rospy.ServiceProxy('dynamic_map', GetMap)
+            dynamicMap = rospy.ServiceProxy('rtabmap/get_map', GetMap)
             dynamicMapResult = dynamicMap()
 
             return dynamicMapResult.map
@@ -116,8 +115,8 @@ class PathFindingROS():
 
         print(currentPosition, goalPosition)
         start_node = grid.node(
-            int(currentPosition[0]), int(currentPosition[1]))
-        end_node = grid.node(int(goalPosition[0]), int(goalPosition[1]))
+            int(currentPosition[1]), int(currentPosition[0]))
+        end_node = grid.node(int(goalPosition[1]), int(goalPosition[0]))
 
         path, runs = self.finder.find_path(start_node, end_node, grid)
 
@@ -153,7 +152,7 @@ class PathFindingROS():
 
         # main thread will now be used to update periodically A-star path
 
-        sleepRate = rospy.Rate(500)
+        sleepRate = rospy.Rate(1)
 
         while(not rospy.is_shutdown()):
             self.pathUpdateCallback()
@@ -175,75 +174,6 @@ class PathFindingROS():
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 print("Error on transform")
                 return None
-
-    def __transformPose(self, poseMatrix, origin, resolution, fromFrame, toFrame):
-        # check if we can transform to target frame
-        if not (self.tfbuffer.can_transform(target_frame=toFrame, source_frame=fromFrame, time=rospy.Duration())):
-            print("Error, can't obtain transform from '{}' to '{}'".format(
-                fromFrame, toFrame))
-            return None
-        else:
-            # get transform
-            translation_vector = None
-            rotation_quarternion = None
-
-            try:
-                transform = self.tfbuffer.lookup_transform(
-                    toFrame, fromFrame, rospy.Time(0))
-                # get transform vectors
-                translation_vector = np.array([transform.transform.translation.x,
-                                              transform.transform.translation.y,
-                                               transform.transform.translation.z], dtype=np.float)
-
-                rotation_quarternion = np.array([transform.transform.rotation.x,
-                                                transform.transform.rotation.y,
-                                                transform.transform.rotation.z,
-                                                 transform.transform.rotation.w])
-
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                print("Error on transform")
-                return None
-
-        newPoses = None
-        print(poseMatrix.shape)
-        shape = poseMatrix.shape
-
-        if (fromFrame == "map" and toFrame == "odom"):
-            shape = (shape[0], 3)  # change to 3 dimensions
-        elif (fromFrame == "odom" and toFrame == "map"):
-            shape = (shape[0], 2)  # change to 2 dimensions
-
-        newPoses = np.empty(shape, dtype=np.float)
-
-        print(poseMatrix)
-
-        for (newPose, oldPose) in zip(newPoses, poseMatrix):
-            print(origin)
-            originPosition = np.array(
-                [origin.position.x, origin.position.y, origin.position.z])
-            # print(pose)
-
-            # pixel to meter
-            if (fromFrame == "map" and toFrame == "odom"):
-                # add dummy dimension
-                oldPose = np.append(oldPose, 0).astype(np.float)
-                print(resolution, oldPose, originPosition, translation_vector)
-                newPose = ((oldPose * resolution) +
-                           originPosition) + translation_vector
-                print(newPose)
-            # meter to pixel
-            elif (fromFrame == "odom" and toFrame == "map"):
-                newPose_stub = ((oldPose + translation_vector) -
-                                originPosition) / resolution
-                newPose = newPose_stub[:2].astype(np.int)
-            else:
-                newPose = oldPose + translation_vector
-
-            # print(pose)
-
-        print(newPoses)
-
-        return newPoses
 
     def publishPath(self, array):
 
@@ -290,14 +220,14 @@ class PathFindingROS():
             img[point[0], point[1], 2] = 0
 
         # Paint start
-        img[start[1], start[0], 0] = 255
-        img[start[1], start[0], 1] = 0
-        img[start[1], start[0], 2] = 0
+        img[start[0], start[1], 0] = 255
+        img[start[0], start[1], 1] = 0
+        img[start[0], start[1], 2] = 0
 
         # Paint end
-        img[end[1], end[0], 0] = 0
-        img[end[1], end[0], 1] = 0
-        img[end[1], end[0], 2] = 255
+        img[end[0], end[1], 0] = 0
+        img[end[0], end[1], 1] = 0
+        img[end[0], end[1], 2] = 255
 
         return img
 
@@ -306,7 +236,7 @@ class PathFindingROS():
         print(datetime.now(), "Before tensor conv")
         map_tf = tf.convert_to_tensor(np.asarray(data))
         print(datetime.now(), "After tensor conv")
-        map_tf = tf.reshape(map_tf, [map_width, map_height])
+        map_tf = tf.reshape(map_tf, [map_height, map_width])
         print(datetime.now(), "Before searching and reducing columns")
 
         # sum columns
