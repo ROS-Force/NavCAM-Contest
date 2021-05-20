@@ -20,6 +20,7 @@
 [submodule "catkin_ws/src/packagedeps/rtabmap_ros"]
 	path = catkin_ws/src/packagedeps/rtabmap_ros
 	url = git@github.com:introlab/rtabmap_ros.git
+	branch = noetic-devel
 [submodule "catkin_ws/src/packagedeps/navigation_msgs"]
 	path = catkin_ws/src/packagedeps/navigation_msgs
 	url = git@github.com:ros-planning/navigation_msgs.git
@@ -38,3 +39,9 @@
 [submodule "catkin_ws/src/packagedeps/robot_localization"]
 	path = catkin_ws/src/packagedeps/robot_localization
 	url = git@github.com:cra-ros-pkg/robot_localization.git
+[submodule "catkin_ws/src/packagedeps/vision_opencv"]
+	path = catkin_ws/src/packagedeps/vision_opencv
+	url = git@github.com:ros-perception/vision_opencv.git
+[submodule "depends/octomap"]
+	path = depends/octomap
+	url = git@github.com:OctoMap/octomap.git
