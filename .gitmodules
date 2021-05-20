@@ -5,42 +5,46 @@
 [submodule "catkin_ws/src/packagedeps/imu_tools"]
 	path = catkin_ws/src/packagedeps/imu_tools
 	url = git@github.com:ccny-ros-pkg/imu_tools.git
-	branch = melodic
-[submodule "depends/eigen"]
-	path = depends/eigen
-	url = https://gitlab.com/libeigen/eigen.git
-[submodule "depends/pcl"]
-	path = depends/pcl
-	url = https://github.com/PointCloudLibrary/pcl
-[submodule "catkin_ws/src/packagedeps/pcl_conversions"]
-	path = catkin_ws/src/packagedeps/pcl_conversions
-	url = git@github.com:ROS-Force/pcl_conversions.git
-[submodule "catkin_ws/src/packagedeps/csm"]
-	path = catkin_ws/src/packagedeps/csm
-	url = git@github.com:jncfa/csm.git
-	branch = catkinize_csm_eigen
-[submodule "catkin_ws/src/packagedeps/depthimage_to_laserscan"]
-	path = catkin_ws/src/packagedeps/depthimage_to_laserscan
-	url = git@github.com:ros-perception/depthimage_to_laserscan.git
-[submodule "catkin_ws/src/packagedeps/scan_tools"]
-	path = catkin_ws/src/packagedeps/scan_tools
-	url = git@github.com:ccny-ros-pkg/scan_tools.git
-	branch = ros1
+	branch = noetic
 [submodule "depends/opencv"]
 	path = depends/opencv
 	url = git@github.com:opencv/opencv.git
+	branch = 4.5.1
 [submodule "depends/opencv_contrib"]
 	path = depends/opencv_contrib
 	url = git@github.com:opencv/opencv_contrib.git
+	branch = 4.5.1
 [submodule "catkin_ws/src/packagedeps/velodyne"]
 	path = catkin_ws/src/packagedeps/velodyne
 	url = git@github.com:ros-drivers/velodyne.git
-[submodule "depends/openpose"]
-	path = depends/openpose
-	url = git@github.com:CMU-Perceptual-Computing-Lab/openpose.git
 [submodule "catkin_ws/src/packagedeps/rtabmap_ros"]
 	path = catkin_ws/src/packagedeps/rtabmap_ros
 	url = git@github.com:introlab/rtabmap_ros.git
+	branch = noetic-devel
 [submodule "catkin_ws/src/packagedeps/navigation_msgs"]
 	path = catkin_ws/src/packagedeps/navigation_msgs
 	url = git@github.com:ros-planning/navigation_msgs.git
+[submodule "depends/rtabmap"]
+	path = depends/rtabmap
+	url = git@github.com:introlab/rtabmap.git
+[submodule "depends/libpointmatcher"]
+	path = depends/libpointmatcher
+	url = git@github.com:ethz-asl/libpointmatcher.git
+[submodule "depends/libnabo"]
+	path = depends/libnabo
+	url = git@github.com:ethz-asl/libnabo.git
+[submodule "depends/gtsam"]
+	path = depends/gtsam
+	url = git@github.com:borglab/gtsam.git
+[submodule "catkin_ws/src/packagedeps/robot_localization"]
+	path = catkin_ws/src/packagedeps/robot_localization
+	url = git@github.com:cra-ros-pkg/robot_localization.git
+[submodule "catkin_ws/src/packagedeps/vision_opencv"]
+	path = catkin_ws/src/packagedeps/vision_opencv
+	url = git@github.com:ros-perception/vision_opencv.git
+[submodule "depends/octomap"]
+	path = depends/octomap
+	url = git@github.com:OctoMap/octomap.git
+[submodule "depends/g2o"]
+	path = depends/g2o
+	url = git@github.com:RainerKuemmerle/g2o.git

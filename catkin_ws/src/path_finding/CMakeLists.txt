@@ -165,6 +165,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
    script/path_finding_node.py
+   script/path_finding_test.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

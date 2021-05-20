@@ -1,10 +1,8 @@
 <launch>
-    <arg name="with_camera"          default="true"/>
-    <include if="$(arg with_camera)" 
-        file="$(find realsense_tools)/launch/rs_camera.launch">
-    </include>
-    
-        <!-- Set sim time if not using camera -->
+    <arg name="with_camera" default="true" />
+    <include if="$(arg with_camera)" file="$(find realsense_tools)/launch/rs_camera.launch"></include>
+
+    <!-- Set sim time if not using camera -->
     <param name="/use_sim_time" value="true" unless="$(arg with_camera)" />
     <param name="/use_sim_time" value="false" if="$(arg with_camera)" />
 
@@ -13,7 +11,7 @@
         <param name="use_mag" type="bool" value="false" />
         <param name="publish_tf" type="bool" value="false" />
         <param name="world_frame" type="string" value="enu" />
-        <remap from="/imu/data_raw" to="/camera/imu"/>
+        <remap from="/imu/data_raw" to="/camera/imu" />
     </node>
 
     <include file="$(find mapping)/launch/rtabmap.launch">
@@ -28,10 +26,10 @@
         <arg name="cfg" value="$(find mapping)/launch/rtabmap/rtabmap.ini"/>
     </include>
 
-    <include file="$(find robot_localization)/launch/ukf_template.launch"/>
-    <param name="/ukf_se/frequency" value="30"/>
-    <param name="/ukf_se/base_link_frame" value="camera_link"/>
-    <param name="/ukf_se/odom0" value="rtabmap/odom"/>
+    <include file="$(find robot_localization)/launch/ukf_template.launch" />
+    <param name="/ukf_se/frequency" value="30" />
+    <param name="/ukf_se/base_link_frame" value="camera_link" />
+    <param name="/ukf_se/odom0" value="rtabmap/odom" />
     <rosparam param="/ukf_se/odom0_config">[true,true,true,
                                             true,true,true,
                                             true,true,true,
