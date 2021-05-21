@@ -30,6 +30,7 @@ class identify_irregularity():
 		self.x=0
 		self.y=0
 		self.z=0
+		multiplier=2
 
 		acel_subscriber=rospy.Subscriber("/imu/data", Imu, self.acelCallback)
 
@@ -80,7 +81,7 @@ class identify_irregularity():
 
 			else:
 				#check if theres any sudden variation in the vertical acelaration, that is 2 times over the standart deviation values calculated on calibration
-				if(self.y>(acel_med+2*standart_dev) or self.y<(acel_med-2*standart_dev)):
+				if(self.y>(acel_med+multiplier*standart_dev) or self.y<(acel_med-multiplier*standart_dev)):
 
 					rospy.loginfo("A instability or a sudden change of inclination was found!")
 

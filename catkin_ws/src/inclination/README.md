@@ -6,12 +6,14 @@ This package includes 2 launch files related to distinct aplications.
 
 The code identify_irregularity.py as 2 stages:
 
-1. calibration stage where we try to find the average inclination of the ground;
+1. The calibration stage where we try to find the average inclination of the ground;
 2. Assuming that the distribution of inclination values trough time is **Normal**, continued measurements of the inclination of the ground are made. We look for outliners to identify a irregularity (2*standart deviation) .
+
+The sensibility for irregularities can be modified by changing the value of the multiplier of standart deviations in line 33.
 
 This application can be launched using:
 
-`roslaunch inclination irregularity_identifier.launch`
+    roslaunch inclination irregularity_identifier.launch
 
 ## Identify inclination of the camera
 
