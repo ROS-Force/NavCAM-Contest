@@ -205,10 +205,17 @@ TODO
 
 # Basic Usage
 
-To run the demos you have to put the rosbag file inside object_detection/demo and edit the tracking_demo.launch replacing the value with the rosbag you want to run.
+## YOLO
 
-**`<arg name="bag_file_name" value="your_rosbag_name" />`**
+First you must download the config and weigth files of the desired model, you can download them [here](https://mega.nz/folder/apZlFAZY#hAD2Dw5YeRCp3xd96Y41QA).
 
-You can change the parameters and then just run
+You can adjust the parameters of each node in the respective YAML file, like in [this](cnf/yolo/yolov3-tiny.yaml) example for the yolov3-tiny model.
+Then you can launch [this](launch/object_tracking.launch) launch file, remap some parameters to match your case and change some arguments like **`with_camera`**. The YOLO model always tries to load the YOLOv4 model, if CUDA it's not installed in the system it will load a lighter model, you can change the argument **`yolo_default_model`** in the launch file to overwrite this.
 
-**`$ roslaunch object_detection tracking_demo.launch`**
+```bash
+  roslaunch object_detection object_tracking.py with_camera:=true
+```
+## Deeplab
+You can adjust the parameters of each node in the respective YAML file, like in [this](cnf/deeplab/) example for the yolov3-tiny model.
+
+
