@@ -2,7 +2,7 @@
 
 This package performs detection and tracking of several objects using two distict models, the state of the art You Only Look Once (YOLO) and DeepLab deep learning model.
 
-## Yolo Model
+# Yolo Model
 
 This package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort), [SORT paper](https://arxiv.org/abs/1602.00763).
 
@@ -17,11 +17,11 @@ Based on the [COCO](http://cocodataset.org/#home) dataset we can detect 80 class
 - banana, apple, sandwich, orange, broccoli, carrot, hot dog, pizza, donut, cake
 - chair, sofa, pottedplant, bed, diningtable, toilet, tvmonitor, laptop, mouse, remote, keyboard, cell phone, microwave, oven, toaster, sink, refrigerator, book, clock, vase, scissors, teddy bear, hair drier, toothbrush
 
-### Node: yolo_detection.py
+## Node: yolo_detection.py
 
 This node implements the YOLO model to perform the detection of objects.
 
-#### Subscribed Topics:
+### Subscribed Topics:
 
 - **`image`** ([sensor_msgs/Image])
 
@@ -35,7 +35,7 @@ This node implements the YOLO model to perform the detection of objects.
 
   The Depth camera image.
  
-#### Published Topics:
+### Published Topics:
 
 - **`output_image`** ([sensor_msgs/Image])
 
@@ -45,7 +45,7 @@ This node implements the YOLO model to perform the detection of objects.
 
   The bounding box for each object detected in the video.
 
-#### Parameters:
+### Parameters:
 
 - **`name`** ([String])
   
@@ -91,11 +91,11 @@ This node implements the YOLO model to perform the detection of objects.
   
   List of classes detected by the model
 
-### Node: sort_tracking.py
+## Node: sort_tracking.py
 
 This node implements the SORT algorithm to track the objects provided by the yolo_detection node.
 
-#### Subscribed Topics:
+### Subscribed Topics:
 
 
 - **`image`** ([sensor_msgs/Image])
@@ -110,7 +110,7 @@ This node implements the SORT algorithm to track the objects provided by the yol
 - **`depth_image`** ([sensor_msgs/Image])
   The depth camera image.
 
-#### Published Topics:
+### Published Topics:
 
 - **`output_image`** ([sensor_msgs/Image])
 
@@ -120,7 +120,7 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
   The class of the object, contains the id, class, color, shape, bounding box, speed, real coordinates relative to the camera.
 
-#### Parameters:
+### Parameters:
 
 - **`sort_threshold`** ([float])
 
@@ -142,22 +142,22 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
   The option to draw the x,y,z speed of the detected objects.
 
-## Deeplab Model
+# Deeplab Model
 
 This package delivers a customizable wrapper of the DeepLab deep learning model for ROS. In order to use this package, you must have an pre-trained model of DeepLab and provide have to [configuration file](cfg/deeplabv3_mnv2_vocpascal.yaml) which defines the model's properties (such as detection classes, the frozen inference graph, etc.),
 
 For more information about DeepLab, see the following links: [DeepLab: Deep Labelling for Semantic Image Segmentation](https://github.com/tensorflow/models/tree/master/research/deeplab)
 
-### Node: Deeplab_detection.py
+## Node: Deeplab_detection.py
 
 This node implements the Deeplab model to perform the segmentation of objects.
 
-#### Subscribed Topics
+### Subscribed Topics
 
 - **`image`** ([sensor_msgs/Image])
   The RGB camera image.
 
-#### Published Topics
+### Published Topics
 
 - **`output_image`** ([sensor_msgs/Image])
 
@@ -168,7 +168,7 @@ This node implements the Deeplab model to perform the segmentation of objects.
  The segmentation map.
 
 
-#### Parameters
+### Parameters
 
 - **`path`** ([String])
   
@@ -186,7 +186,7 @@ This node implements the Deeplab model to perform the segmentation of objects.
   
   List of classes detected by the model
 
-## Demos
+# Demos
 
 The rosbags were recorded with a RealSense D435i.
 
@@ -198,7 +198,12 @@ The rosbags were recorded with a RealSense D435i.
 
 ![](img/recording.gif)
 
-## Basic Usage
+# Performance
+
+TODO
+
+
+# Basic Usage
 
 To run the demos you have to put the rosbag file inside object_detection/demo and edit the tracking_demo.launch replacing the value with the rosbag you want to run.
 
