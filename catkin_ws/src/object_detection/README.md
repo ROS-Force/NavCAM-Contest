@@ -4,7 +4,7 @@ This package performs detection and tracking of several objects using two distic
 
 ## Yolo Model
 
-This package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort),[SORT paper](https://arxiv.org/abs/1602.00763).
+This package performs detection of objects using the state of the art You Only Look Once (YOLO) and for tracking we use the Alex Bewley SORT implementation. For more information about YOLO, Darknet and SORT algorithm see the following links: [YOLO: Real-Time Object Detection](http://pjreddie.com/darknet/yolo/), [Alex Bewley SORT implementation](https://github.com/abewley/sort), [SORT paper](https://arxiv.org/abs/1602.00763).
 
 Based on the [COCO](http://cocodataset.org/#home) dataset we can detect 80 classes:
 
@@ -26,7 +26,15 @@ This node implements the YOLO model to perform the detection of objects.
 - **`image`** ([sensor_msgs/Image])
 
   The RGB camera image.
+  
+- **`camera_info`** ([sensor_msgs/Image])
 
+  The RGB camera info.
+  
+- **`depth_image`** ([sensor_msgs/Image])
+
+  The Depth camera image.
+ 
 #### Published Topics:
 
 - **`output_image`** ([sensor_msgs/Image])
@@ -39,21 +47,49 @@ This node implements the YOLO model to perform the detection of objects.
 
 #### Parameters:
 
-- **`input_size`**
+- **`name`** ([String])
+  
+  YOLO version name
+
+- **`weigths_path`** ([String])
+  
+  YOLO weigths path
+
+- **`config_path`** ([String])
+  
+  YOLO config path
+
+- **`input_size`** ([List of ints])
+  
   New input size
 
-- **`model_scale`**
+- **`model_mean`** ([List of ints])
+  
+  Scalar with mean values which are subtracted from channels.
 
+- **`scale`** ([float])
+  
   Multiplier for frame values..
 
-- **`model_scale`**
-  Multiplier for frame values.
+- **`model_swapRGB`** ([boolean])
   
-- **`conf_threshold`**
+  Swaps the Red and Green channels.
+
+- **`model_crop`** ([boolean])
+  
+  Flag which indicates whether image will be cropped after resize or not.
+
+- **`conf_threshold`** ([float])
+  
   A threshold used to filter boxes by confidences.
 
-- **`nms_threshold`**
+- **`nms_threshold`**([float])
+  
   A threshold used in non maximum suppression.
+
+- **`classes`** ([list of Strings])
+  
+  List of classes detected by the model
 
 ### Node: sort_tracking.py
 
@@ -61,18 +97,17 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
 #### Subscribed Topics:
 
-- **`image`** ([sensor_msgs/Image])
 
+- **`image`** ([sensor_msgs/Image])
   The RGB camera image.
 
 - **`bounding_boxes`** ([object_tracking/BoundingBoxes])
-
   The bounding box for each object detected in the video.
 
 - **`camera_info`** ([sensor_msgs/CameraInfo])
+    The RGB camera info.
 
 - **`depth_image`** ([sensor_msgs/Image])
-
   The depth camera image.
 
 #### Published Topics:
@@ -81,30 +116,29 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
   The RGB image with the bounding_boxes drawn, and the objects id.
 
-- **`object`** ([object_tracking/Object])
+- **`object`** ([object_tracking/Object_Info])
 
   The class of the object, contains the id, class, color, shape, bounding box, speed, real coordinates relative to the camera.
 
 #### Parameters:
 
-
-- **`sort_threshold`**
+- **`sort_threshold`** ([float])
 
   Minimum IOU for match.
 
-- **`min_hits`**
+- **`min_hits`** ([int])
 
   Minimum number of associated detections before track is initialised.
 
-- **`max_age`** ([object_tracking/BoundingBoxes])
+- **`max_age`** ([object_tracking/BoundingBoxes]) ([int])
 
   Maximum number of frames to keep alive a track without associated detections.
 
-- **`blur_humans`**
+- **`blur_humans`** ([boolean])
 
   The option to blur the detected humans.
   
-- **`draw_speed`**
+- **`draw_speed`** ([boolean])
 
   The option to draw the x,y,z speed of the detected objects.
 
@@ -114,7 +148,43 @@ This package delivers a customizable wrapper of the DeepLab deep learning model 
 
 For more information about DeepLab, see the following links: [DeepLab: Deep Labelling for Semantic Image Segmentation](https://github.com/tensorflow/models/tree/master/research/deeplab)
 
-### Node:
+### Node: Deeplab_detection.py
+
+This node implements the Deeplab model to perform the segmentation of objects.
+
+#### Subscribed Topics
+
+- **`image`** ([sensor_msgs/Image])
+  The RGB camera image.
+
+#### Published Topics
+
+- **`output_image`** ([sensor_msgs/Image])
+
+  The segmentation map overlaped with the RGB image.
+
+- **`output_segmap`** ([sensor_msgs/Image])
+
+ The segmentation map.
+
+
+#### Parameters
+
+- **`path`** ([String])
+  
+  Path to the frozen inference graph
+
+- **`input_size`** ([List of ints])
+  
+  New input size
+
+- **`input_bgr`** ([boolean])
+  
+  Swaps the Red and Green channels.
+
+- **`classes`** ([List of Strings])
+  
+  List of classes detected by the model
 
 ## Demos
 
