@@ -13,7 +13,9 @@ The sensibility for irregularities can be modified by changing the value of the 
 
 This application can be launched using:
 
-    roslaunch inclination irregularity_identifier.launch
+```bash
+roslaunch inclination irregularity_identifier.launch
+```
 
 ## Identify inclination of the camera
 

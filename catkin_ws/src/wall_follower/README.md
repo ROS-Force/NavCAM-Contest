@@ -9,5 +9,6 @@ An action can also be defined for when the treshold distance is crossed.
 
 **Launch the package:**
 
-        roslaunch wall_follower simple_wall_follower.launch
-
+```bash
+roslaunch wall_follower simple_wall_follower.launch
+```
