@@ -27,3 +27,15 @@ The [path_finding_node.py](script/path_finding_node.py) uses a service that retr
 - **`algorithm`** ([String])
 
   Path finding algorithm (A\*, dijkstra, etc ...)
+
+# Demos
+
+![](img/path_finding_proof.gif)
+
+# Basic Usage
+
+If you already have RTABMAP running you can use the following command
+```bash
+  roslaunch path_finding path_finding.launch
+```
+
