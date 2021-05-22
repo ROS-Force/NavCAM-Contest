@@ -38,9 +38,9 @@ If you already have RTABMAP running you can use the following command
 ```bash
   roslaunch path_finding path_finding.launch
 ```
-Its possible to launch this node with RTABMAP mapping, just add the following argument to the [mapping launch file](../mapping/launch/opensource-tracking.launch)
+Its possible to launch this node with RTABMAP mapping, just add the following argument to the [mapping launch file](../mapping/launch/opensource-tracking.launch), **`with_path_finding:=true`** .
 ```bash
-  roslaunch mapping opensource-tracking.launch
+  roslaunch mapping opensource-tracking.launch with_path_finding:=true
 ```
 
 
