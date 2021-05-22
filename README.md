@@ -51,17 +51,13 @@ We need a few more ROS related packages, install them with the following command
 ```bash
 sudo apt install ros-noetic-octomap ros-noetic-ddynamic-reconfigure
 ```
-
-### Optional
-
-After the installation you can edit your `~/.bashrc` file to avoid having to source all the time. Add the following lines to the end of your `~/.bashrc` file:
+After the installation edit your `~/.bashrc` file to avoid having to source all the time:
 
 ```bash
-source /opt/ros/noetic/setup.bash
-source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend
+echo "source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend" >> ~/.bashrc
 ```
 
-### Intel® RealSense™ D435i 
+## Intel® RealSense™ D435i 
 
 Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) tutorial to install [**Intel® RealSense™ SDK 2.0**](https://github.com/IntelRealSense/librealsense).
 
