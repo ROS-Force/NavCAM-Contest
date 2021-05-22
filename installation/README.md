@@ -2,7 +2,7 @@
 
 ## ROS Noetic
 
-The best way to install ROS is to follow [this](http://wiki.ros.org/noetic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help vizualize the results.
+The best way to install ROS is to follow [this](http://wiki.ros.org/noetic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help visualize the results.
 
 We need a few more ROS related packages, install them with the following command:
 ```bash
@@ -18,24 +18,16 @@ source /opt/ros/noetic/setup.bash
 source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend
 ```
 
-## Python packages
-
-### Intel Camera Python Wrapper
+### Intel® RealSense™ D435i 
 
 Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) tutorial to install [**Intel® RealSense™ SDK 2.0**](https://github.com/IntelRealSense/librealsense).
-
-You will also need to install the Python wrapper for the RealSense SDK, more information is available [here](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python).
-
-```bash
-pip3 install pyrealsense2 tensorflow catkin_tools
-```
 
 ## Other Python packages
 
 To install the packages, run:
 
 ```bash
-pip3 install colorutils pathfinding
+pip3 install tensorflow catkin_tools colorutils pathfinding
 ```
 
 ## CUDA
@@ -113,11 +105,10 @@ sudo make install
 
 and you should be done!
 
-
-
 ## RTABMAP
 
-To properly take advantage of the GPU acceleration features provided by certain OpenCV packages on RTABMAP, we will need to compile RTAMAP from source to link to the our CUDA-enabled version. Before we compile RTABMAP however, we will also need to compile some additional packages (compile in this order, ):
+To properly take advantage of the GPU acceleration features provided by certain OpenCV packages on RTABMAP, we will need to compile RTAMAP from source to link to the our CUDA-enabled version. Before we compile RTABMAP however, we will also need to compile some additional packages:
+
 ```bash
 mkdir /root/NavCAM-Contest/depends/g2o
 cd /root/NavCAM-Contest/depends/g2o/build
@@ -150,13 +141,13 @@ make -j`nproc`
 make install
 ```
 
-
 Finally, we build and install RTABMAP:
-    
-    mkdir NavCAM-Contest/depends/rtabmap/build
-    cd /root/NavCAM-Contest/depends/rtabmap/build
-    cmake -DWITH_PYTHON=ON -DBUILD_EXAMPLES=OFF ..
-    make -j6 
-    make install
 
+```bash
+mkdir NavCAM-Contest/depends/rtabmap/build
+cd /root/NavCAM-Contest/depends/rtabmap/build
+cmake -DWITH_PYTHON=ON -DBUILD_EXAMPLES=OFF ..
+make -j`nproc` 
+make install
+```
 

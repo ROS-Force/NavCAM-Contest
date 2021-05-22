@@ -22,8 +22,11 @@ import cv2
 import tensorflow as tf # needs TF 2.x version 
 import deeplab.get_dataset_colormap as dlutils
 physical_devices = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
+try:
+  tf.config.experimental.set_memory_growth(physical_devices[0], True)
+except:
+  print("No GPU device was found")
 class DeepLabModel(object):
   """Class to load DeepLab model and run inference on supplied images."""
 
