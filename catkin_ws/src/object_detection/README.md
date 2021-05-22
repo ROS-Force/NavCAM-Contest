@@ -200,7 +200,13 @@ The rosbags were recorded with a RealSense D435i.
 
 # Performance
 
-TODO
+The tests were measured with pre-recorded bags and the input image has a framerate of 30 FPS.
+
+| Testbench                                | YOLOv4 | YOLOv3 | YOLOv3-tiny | Deeplab VocPASCAL | Deeplab ade20k |
+| :-------------------------------------   | :----: | :----: | :---------: | :---------------: | :------------: |
+| CPU: Ryzen 3700x, RAM:16GB, GPU: RTX3070 | 30     | 30     | 30          | 30                | 29.2           | 
+| Jetson Xavier (8GB)                      |        |        |             |                   |                |
+| i5-7440HQ CPU @ 2.80GHz, RAM:8GB         |        |        |             |                   |                |
 
 
 # Basic Usage
