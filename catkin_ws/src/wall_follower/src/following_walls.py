@@ -84,6 +84,8 @@ class following_walls():
 
                         if(self.distance_right<=target_distance):
 
+                                #code for response placed here
+
                                 rospy.loginfo("To close")
 
                     
@@ -94,6 +96,8 @@ class following_walls():
                         rospy.loginfo("Distance to the left= %f m" %(distance_left))
 
                         if(self.distance_left<=target_distance):
+
+                             #code for response placed here
 
                             rospy.loginfo("To close")
 
