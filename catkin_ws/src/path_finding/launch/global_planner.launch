@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="global_planner" type="planner" name="global_planner2d" output="screen">
+        <remap from="goal" to="/move_base_simple/goal" />
+        <remap from="costmap" to= "map" />
+        <remap from="base_link" to="camera_link" />
+    </node>
+</launch>

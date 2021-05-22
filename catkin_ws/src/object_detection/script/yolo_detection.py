@@ -9,12 +9,9 @@ import ctypes
 
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import Image
 from object_detection.msg import BoundingBox, BoundingBoxes
-from geometry_msgs.msg import Vector3
 import message_filters
-import pyrealsense2 as rs2
-
 class YoloModelConfig(object):
     '''
     Helper class which holds the parameters for the YOLO model used. 
@@ -107,38 +104,33 @@ class YoloNode():
 
         self.cv_image_depth = None
         self.cv_image = None
-        self.intrinsics = None
         self.colors = np.random.uniform(0, 255, size=(len(self.modelConfig.classes), 3))
 
         #Subscriber (buff_size is set to 2**24 to avoid delays in the callbacks)
         self.sub = message_filters.Subscriber("image", Image, buff_size=2**24)
         self.sub_depth = message_filters.Subscriber("depth_image", Image, buff_size=2**24)
 
-        # grab camera info
-        self.imageDepthInfoCallback(rospy.wait_for_message("camera_info", CameraInfo))  
-
         ts = message_filters.TimeSynchronizer([self.sub, self.sub_depth], 1)
         ts.registerCallback(self.imageCallback)
-
+        
         #Publisher
         self.pub = rospy.Publisher("output_image", Image, queue_size=1)
         self.pub_bbox = rospy.Publisher("bounding_boxes", BoundingBoxes, queue_size=10)
     
     def imageCallback(self, img_data, depth_data): #Function that runs when an image arrives
         try:
+
             cv_image = self.bridge.imgmsg_to_cv2(img_data, img_data.encoding) # Transforms the format of image into OpenCV 2
             
             self.data_encoding_depth = depth_data.encoding
             self.cv_image_depth = self.bridge.imgmsg_to_cv2(depth_data, depth_data.encoding) # Transforms the format of image into OpenCV 2
+
 
             # exit callback if no depth image stored
 
             if (self.cv_image_depth is None):
                 return 
 
-            if(cv_image.shape != self.cv_image_depth.shape):
-                cv_image = cv2.resize(cv_image, self.cv_image_depth.shape[1::-1])
-            
             h = Header()
             #Create a Time stamp
             h.stamp = img_data.header.stamp
@@ -156,32 +148,6 @@ class YoloNode():
             print(e)
             return
         except ValueError as e:
-            print(e)
-            return
-
-    def imageDepthInfoCallback(self, cameraInfo): 
-        '''
-        Code copied from Intel script "show_center_depth.py". 
-        Gather camera intrisics parameters that will be use to compute the real coordinates of pixels.
-        
-        '''
-        try:
-            if self.intrinsics:
-                return
-            self.intrinsics = rs2.intrinsics()
-            self.intrinsics.width = cameraInfo.width
-            self.intrinsics.height = cameraInfo.height
-            self.intrinsics.ppx = cameraInfo.K[2]
-            self.intrinsics.ppy = cameraInfo.K[5]
-            self.intrinsics.fx = cameraInfo.K[0]
-            self.intrinsics.fy = cameraInfo.K[4]
-            if cameraInfo.distortion_model == 'plumb_bob':
-                self.intrinsics.model = rs2.distortion.brown_conrady
-            elif cameraInfo.distortion_model == 'equidistant':
-                self.intrinsics.model = rs2.distortion.kannala_brandt4
-            self.intrinsics.coeffs = [i for i in cameraInfo.D]
-            
-        except CvBridgeError as e:
             print(e)
             return
 
@@ -207,16 +173,6 @@ class YoloNode():
             bbox.ymin = box[1]
             bbox.xmax = box[2]
             bbox.ymax = box[3]
-            
-            if self.cv_image_depth is not None:
-
-                bbox.topleft = self.computeRealCoor(box[0], box[1])
-    
-                bbox.topleft.z = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2], self.cv_image_depth[(bbox.ymin + bbox.ymax)//2,(bbox.xmin + bbox.xmax)//2])[2]*(10**-3)
-                
-                bbox.bottomright = self.computeRealCoor(box[2], box[3])
-                bbox.bottomright.z = bbox.topleft.z 
-
             bbox.score = float(score)
             bbox.id = int(classid)
             bbox.Class = self.modelConfig.classes[classid[0]]
@@ -231,29 +187,6 @@ class YoloNode():
             self.pub_bbox.publish(bboxes) # Publish the list of Bounding Boxes
         
         return img
-
-    def computeRealCoor(self, x, y):
-        
-        coor = Vector3()
-        
-        if(x ==  self.cv_image_depth.shape[1]):
-            x = x-1
-        if(y ==  self.cv_image_depth.shape[0]):
-            y = y-1
-
-
-        pix = [x, y] #Coordinates of the central point (in pixeis)
-        depth = self.cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
-        result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
-
-        #Create a vector with the coordinates, in meters
-        coor.x = result[0]*10**(-3)
-        coor.y = result[1]*10**(-3)
-        coor.z = result[2]*10**(-3)
-
-        return coor
-
-
 def main():
 
     rospy.init_node('yolo_detection')

@@ -5,7 +5,6 @@ import rospy
 import numpy as np
 import cv2
 from colorutils import Color
-import pyrealsense2 as rs2
 import sys
 
 from std_msgs.msg import Header
@@ -16,7 +15,7 @@ from geometry_msgs.msg import Vector3
 import message_filters
 
 from sort.sort import Sort
-class Sort_tracking():
+class SortTrackingNode():
 
     def __init__(self):
 
@@ -30,7 +29,7 @@ class Sort_tracking():
 
         self.previous_time = rospy.Time.now()
         self.previous_centers = {}
-        self.intrinsics = None
+        self.cameraInfo = None
 
         self.bridge = CvBridge()
         
@@ -109,25 +108,7 @@ class Sort_tracking():
             self.pub.publish(image_message) #publish the labelled image
 
     def imageDepthInfoCallback(self, cameraInfo): #Code copied from Intel script "show_center_depth.py". Gather camera intrisics parameters that will be use to compute the real coordinates of pixels
-        try:
-            if self.intrinsics:
-                return
-            self.intrinsics = rs2.intrinsics()
-            self.intrinsics.width = cameraInfo.width
-            self.intrinsics.height = cameraInfo.height
-            self.intrinsics.ppx = cameraInfo.K[2]
-            self.intrinsics.ppy = cameraInfo.K[5]
-            self.intrinsics.fx = cameraInfo.K[0]
-            self.intrinsics.fy = cameraInfo.K[4]
-            if cameraInfo.distortion_model == 'plumb_bob':
-                self.intrinsics.model = rs2.distortion.brown_conrady
-            elif cameraInfo.distortion_model == 'equidistant':
-                self.intrinsics.model = rs2.distortion.kannala_brandt4
-            self.intrinsics.coeffs = [i for i in cameraInfo.D]
-        except CvBridgeError as e:
-            print(e)
-            return
-
+        self.cameraInfo = cameraInfo
 
     def computeRealCenter(self, tracker, cv_image_depth):
         
@@ -135,8 +116,9 @@ class Sort_tracking():
 
         pix = [int(tracker.xmin + (tracker.xmax-tracker.xmin)//2), int(tracker.ymin + (tracker.ymax-tracker.ymin)//2)] #Coordinates of the central point (in pixeis)
         depth = cv_image_depth[pix[1], pix[0]] #Depth of the central pixel
-        result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
-
+        #result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+        result = SortTrackingNode.deproject_pixel_to_point(self.cameraInfo, [pix[0], pix[1]], depth) # Real coordenates, in mm, of the central pixel
+        
         #Create a vector with the coordinates, in meters
         center.x = result[0]*10**(-3)
         center.y = result[1]*10**(-3)
@@ -296,13 +278,65 @@ class Sort_tracking():
 
         return img
 
+    @staticmethod
+    def deproject_pixel_to_point(cameraInfo, pixel, depth):
+        # parse intrinsic parameters from camera info
+        width = cameraInfo.width
+        height = cameraInfo.height
+        ppx = cameraInfo.K[2]
+        ppy = cameraInfo.K[5]
+        fx = cameraInfo.K[0]
+        fy = cameraInfo.K[4]    
+        coeffs = [i for i in cameraInfo.D]
 
+        if (any(np.array(pixel) > np.array([width, height]))):
+            raise IndexError("Pixel is out of bounds from image: {}, {}".format(np.array(pixel), np.array([width, height])))
+            
+        x = (pixel[0] - ppx) / fx
+        y = (pixel[1] - ppy) / fy 
+
+        xo = x
+        yo = y
+
+        # BROWN CONRADY DISTORTION
+        if cameraInfo.distortion_model == 'plumb_bob':
+            for i in range(10):
+                r2 = x*x + y*y
+                
+                icdist = 1 / (1+((coeffs[4]*r2 + coeffs[1])*r2 + coeffs[0])*r2)
+                delta_x = 2 * coeffs[2] * x*y + coeffs[3] * (r2 + 2 * x*x)
+                delta_y = 2 * coeffs[3] * x*y + coeffs[2] * (r2 + 2 * y*y)
+                x = (xo - delta_x)*icdist
+                y = (yo - delta_y)*icdist
+
+        # KANNALA BRANDT4 DISTORTION
+        elif cameraInfo.distortion_model == 'equidistant':
+            rd = np.sqrt(x*x + y*y)
+            if (rd < sys.float_info.epsilon):
+                rd = sys.float_info.epsilon
+            theta = rd
+            theta2 = rd*rd
+
+            for i in range(4):
+                f = theta*(1 + theta2*(coeffs[0] + theta2*(coeffs[1] + theta2*(coeffs[2] + theta2*coeffs[3])))) - rd
+                if (abs(f) < sys.float_info.epsilon): # already converged        
+                    break
+                    
+                df = 1 + theta2*(3 * coeffs[0] + theta2*(5 * coeffs[1] + theta2*(7 * coeffs[2] + 9 * theta2*coeffs[3])))
+                theta -= f / df
+                theta2 = theta*theta
+            
+            r = np.tan(theta)
+            x *= r / rd
+            y *= r / rd
+
+        return depth*np.array([x,y,1])
 
 def main():
 
     rospy.init_node('sort_tracking')
 
-    st = Sort_tracking()
+    st = SortTrackingNode()
     rospy.spin()
 
 if __name__ == "__main__":

@@ -15,17 +15,16 @@
         <remap from="/imu/data_raw" to="/camera/imu" />
     </node>
 
-    <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
-        <arg name="args" value="--delete_db_on_start" />
-        <arg name="rgb_topic" value="/camera/color/image_raw" />
-        <arg name="depth_topic" value="/camera/aligned_depth_to_color/image_raw" />
-        <arg name="camera_info_topic" value="/camera/color/camera_info" />
-        <arg name="depth_camera_info_topic" value="/camera/depth/camera_info" />
-        <arg name="rtabmapviz" value="false" />
-        <arg name="rviz" value="true" />
-        <param name="Reg/Force3DoF" value="true" />
-        <param name="Optimizer/Slam2D" value="true" />
-
+    <include file="$(find mapping)/launch/rtabmap.launch">
+        <arg name="args" value="--delete_db_on_start"/>
+        <arg name="rgb_topic" value="/camera/color/image_raw"/>
+        <arg name="depth_topic" value="/camera/aligned_depth_to_color/image_raw"/>
+        <arg name="camera_info_topic" value="/camera/color/camera_info"/>
+        <arg name="depth_camera_info_topic" value="/camera/depth/camera_info"/>
+        <arg name="rtabmapviz" value="false"/>
+        <arg name="rviz" value="true"/>
+        <arg name="queue_size" value="10" /> 
+        <arg name="cfg" value="$(find mapping)/launch/rtabmap/rtabmap.ini"/>
     </include>
 
     <include file="$(find robot_localization)/launch/ukf_template.launch" />
@@ -36,22 +35,19 @@
                                             true,true,true,
                                             true,true,true,
                                             true,true,true,
-                                            true,true,true]
+                                            false,false,false]
     </rosparam>
-    <param name="/ukf_se/odom0_relative" value="true" />
-    <param name="/ukf_se/odom0_differential" value="false" />
-    <param name="/ukf_se/odom0_pose_rejection_threshold" value="10000000" />
-    <param name="/ukf_se/odom0_twist_rejection_threshold" value="10000000" />
-
-    <param name="/ukf_se/imu0" value="/imu/data" />
+    <param name="/ukf_se/odom0_relative" value="true"/>
+    <param name="/ukf_se/odom0_differential" value="false"/>
+    <param name="/ukf_se/use_control" value="false"/>
+    <param name="/ukf_se/imu0" value="/imu/data"/>
     <rosparam param="/ukf_se/imu0_config">[false, false, false,
                                             true, true, true,
                                             false, false, false,
                                             true, true, true,
                                             true, true, true]</rosparam>
-    <param name="/ukf_se/imu0_differential" value="true" />
-    <param name="/ukf_se/imu0_relative" value="false" />
-    <param name="/ukf_se/use_control" value="false" />
+    <param name="/ukf_se/imu0_differential" value="true"/>
+    <param name="/ukf_se/imu0_relative" value="false"/>
 
 
     <include if="$(arg with_path_finding)" file="$(find path_finding/launch/path_finding.aunch)"></include>
