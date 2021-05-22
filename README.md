@@ -88,12 +88,13 @@ sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/
 sudo apt update
 ```
 
+Copy this commands to install the latest cuDNN version
 ```bash
 # for the latest cuDNN version (ensure this matches your CUDA version)
 sudo apt install libcudnn8
 sudo apt install libcudnn8-dev
 ```
-
+**OR** this commands to install a specific version of cuDNN
 ```bash
 # if you wish to install for a specific cuDNN version & CUDA version, then replace the values below
 export cudnn_version=8.1.1.33-1
