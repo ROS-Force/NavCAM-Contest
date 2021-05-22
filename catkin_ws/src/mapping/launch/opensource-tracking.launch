@@ -1,4 +1,5 @@
 <launch>
+    <arg name="with_path_finding" default="true" />
     <arg name="with_camera" default="true" />
     <include if="$(arg with_camera)" file="$(find realsense_tools)/launch/rs_camera.launch"></include>
 
@@ -52,5 +53,7 @@
     <param name="/ukf_se/imu0_relative" value="false" />
     <param name="/ukf_se/use_control" value="false" />
 
-    <!-- <param name="/ukf_se/odom0_config" value="{true,true,true,}"/> -->
+
+    <include if="$(arg with_path_finding)" file="$(find path_finding/launch/path_finding.aunch)"></include>
+
 </launch>
