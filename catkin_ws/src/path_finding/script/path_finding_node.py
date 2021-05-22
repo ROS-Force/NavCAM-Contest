@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+from numpy.core.fromnumeric import diagonal
+from pathfinding.core import diagonal_movement
 import rospy
 import numpy as np
 import cv2
 import pyrealsense2 as rs2
 import sys
+from rospy.core import rospyerr
 import tf2_ros
 
 from std_msgs.msg import Header
@@ -17,6 +20,12 @@ from nav_msgs.srv import GetMap
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+from pathfinding.finder.best_first import BestFirst
+from pathfinding.finder.bi_a_star import BiAStarFinder
+from pathfinding.finder.breadth_first import BreadthFirstFinder
+from pathfinding.finder.dijkstra import DijkstraFinder
+from pathfinding.finder.ida_star import IDAStarFinder
+from pathfinding.finder.msp import MinimumSpanningTree
 from datetime import datetime
 
 import tensorflow as tf
@@ -26,6 +35,9 @@ class PathFindingROS():
 
     def __init__(self):
 
+        self.algorithm = rospy.get_param("~algorithm", "A*") #Name of the algorithm
+        self.map_frame = rospy.get_param("~map_frame", "map") #Name of map frame
+        self.base_frame = rospy.get_param("~base_frame", "base_link")
         # Initialize variables
 
         self.intrinsics = None
@@ -33,22 +45,31 @@ class PathFindingROS():
         self.latestGoal = None
         self.stopPathFinding = False
 
-        # Publishers
-        #self.pub = rospy.Publisher("output_image", Image, queue_size=1)
-        #self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=1)
-
         self.tfbuffer = tf2_ros.Buffer(debug=False)
         self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
-        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
+        
+
+        if(self.algorithm == "A*"):
+            self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
+        elif(self.algorithm == "bi_A*"):
+            self.finder = BiAStarFinder(diagonal_movement=DiagonalMovement.always)
+        elif(self.algorithm == "best first"):
+            self.finder = BestFirst(diagonal_movement=DiagonalMovement.always)
+        elif(self.algorithm == "BFS"):
+            self.finder = BreadthFirstFinder(diagonal_movement=DiagonalMovement.always)
+        elif(self.algorithm == "dijkstra"):
+            self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.always)
+        elif(self.algorithm == "IDA*"):
+            self.finder = IDAStarFinder(diagonal_movement=DiagonalMovement.always)
+        elif(self.algorithm == "MST"):
+            self.finder = MinimumSpanningTree(diagonal_movement=DiagonalMovement.always)
+        else:
+            rospyerr("Invalid path finding algorithm: %s", self.algorithm)
+        
         self.currentMap = None
         # Subscriber
-        #self.sub = rospy.Subscriber("map", OccupancyGrid, self.mapCallback, queue_size=10, buff_size=2**24)
-
         self.sub = rospy.Subscriber("/move_base_simple/goal", PoseStamped,
                                     self.goalCallback, queue_size=10, buff_size=2**24)
-
-        # self.sub_map = rospy.Subscriber(
-        #    "/rtabmap/grid_map", OccupancyGrid, self.currentMapCallback, queue_size=1, buff_size=2**24)
 
         # Publisher (update this )
         self.pub_path = rospy.Publisher("path", Path, queue_size=1)
@@ -123,7 +144,6 @@ class PathFindingROS():
         # convert to np
         path = np.array(path)
 
-        #print(datetime.now(), "before map conv")
         print('operations:', runs, 'path length:', len(path))
 
         # Remove after debug is done
@@ -143,14 +163,12 @@ class PathFindingROS():
 
         print(path_transformed)
 
-        #path_transformed = self.__transformPose(path, origin, resolution, toFrame="odom", fromFrame="map")
-
         self.publishPath(path_transformed)
         print("Fim: ", datetime.now())
 
     def run(self):
 
-        # main thread will now be used to update periodically A-star path
+        # main thread will now be used to update periodically
 
         sleepRate = rospy.Rate(1)
 
@@ -159,13 +177,13 @@ class PathFindingROS():
             sleepRate.sleep()
 
     def __getCurrentPosition(self):
-        if not (self.tfbuffer.can_transform(target_frame="map", source_frame="camera_link", time=rospy.Duration())):
-            print("Error, can't obtain transform from 'camera_link' to 'map'")
+        if not (self.tfbuffer.can_transform(target_frame=self.map_frame, source_frame=self.base_frame, time=rospy.Duration())):
+            print("Error, can't obtain transform from %s to %s", self.base_frame, self.map_frame)
             return None
         else:
             try:
                 transform = self.tfbuffer.lookup_transform(
-                    "map", "camera_link", rospy.Time(0))
+                    self.map_frame, self.base_frame, rospy.Time(0))
                 # get transform vectors
                 return np.array([transform.transform.translation.x,
                                  transform.transform.translation.y,

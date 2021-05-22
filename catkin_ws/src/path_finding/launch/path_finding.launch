@@ -1,0 +1,10 @@
+<launch>
+
+    <node pkg="path_finding" type="path_finding_node.py" name="path_finding_node" output="screen">
+        <param name="algorithm" value="A*" />
+        <param name="map_frame" value="map" />
+        <param name="base_frame" value="camera_link" />
+        <remap from="goal" to="/move_base_simple/goal" />
+    </node>
+
+</launch>
