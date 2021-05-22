@@ -188,15 +188,19 @@ This node implements the Deeplab model to perform the segmentation of objects.
 
 # Demos
 
-The rosbags were recorded with a RealSense D435i.
+The rosbags were recorded with a RealSense D435i at 30fps.
+
+## YOLOv4
 
 ![](img/highway_demo.gif)
+![](img/yolo_people.gif)
+![](img/semaforo_proof.gif)
 
-![](img/2_humans_demo.gif)
-
-![](img/street_demo.gif)
+## Deeplab
 
 ![](img/recording.gif)
+
+
 
 # Performance
 
