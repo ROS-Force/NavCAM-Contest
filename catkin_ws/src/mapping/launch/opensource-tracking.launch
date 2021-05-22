@@ -47,4 +47,9 @@
                                             true, true, true]</rosparam>
     <param name="/ukf_se/imu0_differential" value="true"/>
     <param name="/ukf_se/imu0_relative" value="false"/>
+
+
+    <node pkg="mapping" type="odom_parser.py" name="OdomParser">
+        <param name="odom_file_path" value="$(find mapping)/launch/odolog/test2_Odometry.odolog"/>
+    </node>
 </launch>
