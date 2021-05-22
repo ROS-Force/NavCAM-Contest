@@ -1,4 +1,4 @@
-# NavCam-Contest
+# NavCAM-Contest
 
 Work developed by ROS-Force for ActiveSpace's NavCAM contest.
 
@@ -6,13 +6,17 @@ Work developed by ROS-Force for ActiveSpace's NavCAM contest.
 
 ### Enviroment
 
-This package was developed and tested in Ubuntu 20.04 and ROS Noetic, it may not work in other enviroments.
+This package was developed and tested with the following software:
 
 - **Ubuntu 20.04**
 - **ROS Noetic**
 - **Python 3**
 - **CUDA v11.2**
 - **cuDNN v8.1.1**
+- **OpenCV v4.5.1**
+- **Tensorflow v2.4.1**
+
+To compile this package for the **Nvidia Jetson** please go to [this fork]().
 
 ### Camera
 
@@ -210,6 +214,8 @@ catkin profile set Release
 catkin config --install --merge-devel --extend /opt/ros/$ROS_DISTRO
 catkin build
 ```
+
+# Sub-Packages
 
 ## [Object Detection](/catkin_ws/src/object_detection)
 
