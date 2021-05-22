@@ -200,7 +200,7 @@ The rosbags were recorded with a RealSense D435i.
 
 # Performance
 
-The tests were measured with the pre-recorded `people_*.bag` at 30 FPS. The table shows the average FPS for each model to the 3 testbenchs.
+The tests were measured with the pre-recorded `people_*.bag` at 30 FPS. The table shows the average FPS of several models to each testbench.
 
 | Testbench                                | YOLOv4 | YOLOv3 | YOLOv3-tiny | Deeplab VocPASCAL | Deeplab ade20k |
 | :-------------------------------------   | :----: | :----: | :---------: | :---------------: | :------------: |
