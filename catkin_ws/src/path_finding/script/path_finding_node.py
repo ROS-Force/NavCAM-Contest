@@ -22,7 +22,7 @@ from datetime import datetime
 import tensorflow as tf
 
 
-class PathFindingROS():
+class PathFindingNode():
 
     def __init__(self):
 
@@ -86,11 +86,8 @@ class PathFindingROS():
         map_width = latestGrid.info.width
         map_height = latestGrid.info.height
 
-        map_array, origin_dist = PathFindingROS.__cropMap(
-            latestGrid.data, map_width, map_height)
-
-        # invert
-        #origin_dist = origin_dist[::-1]
+        map_array = np.array(latestGrid.data).reshape(map_width, map_height)
+        origin_dist = np.array([0,0])
 
         grid = Grid(matrix=map_array)
         mapShape = np.array(map_array.shape).astype(np.uint)
@@ -230,36 +227,12 @@ class PathFindingROS():
 
         return img
 
-    @staticmethod
-    def __cropMap(data, map_width, map_height):
-        print(datetime.now(), "Before tensor conv")
-        map_tf = tf.convert_to_tensor(np.asarray(data))
-        print(datetime.now(), "After tensor conv")
-        map_tf = tf.reshape(map_tf, [map_height, map_width])
-        print(datetime.now(), "Before searching and reducing columns")
-
-        # sum columns
-        #indexes = tf.where(map_tf >= 0)
-        #min_idx = tf.reduce_min(indexes, axis=0)
-        #max_idx = tf.reduce_max(indexes, axis=0)
-
-        print(datetime.now(), "After summing columns")
-        #result = map_tf[min_idx[0]:max_idx[0], min_idx[1]:max_idx[1]]
-        result = map_tf[:]
-        print(datetime.now(), "After slicing columns")
-
-        result = tf.where(result == 0, x=1, y=result)
-        result = tf.where(result == 100, x=-1, y=result)
-        # min_inx.numpy()
-        return result.numpy(), np.array([0, 0])
-
-
 def main():
 
     rospy.init_node('path_finding')
 
     # initialize node
-    pf = PathFindingROS()
+    pf = PathFindingNode()
 
     # run node
     pf.run()
