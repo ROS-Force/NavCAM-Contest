@@ -21,7 +21,7 @@ class YoloModelConfig(object):
     '''
 
     def __init__(self, modelConfig):
-        self.name = modelConfig.get("name") # yolo.weights path.
+        self.name = modelConfig.get("name") # yolo version.
         self.weightPath = modelConfig.get("weights_path") # yolo.weights path.
         self.configPath = modelConfig.get("config_path") # yolo.cfg path.
         self.inputSize = tuple(modelConfig.get("input_size"))  # New input size.

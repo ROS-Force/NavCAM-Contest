@@ -49,7 +49,7 @@ class Sort_tracking():
 
         #Publishers
         self.pub = rospy.Publisher("output_image", Image, queue_size=10)
-        self.pub_obj = rospy.Publisher("object_info", Object_info, queue_size=10)
+        self.pub_obj = rospy.Publisher("object", Object_info, queue_size=10)
 
         #Subscriber
         self.sub = message_filters.Subscriber("image", Image, queue_size=100, buff_size=2**27)
