@@ -5,86 +5,158 @@
 The best way to install ROS is to follow [this](http://wiki.ros.org/noetic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help vizualize the results.
 
 We need a few more ROS related packages, install them with the following command:
-
-    sudo apt install ros-noetic-octomap ros-noetic-ddynamic-reconfigure
+```bash
+sudo apt install ros-noetic-octomap ros-noetic-ddynamic-reconfigure
+```
 
 ### Optional
 
 After the installation you can edit your ~/.bashrc file to avoid having to source all the time. Add the following lines to the end of your ~/.bashrc file:
 
-    source /opt/ros/noetic/setup.bash
-    source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend
-    
+```bash
+source /opt/ros/noetic/setup.bash
+source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend
+```
+
 ## Python packages
 
 ### Intel Camera Python Wrapper
 
-Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md) tutorial to install [**Intel® RealSense™ SDK 2.0**](https://github.com/IntelRealSense/librealsense).
+Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) tutorial to install [**Intel® RealSense™ SDK 2.0**](https://github.com/IntelRealSense/librealsense).
 
-Install the python wrapper. Information is available at the [Python Wrapper](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python)
+You will also need to install the Python wrapper for the RealSense SDK, more information is available [here](https://github.com/IntelRealSense/librealsense/tree/development/wrappers/python).
 
-    pip3 install pyrealsense2 tensorflow catkin_tools
-
+```bash
+pip3 install pyrealsense2 tensorflow catkin_tools
+```
 
 ## Other Python packages
 
 To install the packages, run:
 
-    pip3 install colorutils pathfinding
+```bash
+pip3 install colorutils pathfinding
+```
 
 ## CUDA
 
 The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) tutorial. This package was tested with version 11.2 of CUDA.
 
-
 ## cuDNN
 
+In order to setup cuDNN in your system, there are several methods. Here, we will follow the package manager installation, fOr more information or a more detailed tutorial follow the [NVIDIA cuDNN Documentation guide](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html). 
 
+First we need to add the NVIDIA CUDA repositories. 
+```bash
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin 
 
-In order to download cuDNN, ensure you are registered for the [NVIDIA Developer Program](https://developer.nvidia.com/developer-program). Then go to [NVIDIA cuDNN home page](https://developer.nvidia.com/cudnn) and click to download.
+sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+sudo apt-get update
+```
 
-We advise to install the Debian packages, therefore download the 3 \*.deb files for your Ubuntu version.
+```bash
+# for the latest cuDNN version (ensure this matches your CUDA version)
+sudo apt-get install libcudnn8
+sudo apt-get install libcudnn8-dev
+```
 
-    cd ~/Downloads
-    sudo dpkg -i libcudnn*.deb
-
-and cuDNN should be ready to go. For more information or a more detailed tutorial follow the [NVIDIA cuDNN Documentation guide](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html).
+```bash
+# if you wish to install for a specific cuDNN version & CUDA version, then replace the values below
+export cudnn_version=8.1.1.33-1
+export cuda_version=11.2
+sudo apt-get install libcudnn8=${cudnn_version}-1+${cuda_version}
+sudo apt-get install libcudnn8-dev=${cudnn_version}-1+${cuda_version}
+```
 
 ## Compile OpenCV from source
 
 First step is to create a build folder:
-
-    cd NavCAM-Contest/depends/opencv
-    mkdir build
-    cd build
+```bash
+cd NavCAM-Contest/depends/opencv
+mkdir build
+cd build
+```
 
 Then copy the following command and **change** the **CUDA_ARCH_BIN** value to the compute capability of your machine. If you don't know your compute capability look for your Graphic Card [here](https://developer.nvidia.com/cuda-gpus).
 
-    cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D BUILD_EXAMPLES=ON \
-    -D INSTALL_PYTHON_EXAMPLES=ON \
-    -D INSTALL_C_EXAMPLES=ON \
-    -D OPENCV_ENABLE_NONFREE=ON \
-    -D WITH_CUDA=ON \
-    -D WITH_CUDNN=ON \
-    -D WITH_EIGEN=ON \
-    -D OPENCV_DNN_CUDA=ON \
-    -D ENABLE_FAST_MATH=1 \
-    -D CUDA_FAST_MATH=1 \
-    -D CUDA_ARCH_BIN=6.1 \
-    -D WITH_CUBLAS=1 \
-    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ \
-    -D HAVE_opencv_python2=ON \
-    -D HAVE_opencv_python3=ON \
-    -D BUILD_opencv_python2=ON \
-    -D BUILD_opencv_python3=ON \
-    -D BUILD_EXAMPLES=ON ..
+```bash
+cmake -D CMAKE_BUILD_TYPE=RELEASE \
+-D CMAKE_INSTALL_PREFIX=/usr/local \
+-D BUILD_EXAMPLES=ON \
+-D INSTALL_PYTHON_EXAMPLES=ON \
+-D INSTALL_C_EXAMPLES=ON \
+-D OPENCV_ENABLE_NONFREE=ON \
+-D WITH_CUDA=ON \
+-D WITH_CUDNN=ON \
+-D WITH_EIGEN=ON \
+-D OPENCV_DNN_CUDA=ON \
+-D ENABLE_FAST_MATH=1 \
+-D CUDA_FAST_MATH=1 \
+-D CUDA_ARCH_BIN=6.1 \
+-D WITH_CUBLAS=1 \
+-D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ \
+-D HAVE_opencv_python2=ON \
+-D HAVE_opencv_python3=ON \
+-D BUILD_opencv_python2=ON \
+-D BUILD_opencv_python3=ON \
+-D BUILD_EXAMPLES=ON ..
+```
+Now compile:
 
-Now compile
-
-    make
-    sudo make install
+```bash
+# you can change the amount of make jobs with the -j argument to speed up the compilation process
+make -j`nproc`
+sudo make install
+```
 
 and you should be done!
+
+
+
+## RTABMAP
+
+To properly take advantage of the GPU acceleration features provided by certain OpenCV packages on RTABMAP, we will need to compile RTAMAP from source to link to the our CUDA-enabled version. Before we compile RTABMAP however, we will also need to compile some additional packages (compile in this order, ):
+```bash
+mkdir /root/NavCAM-Contest/depends/g2o
+cd /root/NavCAM-Contest/depends/g2o/build
+cmake ..
+make -j`nproc`
+make install
+
+mkdir /root/NavCAM-Contest/depends/libnabo/build
+cd /root/NavCAM-Contest/depends/libnabo/build
+cmake -DLIBNABO_BUILD_PYTHON=OFF ..
+make -j`nproc`
+make install
+
+mkdir NavCAM-Contest/depends/libpointmatcher/build
+cd /root/NavCAM-Contest/depends/libpointmatcher/build
+cmake ..
+make -j`nproc`
+make install
+
+mkdir NavCAM-Contest/depends/gtsam/build
+cd /root/NavCAM-Contest/depends/gtsam/build
+cmake -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF -DGTSAM_USE_SYSTEM_EIGEN=ON ..
+make -j`nproc`
+make install
+
+mkdir NavCAM-Contest/depends/octomap/build
+cd /root/NavCAM-Contest/depends/octomap/build
+cmake ..
+make -j`nproc`
+make install
+```
+
+
+Finally, we build and install RTABMAP:
+    
+    mkdir NavCAM-Contest/depends/rtabmap/build
+    cd /root/NavCAM-Contest/depends/rtabmap/build
+    cmake -DWITH_PYTHON=ON -DBUILD_EXAMPLES=OFF ..
+    make -j6 
+    make install
+
 

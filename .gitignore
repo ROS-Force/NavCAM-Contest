@@ -193,11 +193,9 @@ dmypy.json
 *.pcap
 
 # DNN 
-yolo*.weights
-yolo*.cfg
+yolov4.weights
+yolov3.weights
+
 
 #Caffe Models
 *.caffemodel
-
-# DeepROS
-frozen_inference_graph.pb
