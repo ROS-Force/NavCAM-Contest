@@ -204,13 +204,13 @@ The rosbags were recorded with a RealSense D435i at 30fps.
 
 # Performance
 
-The tests were measured with the pre-recorded `people_*.bag` at 30 FPS. The table shows the average FPS of several models to each testbench.
+The tests were measured with the pre-recorded `people_0.bag` and `people_1.bag` at 30 FPS. The table shows the average FPS of several models to each testbench.
 
 | Testbench                                | YOLOv4 | YOLOv3 | YOLOv3-tiny | Deeplab VocPASCAL | Deeplab ade20k |
 | :-------------------------------------   | :----: | :----: | :---------: | :---------------: | :------------: |
 | CPU: Ryzen 3700x, RAM:16GB, GPU: RTX3070 | 30     | 30     | 30          | 30                | 29.2           | 
-| Jetson Xavier (8GB)                      |        |        |             |                   |                |
 | i5-7440HQ CPU @ 2.80GHz, RAM:8GB         | 2.39   | 3.89   |  26.67      | 2.60              |  1.65          |
+<!--| Jetson Xavier (8GB)                      |        |        |             |                   |                |-->
 
 
 # Basic Usage
