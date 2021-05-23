@@ -43,7 +43,7 @@ class following_walls():
         self.rate = rospy.Rate(10)
 
         wall_in_the_right=True
-        target_distance=0
+        target_distance=0.01
         wall_found=0
 
         #Topic subscribers
@@ -84,6 +84,8 @@ class following_walls():
 
                         if(self.distance_right<=target_distance):
 
+                                #code for response placed here
+
                                 rospy.loginfo("To close")
 
                     
@@ -94,6 +96,8 @@ class following_walls():
                         rospy.loginfo("Distance to the left= %f m" %(self.distance_left))
 
                         if(self.distance_left<=target_distance):
+
+                             #code for response placed here
 
                             rospy.loginfo("To close")
 
@@ -179,12 +183,13 @@ class following_walls():
                 depth = self.cv_image_depth[i1,j1] #Depth of the central pixel
                 result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i1, j1], depth) # Real coordenates, in mm, of the central pixel
 
-                #Create a vector with the coordinates, in meters
+                #Create a vector with the coordinates
                 x_left.append(result[0])
                 j1=j1+1
 
             i1=i1+1
 
+        #distance to the left in meters
         self.distance_left=-(sum(x_left)/len(x_left))*10**(-3)
         
 
@@ -200,12 +205,13 @@ class following_walls():
                 depth = self.cv_image_depth[i2,j2] #Depth of the central pixel
                 result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [i2, j2], depth) # Real coordenates, in mm, of the central pixel
 
-                #Create a vector with the coordinates, in meters
+                #Create a vector with the coordinates
                 x_right.append(result[0])
                 j2=j2+1
 
             i2=i2+1
 
+        #distance to the right in meters
         self.distance_right=-(sum(x_right)/len(x_right))*10**(-3)
 
 

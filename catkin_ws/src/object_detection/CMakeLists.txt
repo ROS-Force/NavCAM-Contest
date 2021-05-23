@@ -164,18 +164,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/object_detection_node.cpp)
 
-add_executable (rgb_seg src/rgb_seg.cpp)
-target_link_libraries (rgb_seg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-
-add_executable (yolo_rgbseg src/yolo_rgbseg.cpp)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(yolo_rgbseg PUBLIC ${catkin_LIBRARIES} ${PCL_LIBRARIES} OpenMP::OpenMP_CXX)
-else()
-    target_link_libraries (yolo_rgbseg ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-endif()
-
-add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -203,7 +191,6 @@ add_dependencies(yolo_rgbseg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 catkin_install_python(PROGRAMS
    script/yolo_detection.py
    script/sort_tracking.py
-   script/openPose_node.py
    script/deeplab_detection.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
