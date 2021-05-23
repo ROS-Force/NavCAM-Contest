@@ -16,7 +16,7 @@ This package was developed and tested with the following software:
 - **OpenCV v4.5.1**
 - **Tensorflow v2.4.1**
 
-To compile this package for the **Nvidia Jetson Xavier NX** please go to [this fork]().
+To compile this package for the **Nvidia Jetson Xavier NX** please go to [this fork](https://github.com/jncfa/NavCAM-Contest).
 
 ### Camera
 
