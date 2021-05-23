@@ -33,7 +33,7 @@ The following table was made to evaluate the accuracy of the camera in good ligh
 | 9.0            |   10.018 |                  0.732 |
 | 10.0           |   11.453 |                   1.22 |
 
-## Setting up
+## Setting up the packages
 
 The first step is to clone the repository:
 
@@ -41,27 +41,26 @@ The first step is to clone the repository:
 cd ~
 git clone --recursive git@github.com:ROS-Force/NavCAM-Contest.git
 ```
+However, before we start running any package, we need to install some dependencies.
+____
 
-## ROS Noetic
+### Dependencies
 
-The best way to install ROS is to follow [this](http://wiki.ros.org/noetic/Installation/Ubuntu) tutorial. Choose the Desktop-Full Install to install packages like rviz to help visualize the results.
+#### ROS Noetic
+
+The best way to install ROS is to follow [this](http://wiki.ros.org/noetic/Installation/Ubuntu) tutorial. Follow the Desktop-Full installation to install packages like RVIZ to help visualize the results.
 
 We need a few more ROS related packages, install them with the following command:
 
 ```bash
 sudo apt install ros-noetic-octomap ros-noetic-ddynamic-reconfigure
 ```
-After the installation edit your `~/.bashrc` file to avoid having to source all the time:
 
-```bash
-echo "source ~/NavCAM-Contest/catkin_ws/devel/setup.bash --extend" >> ~/.bashrc
-```
-
-## Intel® RealSense™ D435i 
+#### Intel® RealSense™ D435i 
 
 Follow [this](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) tutorial to install [**Intel® RealSense™ SDK 2.0**](https://github.com/IntelRealSense/librealsense).
 
-## Other Python packages
+#### Other Python packages
 
 To install the packages, run:
 
@@ -69,11 +68,11 @@ To install the packages, run:
 pip3 install tensorflow catkin_tools colorutils pathfinding
 ```
 
-## CUDA
+#### CUDA
 
 The best way to install CUDA is to follow [this](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) tutorial. This package was tested with version 11.2 of CUDA.
 
-## cuDNN
+#### cuDNN
 
 In order to setup cuDNN in your system, there are several methods. Here, we will follow the package manager installation, fOr more information or a more detailed tutorial follow the [NVIDIA cuDNN Documentation guide](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html). 
 
@@ -94,7 +93,8 @@ Copy this commands to install the latest cuDNN version
 sudo apt install libcudnn8
 sudo apt install libcudnn8-dev
 ```
-**OR** this commands to install a specific version of cuDNN
+**OR** use these commands to install a specific version of cuDNN:
+
 ```bash
 # if you wish to install for a specific cuDNN version & CUDA version, then replace the values below
 export cudnn_version=8.1.1.33-1
@@ -103,7 +103,7 @@ sudo apt install libcudnn8=${cudnn_version}-1+${cuda_version}
 sudo apt install libcudnn8-dev=${cudnn_version}-1+${cuda_version}
 ```
 
-## Compile OpenCV from source
+#### Compile OpenCV from source
 
 To make use of GPU acceleration, we need to compile OpenCV from source. First step is to create a build folder:
 
@@ -147,11 +147,11 @@ sudo make install
 
 and you should be done!
 
-## RTABMAP
+#### RTAB-Map
 
-TODO: DESCRIBE WHAT RTABMAP IS
+[**RTAB-Map** (Real-Time Appearance-Based Mapping)](http://introlab.github.io/rtabmap/) is a RGB-D SLAM approach based on a global loop closure detector with real-time constraints. It can be used to generate a 3D point clouds of the environment and/or to create a 2D occupancy grid map for navigation. 
 
-To properly take advantage of the GPU acceleration features provided by certain OpenCV packages on RTABMAP, we will need to compile RTAMAP from source to link to the our CUDA-enabled version. Before we compile RTABMAP however, we will also need to compile some additional packages:
+In order to maximize performance on RTAB-Map, we need to take advantage of the GPU acceleration features provided by certain OpenCV packages used by RTAB-Map, as well as faster mapping by mixing with another mapping algorithm called [Octomap](https://octomap.github.io/). Which means, we will need to compile RTAB-Map from source to link to the our CUDA-enabled version and to the Octomap libraries. Before we compile RTAB-Map however, we will also need to compile some additional packages:
 
 ```bash
 # building g2o for graph optimization
@@ -175,7 +175,7 @@ cmake ..
 make -j`nproc`
 sudo make install
 
-# building GTSAM for graph optmization
+# building GTSAM for graph optmization (if you installed g2o, you don't have to install this one)
 mkdir NavCAM-Contest/depends/gtsam/build
 cd /root/NavCAM-Contest/depends/gtsam/build
 cmake -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF -DGTSAM_USE_SYSTEM_EIGEN=ON ..
@@ -190,7 +190,7 @@ make -j`nproc`
 sudo make install
 ```
 
-Finally, we build and install RTABMAP:
+Finally, we build and install RTAB-Map:
 
 ```bash
 mkdir NavCAM-Contest/depends/rtabmap/build
@@ -199,6 +199,7 @@ cmake -DWITH_PYTHON=ON -DBUILD_EXAMPLES=OFF ..
 make -j`nproc` 
 sudo make install
 ```
+___
 
 After installing all the required dependencies, configure and compile the catkin workspace:
 
@@ -209,7 +210,14 @@ catkin init
 catkin config --profile Release -x _release --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin profile set Release
 catkin config --install --merge-devel --extend /opt/ros/$ROS_DISTRO
-catkin build
+catkin build -j`nproc` 
+source ~/NavCAM-Contest/catkin_ws/devel_release/setup.bash
+```
+
+After the installation, edit your `~/.bashrc` file to avoid having to source all the time:
+
+```bash
+echo "source ~/NavCAM-Contest/catkin_ws/devel_release/setup.bash --extend" >> ~/.bashrc
 ```
 
 # Sub-Packages
