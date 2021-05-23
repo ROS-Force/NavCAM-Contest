@@ -144,7 +144,7 @@ This node implements the SORT algorithm to track the objects provided by the yol
 
 # Deeplab Model
 
-This package delivers a customizable wrapper of the DeepLab deep learning model for ROS. In order to use this package, you must have an pre-trained model of DeepLab and provide have to [configuration file](cfg/deeplabv3_mnv2_vocpascal.yaml) which defines the model's properties (such as detection classes, the frozen inference graph, etc.),
+This package delivers a customizable wrapper of the DeepLab deep learning model for ROS. In order to use this package, you must have an pre-trained model of DeepLab and provide have to [configuration file](cfg/deeplab/deeplabv3_mnv2_vocpascal.yaml) which defines the model's properties (such as detection classes, the frozen inference graph, etc.),
 
 For more information about DeepLab, see the following links: [DeepLab: Deep Labelling for Semantic Image Segmentation](https://github.com/tensorflow/models/tree/master/research/deeplab)
 
@@ -219,7 +219,7 @@ The tests were measured with the pre-recorded `people_*.bag` at 30 FPS. The tabl
 
 First you must download the config and weigth files of the desired model, you can download them [here](https://mega.nz/folder/apZlFAZY#hAD2Dw5YeRCp3xd96Y41QA).
 
-You can adjust the parameters of each node in the respective YAML file, like in [this](cnf/yolo/yolov3-tiny.yaml) example for the `yolov3-tiny` model.
+You can adjust the parameters of each node in the respective YAML file, like in [this](cfg/yolo/yolov3-tiny.yaml) example for the `yolov3-tiny` model.
 Then you can launch [this](launch/object_tracking.launch) launch file, remap some parameters to match your use case and change some arguments like **`with_camera`**. The YOLO model always tries to load the YOLOv4 model, if CUDA it's not installed in the system it will load a lighter model, you can change the argument **`yolo_default_model`** in the launch file to overwrite this.
 
 ```bash
@@ -227,7 +227,7 @@ Then you can launch [this](launch/object_tracking.launch) launch file, remap som
 ```
 
 ## DeepLab
-You can adjust the parameters of each node in the respective YAML file, like in [this](cnf/deeplab/deeplabv3_mnv2_vocpascal.yaml) example for the `
+You can adjust the parameters of each node in the respective YAML file, like in [this](cfg/deeplab/deeplabv3_mnv2_vocpascal.yaml) example for the `
 deeplabv3_mnv2_vocpascal` model.
 Then you can launch [this](launch/deeplab_segmentation.launch) launch file, remap some parameters to match your use case and change some arguments like **`with_camera`**. The default DeepLab model is `deeplabv3_mnv2_vocpascal`, but this behaviour can be changed by changing the `deeplab_model` argument. You can also use your own pre-trained model, as long as you write an adequate YAML configuration (use [this](cnf/deeplab/deeplabv3_mnv2_vocpascal.yaml) as an example). To properly run the DeepLab node, your computer will need to support GPU aceleration, otherwise heavy performance losses are to be expected.
 
