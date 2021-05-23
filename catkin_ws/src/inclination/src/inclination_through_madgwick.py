@@ -28,8 +28,25 @@ class orientation():
 
 		#roslaunch inclination imu_filter_madgwick.launch is used to publish the following topic
 		#/imu/data publishes the orientation of the camera in the quaternion format
-		
+		self.theta=0
+		self.phi=0
+		self.psi2=0
+
 		angles_subscriber=rospy.Subscriber("/imu/data", Imu, self.anglesCallback)
+
+		
+		frequency=2
+
+		self.rate = rospy.Rate(frequency)
+
+		inclination_identifier=1
+
+		while not rospy.is_shutdown():
+
+			rospy.loginfo("Rotation around z=%s and y=%s and x=%s degrees"%(self.theta,self.phi,self.psi2))
+
+			self.rate.sleep()								
+
 	
 	#callback function 
 	def anglesCallback(self,angles_message):
@@ -41,23 +58,23 @@ class orientation():
 		self.w = angles_message.orientation.w
 
 		#theta is rotation aroun the z axis by theta rad
-		theta=math.asin(-2*(self.x*self.z-self.w*self.y))
+		self.theta=math.asin(-2*(self.x*self.z-self.w*self.y))
 
 		#around the y axis of the camera
-		phi=math.asin(2*(self.w*self.z+self.x*self.y)/math.cos(theta))
+		self.phi=math.asin(2*(self.w*self.z+self.x*self.y)/math.cos(self.theta))
 
 		#psi and psi2 are complementary angles, 180-psi=psi2
 		#psi=math.acos(2*((self.w**2)+(self.z**2)-0.5)/math.cos(theta))
 
 		#around the x axis
-		psi2=math.asin(2*(self.w*self.x+self.y*self.z)/math.cos(theta))
+		self.psi2=math.asin(2*(self.w*self.x+self.y*self.z)/math.cos(self.theta))
 
 		#converting rad to degrees
-		theta=(theta*180)/(math.pi)
-		phi=(phi*180)/(math.pi)
-		psi2=(psi2*180)/(math.pi)
+		self.theta=(self.theta*180)/(math.pi)
+		self.phi=(self.phi*180)/(math.pi)
+		self.psi2=(self.psi2*180)/(math.pi)
 		
-		rospy.loginfo("Rotation around z=%s and y=%s and x=%s degrees"%(theta,phi,psi2))
+		#rospy.loginfo("Rotation around z=%s and y=%s and x=%s degrees"%(theta,phi,psi2))
 
 
 

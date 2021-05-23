@@ -51,7 +51,7 @@ class identify_irregularity():
 				standart_dev_array=[]
 				rospy.loginfo("recalibrating")
 
-				while(i1<frequency*1.5):
+				while(i1<frequency*2):
 
 					acel_array.append(self.y)
 
@@ -61,11 +61,11 @@ class identify_irregularity():
 
 				acel_med=sum(acel_array)/len(acel_array)
 
-				#rospy.loginfo("Acel med=%s"%(acel_med))
+				rospy.loginfo("Acel med=%s"%(acel_med))
 
 				while(i2<len(acel_array)):
 
-					standart_dev_array=[(acel_array[i2]-acel_med)**2]
+					standart_dev_array.append((acel_array[i2]-acel_med)**2)
 
 					i2=i2+1
 
@@ -75,19 +75,21 @@ class identify_irregularity():
 
 				standart_dev=math.sqrt(sum_med/len(acel_array))
 
-				#rospy.loginfo("standart dev=%s"%(standart_dev))
+				rospy.loginfo("standart dev=%s"%(standart_dev))
 
 				inclination_identifier=0;
 
 			else:
 				#check if theres any sudden variation in the vertical acelaration, that is 2 times over the standart deviation values calculated on calibration
+				#rospy.loginfo("valor lido=%s"%(self.y))
 				if(self.y>(acel_med+multiplier*standart_dev) or self.y<(acel_med-multiplier*standart_dev)):
 
+					rospy.loginfo("value read%s"%(self.y))
 					rospy.loginfo("A instability or a sudden change of inclination was found!")
 
 					inclination_identifier=1
 
-		self.rate.sleep()
+			self.rate.sleep()
 
 	def acelCallback(self,accel_message):
 		

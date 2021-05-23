@@ -23,3 +23,9 @@ We use the IMU data from the realsense camera to get the inclination around each
 
 ![](imgs/Intel_orientation.PNG )
 
+
+can be launched with:
+
+```bash
+roslaunch inclination inclination_measurements.launch
+```
