@@ -91,7 +91,7 @@ class following_walls():
                         
                         self.distance_left=self.left_side_measurement()
 
-                        rospy.loginfo("Distance to the left= %f m" %(distance_left))
+                        rospy.loginfo("Distance to the left= %f m" %(self.distance_left))
 
                         if(self.distance_left<=target_distance):
 
