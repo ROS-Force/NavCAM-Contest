@@ -191,7 +191,6 @@ include_directories(
 catkin_install_python(PROGRAMS
    script/yolo_detection.py
    script/sort_tracking.py
-   script/openPose_node.py
    script/deeplab_detection.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
