@@ -16,7 +16,7 @@ This package was developed and tested with the following software:
 - **OpenCV v4.5.1**
 - **Tensorflow v2.4.1**
 
-To compile this package for the **Nvidia Jetson** please go to [this fork]().
+To compile this package for the **Nvidia Jetson Xavier NX** please go to [this fork]().
 
 ### Camera
 
@@ -41,7 +41,7 @@ The first step is to clone the repository:
 cd ~
 git clone --recursive git@github.com:ROS-Force/NavCAM-Contest.git
 ```
-However, before we start running any package, we need to install some dependencies.
+However, before we build and run our packages, we will need to install some dependencies first.
 ____
 
 ### Dependencies
@@ -87,7 +87,7 @@ sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/
 sudo apt update
 ```
 
-Copy this commands to install the latest cuDNN version
+Copy this commands to install the latest cuDNN version:
 ```bash
 # for the latest cuDNN version (ensure this matches your CUDA version)
 sudo apt install libcudnn8
