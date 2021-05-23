@@ -1,13 +1,16 @@
 # Mapping
 
-This package contains the launch files that performs SLAM
+To perform simultaneous mapping and localization (SLAM), we use the following packages:
 
-Algorithms Implemented:
+- **OctoMap** - 3D occupancy grid mapping approach;
+- **RTAB-Map** - Visual odometry (PnP, using GFTT and ORB features) and loop closure, integrating OctoMap mapping;
+- **robot_localization** - State estimation node using Unscented Kalman Filter (UFK) to fuse Visual Odometry with IMU data;
 
-- Gmapping
-- Octomap
+This package contains the launch files to run the packages automatically. To start the SLAM process, use the following [`slam-navigation.launch`](launch/slam-navigation.launch). You can use the parameters `with_camera` to enable the camera automatically, and `with_path_finding` to start the path finding node, like this:
 
-we are performing 2D localization and mapping with gmapping and we are using octomap to perform a 2D localization with a 3D map.
+```bash
+  roslaunch mapping slam-navigation.launch with_camera:=true with_path_finding:=true
+```
 
 ## Demos
 

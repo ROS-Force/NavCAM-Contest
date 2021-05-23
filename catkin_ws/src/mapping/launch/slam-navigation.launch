@@ -50,6 +50,6 @@
     <param name="/ukf_se/imu0_relative" value="false"/>
 
 
-    <include if="$(arg with_path_finding)" file="$(find path_finding/launch/path_finding.aunch)"></include>
+    <include if="$(arg with_path_finding)" file="$(find path_finding)/launch/path_finding.launch"></include>
 
 </launch>
