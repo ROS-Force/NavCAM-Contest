@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ros:noetic-ros-base-l4t-r32.5.0
+ARG BASE_IMAGE=ros:noetic-ros-base-l4t-r32.5.1
 FROM ${BASE_IMAGE}
 LABEL maintainer "José Faria <jncfaria@gmail.com>"
 
@@ -42,7 +42,10 @@ RUN apt-get -y install \
     libbullet-dev \
     libpcap-dev \
     libeigen3-dev \ 
-    libomp-dev
+    libomp-dev \
+    libopencv \
+    libopencv-dev \
+    libopencv-python
 
 # Install TF dependencies 
 RUN apt-get -y install \
