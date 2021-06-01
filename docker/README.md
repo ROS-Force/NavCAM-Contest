@@ -12,7 +12,7 @@ then open a terminal in the **Nvidia Jetson** and run the following command, rep
 
 ```bash
   
-  ssh-import-id gh:username
+ssh-import-id gh:username
   
 ```
 
@@ -20,7 +20,7 @@ In **your computer** edit the config file
 
 ```bash
   
-  nano /home/$USER/.ssh/config
+nano /home/$USER/.ssh/config
   
 ```
 and add a new host
@@ -37,7 +37,7 @@ Host name
 where the Host is the name you want, the User and the Hostname are the Jetson parameters (user@hostname). Now you have a SSH connection from your computer to the Nvidia Jetson. To enter the Nvidia Jetson terminal, just run the following command:
  
  ```bash
-  ssh name
+ssh name
  ```
 where ``name`` is the name you wrote in the config file.
 
@@ -51,13 +51,13 @@ Open the terminal and run the following command
 
 ```bash
 
-  export ROS_IP=`hostname -I | awk '{print $1}' `
+export ROS_IP=`hostname -I | awk '{print $1}' `
   
 ```
 Now you can launch the roscore
 
 ```bash
- roscore
+roscore
 ```
 
 
@@ -68,13 +68,13 @@ Open the terminal and run the following command, please replace the ``jetson_hos
 
 ```bash
 
-  export ROS_MASTER_URI='http://jetson_hostname.local.local:11311'
+export ROS_MASTER_URI='http://jetson_hostname.local.local:11311'
   
-  export ROS_IP=`hostname -I | awk '{print $1}' `
+export ROS_IP=`hostname -I | awk '{print $1}' `
 
 ```
 You should be able to connect to the rosmaster created in the Nvidia Jetson, check if everything is working by running the followig command
 
 ```bash
-  rostopic list
+rostopic list
 ```
