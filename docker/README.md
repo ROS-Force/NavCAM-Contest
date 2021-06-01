@@ -2,16 +2,13 @@
 
 To build the Docker images for Nvidia Jetson Xavier NX, you simply need to run `./docker_build.sh` on this folder, and it will build the images automatically. Make sure you setup SSH access to GitHub, as the submodules are linked through SSH (not HTTP).
 
-After building the image, run `./docker_run.sh` to automatically start the Docker container.
-
-To use ROS remotely (from your computer to the Jetson Container), make sure to follow the [Network Setup](http://wiki.ros.org/ROS/NetworkSetup) guide.
-
+After building the image, run `./docker_run.sh` to automatically start a Docker container.
 
 ## Configure SSH connection to the Nvidia Jetson
 
 Ensure that you have the the Github SSH keys set up in **your computer**, if not follow [this](https://techyarsal.medium.com/how-to-setup-git-the-proper-way-part-2-setting-up-ssh-key-ef745e5e8bfb) tutorial.
 
-Open a terminal in the **Nvidia Jetson** and run the following command, replace the ``username`` by your Github username
+then open a terminal in the **Nvidia Jetson** and run the following command, replace the ``username`` by your Github username
 
 ```bash
   
@@ -26,7 +23,7 @@ In **your computer** edit the config file
   nano /home/$USER/.ssh/config
   
 ```
-and add a new host by pasting the following text
+and add a new host
 
 ```
 Host name
@@ -35,9 +32,14 @@ Host name
   ForwardX11 yes
   ForwardAgent yes
   Port 22
- ```
+```
  
- where the Host is the name you want, the User and the Hostname are the Jetson parameters.
+where the Host is the name you want, the User and the Hostname are the Jetson parameters (user@hostname). Now you have a SSH connection from your computer to the Nvidia Jetson. To enter the Nvidia Jetson terminal, just run the following command:
+ 
+ ```bash
+  ssh name
+ ```
+where ``name`` is the name you wrote in the config file.
 
 
 
@@ -45,20 +47,34 @@ Host name
 
 ### Jetson 
 
+Open the terminal and run the following command
+
 ```bash
 
   export ROS_IP= `ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'` | awk '{print $2}'
 
+```
+Now you can launch the roscore
+
+```bash
+ roscore
 ```
 
 
 ### Computer
 
 
+Open the terminal and run the following command, please replace the ``jetson_hostname`` by the hostname of your Jetson.
+
 ```bash
 
-  export ROS_MASTER_URI='http://activespace-jetson.local:11311'
+  export ROS_MASTER_URI='http://jetson_hostname.local.local:11311'
   
   export ROS_IP= `ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'` | awk '{print $2}'
  
+```
+You should be able to connect to the rosmaster created in the Nvidia Jetson, check if everything is working by running the followig command
+
+```bash
+  rostopic list
 ```
