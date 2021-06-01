@@ -68,7 +68,7 @@ Open the terminal and run the following command, please replace the ``jetson_hos
 
 ```bash
 
-export ROS_MASTER_URI='http://jetson_hostname.local.local:11311'
+export ROS_MASTER_URI='http://jetson_hostname.local:11311'
   
 export ROS_IP=`hostname -I | awk '{print $1}' `
 
