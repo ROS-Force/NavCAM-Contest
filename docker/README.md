@@ -51,8 +51,8 @@ Open the terminal and run the following command
 
 ```bash
 
-  export ROS_IP= `ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'` | awk '{print $2}'
-
+  export ROS_IP=`hostname -I | awk '{print $1}' `
+  
 ```
 Now you can launch the roscore
 
@@ -70,8 +70,8 @@ Open the terminal and run the following command, please replace the ``jetson_hos
 
   export ROS_MASTER_URI='http://jetson_hostname.local.local:11311'
   
-  export ROS_IP= `ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'` | awk '{print $2}'
- 
+  export ROS_IP=`hostname -I | awk '{print $1}' `
+
 ```
 You should be able to connect to the rosmaster created in the Nvidia Jetson, check if everything is working by running the followig command
 
