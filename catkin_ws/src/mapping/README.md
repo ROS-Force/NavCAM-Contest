@@ -19,7 +19,7 @@ This package contains the launch files to run the packages automatically. To sta
 
 ## Performance 
 
-The tests were measured with the pre-recorded ``Test4_*.bag`` files at 30 FPS. The table shows the average FPS of several models to each testbench.
+The tests were measured with the pre-recorded ``Test4_*.bag`` files at 30 FPS. The table shows the average Rate of odometry and map update to each testbench.
 
 
 | Testbench                                | Odometry Rate (Hz) | Map Update Rate (Hz) |
