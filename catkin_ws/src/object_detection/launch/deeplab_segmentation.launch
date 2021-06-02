@@ -15,7 +15,7 @@
 
     <node pkg="rviz" type="rviz" name="rviz" if="$(arg rviz)"/>
     <include file="$(find realsense_tools)/launch/rs_camera.launch" if="$(arg with_camera)"/>
-    <rosparam command="load" file="$(find object_detection)/cfg/deeplab/$(deeplab_model).yaml" subst_value="True"/>
+    <rosparam command="load" file="$(find object_detection)/cfg/deeplab/$(arg deeplab_model).yaml" subst_value="True"/>
 
     <node pkg="object_detection" type="deeplab_detection.py" name="deeplab_detection" output="screen">
         <remap from="image" to="$(arg rgb_image)" />
