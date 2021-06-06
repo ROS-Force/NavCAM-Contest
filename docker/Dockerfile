@@ -42,10 +42,7 @@ RUN apt-get -y install \
     libbullet-dev \
     libpcap-dev \
     libeigen3-dev \ 
-    libomp-dev \
-    libopencv \
-    libopencv-dev \
-    libopencv-python
+    libomp-dev
 
 # Install TF dependencies 
 RUN apt-get -y install \
@@ -69,22 +66,7 @@ RUN apt-get -y install \
     python3-wstool \
     python3-rosdep
 
-# update pip
-
-
-# install more TF dependencies
-#RUN pip3 install -U \ 
-#    future==0.18.2 \
-#    mock==3.0.5  \
-#    h5py==2.10.0 \
-#    keras_preprocessing==1.1.1 \
-#    keras_applications==1.0.8 \
-#    gast==0.2.2 \
-#    futures \
-#    protobuf \
-#    pybind11
-
-RUN pip3 install --upgrade pip
+RUN pip3 install pybind11
 
 #Install more PIP packages (for SORT algorithm and coloring for bounding boxes)
 RUN pip3 install \
@@ -92,9 +74,6 @@ RUN pip3 install \
     pathfinding \
     lap \
     filterpy
-
-# install tensorflow 
-#RUN pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v45 tensorflow
 
 # Clean-up
 RUN apt-get clean
@@ -130,70 +109,70 @@ RUN echo "$ssh_prv_key" > /root/.ssh/id_rsa && \
 WORKDIR /root
 RUN git clone -b noetic --single-branch --recursive git@github.com:jncfa/NavCAM-Contest.git
 # hotfixes for certain packages
-RUN sed -i 's/python37/python/' /root/NavCAM-Contest/catkin_ws/src/packagedeps/vision_opencv/cv_bridge/CMakeLists.txt
+RUN sed -i 's/python37/python3/' /root/NavCAM-Contest/catkin_ws/src/packagedeps/vision_opencv/cv_bridge/CMakeLists.txt
 
 #==========COMPILE DEPENDENCIES===============
-#RUN mkdir /root/NavCAM-Contest/depends/opencv/build
-#WORKDIR /root/NavCAM-Contest/depends/opencv/build
-#RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
-#-D CMAKE_INSTALL_PREFIX=/usr/local \
-#-D EIGEN_INCLUDE_PATH=/usr/include/eigen3 \
-#-D INSTALL_PYTHON_EXAMPLES=ON \
-#-D INSTALL_C_EXAMPLES=ON \
-#-D OPENCV_ENABLE_NONFREE=ON \
-#-D WITH_CUDA=ON \
-#-D WITH_CUDNN=ON \
-#-D WITH_EIGEN=ON \
-#-D OPENCV_DNN_CUDA=ON \
-#-D ENABLE_FAST_MATH=1 \
-#-D CUDA_FAST_MATH=1 \
-#-D CUDA_ARCH_BIN=7.2 \
-#-D CUDA_ARCH_PTX= \
-#-D WITH_CUBLAS=1 \
-#-D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ \
-#-D HAVE_opencv_python2=OFF \
-#-D HAVE_opencv_python3=ON \
-#-D BUILD_opencv_python2=OFF \
-#-D BUILD_opencv_python3=ON \
-#-D OPENCV_GENERATE_PKGCONFIG=ON \
-#-D BUILD_EXAMPLES=OFF ..
-#RUN make -j`nproc`
-#RUN make install
+RUN mkdir /root/NavCAM-Contest/depends/opencv/build
+WORKDIR /root/NavCAM-Contest/depends/opencv/build
+RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
+-D CMAKE_INSTALL_PREFIX=/usr/local \
+-D EIGEN_INCLUDE_PATH=/usr/include/eigen3 \
+-D INSTALL_PYTHON_EXAMPLES=ON \
+-D INSTALL_C_EXAMPLES=ON \
+-D OPENCV_ENABLE_NONFREE=ON \
+-D WITH_CUDA=ON \
+-D WITH_CUDNN=ON \
+-D WITH_EIGEN=ON \
+-D OPENCV_DNN_CUDA=ON \
+-D ENABLE_FAST_MATH=1 \
+-D CUDA_FAST_MATH=1 \
+-D CUDA_ARCH_BIN=7.2 \
+-D CUDA_ARCH_PTX= \
+-D WITH_CUBLAS=1 \
+-D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ \
+-D HAVE_opencv_python2=OFF \
+-D HAVE_opencv_python3=ON \
+-D BUILD_opencv_python2=OFF \
+-D BUILD_opencv_python3=ON \
+-D OPENCV_GENERATE_PKGCONFIG=ON \
+-D BUILD_EXAMPLES=OFF ..
+RUN make -j 5
+RUN make install
 
 RUN mkdir /root/NavCAM-Contest/depends/g2o/build
 WORKDIR /root/NavCAM-Contest/depends/g2o/build
 RUN cmake ..
-RUN make -j`nproc`
+RUN make -j 5
 RUN make install
 
 RUN mkdir /root/NavCAM-Contest/depends/libnabo/build
 WORKDIR /root/NavCAM-Contest/depends/libnabo/build
 RUN cmake -DLIBNABO_BUILD_PYTHON=OFF ..
-RUN make -j`nproc`
+RUN make -j 5
 RUN make install
 
 RUN mkdir /root/NavCAM-Contest/depends/libpointmatcher/build
 WORKDIR /root/NavCAM-Contest/depends/libpointmatcher/build
 RUN cmake ..
-RUN make -j`nproc`
+RUN make -j 5
 RUN make install
 
 RUN mkdir /root/NavCAM-Contest/depends/gtsam/build
 WORKDIR /root/NavCAM-Contest/depends/gtsam/build
 RUN cmake -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF -DGTSAM_USE_SYSTEM_EIGEN=ON ..
-RUN make -j`nproc`
+RUN make -j 5
 RUN make install
 
 RUN mkdir /root/NavCAM-Contest/depends/octomap/build
 WORKDIR /root/NavCAM-Contest/depends/octomap/build
 RUN cmake ..
-RUN make -j`nproc`
+RUN make -j 5
 RUN make install
 
 #RUN mkdir /root/NavCAM-Contest/depends/rtabmap/build
 WORKDIR /root/NavCAM-Contest/depends/rtabmap/build
-RUN cmake -DWITH_PYTHON=ON -DBUILD_EXAMPLES=OFF ..
-RUN make -j`nproc`
+RUN cmake -D BUILD_EXAMPLES=OFF ..
+RUN make -j 5
 RUN make install
 
 #==================COMPILE THE REPO==============================
@@ -204,10 +183,10 @@ RUN catkin profile set Release
 RUN catkin config --install --merge-devel --blacklist rviz_imu_plugin --extend $ROS_ROOT
 
 # build orocos first and source it
-RUN catkin build orocos_kdl -j`nproc`
+RUN catkin build orocos_kdl -j 5
 
 # build the rest 
-RUN catkin build -j`nproc`
+RUN catkin build -j 5
 RUN echo "source /root/NavCAM-Contest/catkin_ws/devel_release/setup.bash --extend" >> /root/.bashrc
 
 EXPOSE 11311
