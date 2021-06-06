@@ -229,3 +229,4 @@ echo "source ~/NavCAM-Contest/catkin_ws/devel_release/setup.bash --extend" >> ~/
 ## [Path Finding](/catkin_ws/src/path_finding)
 
 ## [Inclination](/catkin_ws/src/inclination)
+## [Wall_follower](/catkin_ws/src/wall_follower)
