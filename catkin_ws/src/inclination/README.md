@@ -30,4 +30,4 @@ can be launched with:
 ```bash
 roslaunch inclination inclination_measurements.launch
 ```
-![](imgs/rotation angles.gif)
+![](imgs/rotation_angles.gif)
