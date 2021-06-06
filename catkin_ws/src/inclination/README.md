@@ -22,7 +22,7 @@ roslaunch inclination irregularity_identifier.launch
 
 We use the IMU data from the realsense camera to get the inclination around each axis in degrees. As the image shows:
 
-![](imgs/)
+![](imgs/Intel_orientation.PNG)
 
 
 can be launched with:
@@ -30,3 +30,4 @@ can be launched with:
 ```bash
 roslaunch inclination inclination_measurements.launch
 ```
+![](imgs/rotation angles.gif)
