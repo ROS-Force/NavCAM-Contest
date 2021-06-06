@@ -224,9 +224,10 @@ echo "source ~/NavCAM-Contest/catkin_ws/devel_release/setup.bash --extend" >> ~/
 
 ## [Object Detection](/catkin_ws/src/object_detection)
 
+## [Inclination](/catkin_ws/src/inclination)
+
+## [Wall_follower](/catkin_ws/src/wall_follower)
+
 ## [Mapping](/catkin_ws/src/mapping)
 
 ## [Path Finding](/catkin_ws/src/path_finding)
-
-## [Inclination](/catkin_ws/src/inclination)
-## [Wall_follower](/catkin_ws/src/wall_follower)
